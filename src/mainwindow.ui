@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
+    <width>531</width>
     <height>700</height>
    </rect>
   </property>
@@ -131,6 +131,7 @@ text-align: center; </string>
           <property name="font">
            <font>
             <pointsize>16</pointsize>
+            <bold>true</bold>
            </font>
           </property>
           <property name="text">
@@ -198,6 +199,7 @@ padding: 5px;</string>
           <property name="font">
            <font>
             <pointsize>16</pointsize>
+            <bold>true</bold>
            </font>
           </property>
           <property name="text">
@@ -275,7 +277,7 @@ padding: 5px;</string>
        <number>10</number>
       </property>
       <property name="rightMargin">
-       <number>10</number>
+       <number>8</number>
       </property>
       <property name="bottomMargin">
        <number>0</number>

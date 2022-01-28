@@ -14,6 +14,7 @@
 #include <QMovie>
 
 #include "utilities.h"
+#include "buywindow.h"
 
 namespace Ui {
 class DashboardWindow;
@@ -25,6 +26,8 @@ class DashboardWindow : public QMainWindow
 
 private:
     Ui::DashboardWindow         *ui;
+
+    BuyWindow                   *pBuyWindow;
 
     QNetworkAccessManager       manager;
     QNetworkRequest             request;
@@ -40,17 +43,19 @@ private:
 
 private slots:
     void                        on_QUIT_clicked();
+    void                        on_REFRESH_clicked();
 
     void                        on_BUY_clicked();
     void                        on_BUYSELL_clicked();
     void                        on_SELL_clicked();
     void                        on_SELLBUY_clicked();
 
+
     void                        accountAPIStatusReady();
 
 public:
-    explicit DashboardWindow(QWidget *parent = nullptr);
-    ~DashboardWindow();
+    explicit                    DashboardWindow(QWidget *parent = nullptr);
+                                ~DashboardWindow();
 };
 
 #endif // DASHBOARDWINDOW_H

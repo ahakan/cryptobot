@@ -31,6 +31,7 @@ set(STYLE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/style/)
 set(HEADERS
         ${INC_DIRECTORY}/mainwindow.h
         ${INC_DIRECTORY}/dashboardwindow.h
+        ${INC_DIRECTORY}/buywindow.h
 
         ${INC_DIRECTORY}/utilities.h
         ${INC_DIRECTORY}/socket.h
@@ -41,12 +42,14 @@ set(SOURCES
 
         ${SRC_DIRECTORY}/mainwindow.cpp
         ${SRC_DIRECTORY}/dashboardwindow.cpp
+        ${SRC_DIRECTORY}/buywindow.cpp
 
         ${SRC_DIRECTORY}/utilities.cpp
         ${SRC_DIRECTORY}/socket.cpp
 
         ${SRC_DIRECTORY}/mainwindow.ui
         ${SRC_DIRECTORY}/dashboardwindow.ui
+        ${SRC_DIRECTORY}/buywindow.ui
 
         dashboard.qrc
 )

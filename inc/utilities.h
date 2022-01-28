@@ -9,19 +9,19 @@
 class Utilities
 {
 private:
-    QSettings *settings;
+    QSettings                   *settings;
 
-    QString appDirectory;
+    QString                     appDirectory;
 
 public:
-    Utilities();
+                                Utilities();
 
-    void setApplicationDirectory(QString dir);
-    void setSettingsValue(QString key, QString value);
-    QString getSettingsValue(QString key);
+    void                        setApplicationDirectory(QString dir);
+    void                        setSettingsValue(QString key, QString value);
+    QString                     getSettingsValue(QString key);
 
-    QString encryptWithHMAC(const char* key, const char* data);
-    QString getSignature(QString query);
+    QString                     encryptWithHMAC(const char* key, const char* data);
+    QString                     getSignature(QString query);
 };
 
 extern Utilities Util;

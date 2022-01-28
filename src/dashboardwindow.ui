@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
+    <width>533</width>
     <height>700</height>
    </rect>
   </property>
@@ -43,6 +43,13 @@
            </size>
           </property>
          </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="REFRESH">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QPushButton" name="QUIT">
@@ -103,8 +110,7 @@
             </property>
             <property name="styleSheet">
              <string notr="true">letter-spacing: 0.3em
-rgb(218, 223, 225);
-text-align: center; </string>
+rgb(218, 223, 225);</string>
             </property>
             <property name="text">
              <string>CRYPTO BOT</string>

@@ -51,14 +51,8 @@ MainWindow::MainWindow(QString appDir, QWidget *parent)
         ui->API_KEY_LABEL->setVisible(false);
         ui->SECRET_KEY_LABEL->setVisible(false);
 
-        checkAccountStatus();
+//        checkAccountStatus();
     }
-
-//    pDashboardWindow = new DashboardWindow();
-
-//    pDashboardWindow->show();
-
-//    this->close();
 }
 
 MainWindow::~MainWindow()

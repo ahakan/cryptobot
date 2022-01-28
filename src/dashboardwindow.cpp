@@ -44,7 +44,18 @@ DashboardWindow::DashboardWindow(QWidget *parent) :
     ui->QUIT->setStyleSheet("border: 0px solid rgb(0, 7, 32)");
     ui->QUIT->setIconSize(QSize(24, 24));
 
-    checkAccountAPIStatus();
+    ui->REFRESH->setIcon(QIcon(":/dashboard/style/icon/refresh.png"));
+    ui->REFRESH->setStyleSheet("border: 0px solid rgb(0, 7, 32)");
+    ui->REFRESH->setIconSize(QSize(18, 18));
+    ui->REFRESH->setVisible(false);
+
+//    checkAccountAPIStatus();
+
+    pBuyWindow = new BuyWindow();
+
+    pBuyWindow->show();
+
+    this->close();
 }
 
 DashboardWindow::~DashboardWindow()
@@ -75,6 +86,8 @@ void DashboardWindow::accountAPIStatusReady()
         ui->SELL->setVisible(false);
         ui->BUYSELL->setVisible(false);
         ui->SELLBUY->setVisible(false);
+
+        ui->REFRESH->setVisible(true);
 
     }
     else
@@ -133,7 +146,11 @@ void DashboardWindow::on_QUIT_clicked()
 
 void DashboardWindow::on_BUY_clicked()
 {
+    pBuyWindow = new BuyWindow();
 
+    pBuyWindow->show();
+
+    this->close();
 }
 
 
@@ -152,5 +169,11 @@ void DashboardWindow::on_SELL_clicked()
 void DashboardWindow::on_SELLBUY_clicked()
 {
 
+}
+
+
+void DashboardWindow::on_REFRESH_clicked()
+{
+    checkAccountAPIStatus();
 }
 

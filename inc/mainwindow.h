@@ -54,8 +54,8 @@ private slots:
     void                        accountStatusReady();
 
 public:
-    MainWindow(QString appDir, QWidget *parent = nullptr);
-    ~MainWindow();
+                                MainWindow(QString appDir, QWidget *parent = nullptr);
+                                ~MainWindow();
 
 };
 #endif // MAINWINDOW_H
