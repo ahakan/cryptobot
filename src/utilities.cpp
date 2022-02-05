@@ -1,54 +1,97 @@
-#include "utilities.h"
+#include "../inc/utilities.h"
 
+
+/**
+ * @brief Construct a new Utilities::Utilities object
+ * 
+ */
 Utilities::Utilities()
 {
-}
+    // Log file init
+    mConfigFile.open("config.json", std::ifstream::binary);
 
-void Utilities::setApplicationDirectory(QString dir)
-{
-    appDirectory = dir;
-}
+    mConfigFile >> mConfigJson;
 
-void Utilities::setSettingsValue(QString key, QString value)
-{
-    settings = new QSettings(appDirectory + "/crypto.plist", QSettings::NativeFormat);
-
-    settings->setValue(key, value);
-}
-
-QString Utilities::getSettingsValue(QString key)
-{
-    settings = new QSettings(appDirectory + "/crypto.plist", QSettings::NativeFormat);
-
-    return settings->value(key).toString();
-}
-
-QString Utilities::encryptWithHMAC(const char* key, const char* data)
-{
-    unsigned char *result;
-    static char res_hexstring[64];
-    int result_len = 32;
-    QString signature;
-
-    result = HMAC(EVP_sha256(), key, strlen((char *)key), const_cast<unsigned char *>(reinterpret_cast<const unsigned char*>(data)), strlen((char *)data), NULL, NULL);
-
-    for (int i = 0; i < result_len; i++) {
-        sprintf(&(res_hexstring[i * 2]), "%02x", result[i]);
+    if (mConfigJson.size() == 0)
+    {
+        ELOG(ERROR, "Failed to initialize Utilities constructor.");
+        exit(0);
     }
 
-    for (int i = 0; i < 64; i++) {
-        signature += res_hexstring[i];
-    }
+    // Get preferred exchange name
+    mExchangeName   = mConfigJson["user"]["exchange"]["name"].asString();
 
-    return signature;
+    // Get exchange config
+    mExchangeJson   = mConfigJson[mExchangeName];
+
+    ELOG(INFO, "Utilities constructor initialized.");
+
+    
 }
 
-QString Utilities::getSignature(QString query)
+
+/**
+ * @brief Destroy the Utilities::Utilities object
+ * 
+ */
+Utilities::~Utilities()
 {
-    QString signature = encryptWithHMAC(getSettingsValue("SECRET_KEY").toStdString().c_str(), query.toStdString().c_str());
-    return "&signature=" + signature;
+    ELOG(INFO, "Utilities destructor.");
+}
+
+/**
+ * @brief Construct a new WebsocketUtils::WebsocketUtils object
+ * 
+ */
+WebsocketUtils::WebsocketUtils()
+{
+    mWebsocketJson = mExchangeJson["websocket"];
+
+    if (mWebsocketJson.size() == 0)
+        ELOG(ERROR, "Failed to initialize WebSocketUtils constructor.");
+
+    ELOG(INFO, "WebSocketUtils constructor initialized.");
 }
 
 
-Utilities Util = Utilities();
+/**
+ * @brief Destroy the WebsocketUtils::WebsocketUtils object
+ * 
+ */
+WebsocketUtils::~WebsocketUtils()
+{
+    ELOG(INFO, "WebsocketUtils destructor.");
+}
 
+
+/**
+ * @brief Return host address
+ * 
+ * @return std::string 
+ */
+std::string WebsocketUtils::getHost()
+{
+    return mWebsocketJson["host"].asString();
+}
+
+
+/**
+ * @brief Return port
+ * 
+ * @return std::string 
+ */
+std::string WebsocketUtils::getPort()
+{
+    return mWebsocketJson["port"].asString();
+}
+
+
+/**
+ * @brief Return endpoint
+ * 
+ * @return std::string 
+ */
+std::string WebsocketUtils::getEndpoint()
+{
+    return mWebsocketJson["endpoint"].asString();
+}

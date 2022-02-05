@@ -1,0 +1,60 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_803cb/fast && /usr/bin/make  -f CMakeFiles/cmTC_803cb.dir/build.make CMakeFiles/cmTC_803cb.dir/build
+make[1]: Entering directory '/home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_803cb.dir/src.c.o
+/usr/bin/clang-13 -DCMAKE_HAVE_LIBC_PTHREAD   -MD -MT CMakeFiles/cmTC_803cb.dir/src.c.o -MF CMakeFiles/cmTC_803cb.dir/src.c.o.d -o CMakeFiles/cmTC_803cb.dir/src.c.o -c /home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_803cb
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_803cb.dir/link.txt --verbose=1
+/usr/bin/clang-13 CMakeFiles/cmTC_803cb.dir/src.c.o -o cmTC_803cb 
+/usr/bin/ld: CMakeFiles/cmTC_803cb.dir/src.c.o: in function `main':
+src.c:(.text+0x22): undefined reference to `pthread_create'
+/usr/bin/ld: src.c:(.text+0x2b): undefined reference to `pthread_detach'
+/usr/bin/ld: src.c:(.text+0x34): undefined reference to `pthread_cancel'
+/usr/bin/ld: src.c:(.text+0x41): undefined reference to `pthread_join'
+clang-13: error: linker command failed with exit code 1 (use -v to see invocation)
+make[1]: *** [CMakeFiles/cmTC_803cb.dir/build.make:100: cmTC_803cb] Error 1
+make[1]: Leaving directory '/home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_803cb/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_b7db1/fast && /usr/bin/make  -f CMakeFiles/cmTC_b7db1.dir/build.make CMakeFiles/cmTC_b7db1.dir/build
+make[1]: Entering directory '/home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b7db1.dir/CheckFunctionExists.c.o
+/usr/bin/clang-13   -DCHECK_FUNCTION_EXISTS=pthread_create -MD -MT CMakeFiles/cmTC_b7db1.dir/CheckFunctionExists.c.o -MF CMakeFiles/cmTC_b7db1.dir/CheckFunctionExists.c.o.d -o CMakeFiles/cmTC_b7db1.dir/CheckFunctionExists.c.o -c /usr/share/cmake/Modules/CheckFunctionExists.c
+Linking C executable cmTC_b7db1
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b7db1.dir/link.txt --verbose=1
+/usr/bin/clang-13  -DCHECK_FUNCTION_EXISTS=pthread_create CMakeFiles/cmTC_b7db1.dir/CheckFunctionExists.c.o -o cmTC_b7db1  -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+clang-13: error: linker command failed with exit code 1 (use -v to see invocation)
+make[1]: *** [CMakeFiles/cmTC_b7db1.dir/build.make:100: cmTC_b7db1] Error 1
+make[1]: Leaving directory '/home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_b7db1/fast] Error 2
+
+
+

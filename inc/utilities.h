@@ -1,31 +1,40 @@
-#ifndef UTILITIES_H
-#define UTILITIES_H
+#ifndef Utilities_h
+#define Utilities_h
 
-#include <QtCore/QCoreApplication>
-#include <QSettings>
+#include <iostream>
+#include <string>
+#include <fstream>
 
-#include <openssl/hmac.h>
+#include "elog.h"
+#include "json/json.h"
 
 class Utilities
 {
-private:
-    QSettings                   *settings;
+    private:
+    protected:
+        std::ifstream           mConfigFile;
+        Json::Value             mConfigJson;
+        Json::Value             mExchangeJson;
+        std::string             mExchangeName;
 
-    QString                     appDirectory;
-
-public:
+    public:
                                 Utilities();
+        virtual                 ~Utilities();
 
-    void                        setApplicationDirectory(QString dir);
-    void                        setSettingsValue(QString key, QString value);
-    QString                     getSettingsValue(QString key);
-
-    QString                     encryptWithHMAC(const char* key, const char* data);
-    QString                     getSignature(QString query);
 };
 
-extern Utilities Util;
+class WebsocketUtils : public Utilities
+{
+    private:
+        Json::Value             mWebsocketJson;
 
-#endif // UTILITIES_H
+    public:
+                                WebsocketUtils();
+                                ~WebsocketUtils();
 
+        std::string             getHost();
+        std::string             getPort();
+        std::string             getEndpoint();
+};
 
+#endif

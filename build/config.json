@@ -1,0 +1,18 @@
+{
+    "user": {
+        "exchange": {
+            "name": "binance"
+        }
+    },
+    "binance": {
+        "websocket": {
+            "host": "stream.binance.com",
+            "port": "9443",
+            "endpoint": "/ws/solbusd@kline_1m"
+        },
+        "api": {
+            "API_KEY": "",
+            "SECRET_KEY": ""
+        }
+    }
+}

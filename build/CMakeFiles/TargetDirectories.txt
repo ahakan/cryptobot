@@ -1,0 +1,9 @@
+/home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/package.dir
+/home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/package_source.dir
+/home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/edit_cache.dir
+/home/ahc/Desktop/Git/cryptobot/build/CMakeFiles/rebuild_cache.dir
+/home/ahc/Desktop/Git/cryptobot/build/src/CMakeFiles/cryptobot.dir
+/home/ahc/Desktop/Git/cryptobot/build/src/CMakeFiles/package.dir
+/home/ahc/Desktop/Git/cryptobot/build/src/CMakeFiles/package_source.dir
+/home/ahc/Desktop/Git/cryptobot/build/src/CMakeFiles/edit_cache.dir
+/home/ahc/Desktop/Git/cryptobot/build/src/CMakeFiles/rebuild_cache.dir

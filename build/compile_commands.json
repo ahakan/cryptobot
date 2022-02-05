@@ -1,0 +1,22 @@
+[
+{
+  "directory": "/home/ahc/Desktop/Git/cryptobot/build/src",
+  "command": "/usr/bin/c++  -I/home/ahc/Desktop/Git/cryptobot/inc -isystem /home/ahc/Desktop/Git/cryptobot/lib/libjson-1.9.5/include/json -isystem /home/ahc/Desktop/Git/cryptobot/lib/libwebsockets-4.3.0/include -isystem /home/ahc/Desktop/Git/cryptobot/lib/libelog-1.0.0/inc -isystem /home/ahc/Desktop/Git/cryptobot/lib/libsqlite-3.37.2/inc -Wall -Wextra -g -std=gnu++11 -o CMakeFiles/cryptobot.dir/main.cpp.o -c /home/ahc/Desktop/Git/cryptobot/src/main.cpp",
+  "file": "/home/ahc/Desktop/Git/cryptobot/src/main.cpp"
+},
+{
+  "directory": "/home/ahc/Desktop/Git/cryptobot/build/src",
+  "command": "/usr/bin/c++  -I/home/ahc/Desktop/Git/cryptobot/inc -isystem /home/ahc/Desktop/Git/cryptobot/lib/libjson-1.9.5/include/json -isystem /home/ahc/Desktop/Git/cryptobot/lib/libwebsockets-4.3.0/include -isystem /home/ahc/Desktop/Git/cryptobot/lib/libelog-1.0.0/inc -isystem /home/ahc/Desktop/Git/cryptobot/lib/libsqlite-3.37.2/inc -Wall -Wextra -g -std=gnu++11 -o CMakeFiles/cryptobot.dir/sql.cpp.o -c /home/ahc/Desktop/Git/cryptobot/src/sql.cpp",
+  "file": "/home/ahc/Desktop/Git/cryptobot/src/sql.cpp"
+},
+{
+  "directory": "/home/ahc/Desktop/Git/cryptobot/build/src",
+  "command": "/usr/bin/c++  -I/home/ahc/Desktop/Git/cryptobot/inc -isystem /home/ahc/Desktop/Git/cryptobot/lib/libjson-1.9.5/include/json -isystem /home/ahc/Desktop/Git/cryptobot/lib/libwebsockets-4.3.0/include -isystem /home/ahc/Desktop/Git/cryptobot/lib/libelog-1.0.0/inc -isystem /home/ahc/Desktop/Git/cryptobot/lib/libsqlite-3.37.2/inc -Wall -Wextra -g -std=gnu++11 -o CMakeFiles/cryptobot.dir/utilities.cpp.o -c /home/ahc/Desktop/Git/cryptobot/src/utilities.cpp",
+  "file": "/home/ahc/Desktop/Git/cryptobot/src/utilities.cpp"
+},
+{
+  "directory": "/home/ahc/Desktop/Git/cryptobot/build/src",
+  "command": "/usr/bin/c++  -I/home/ahc/Desktop/Git/cryptobot/inc -isystem /home/ahc/Desktop/Git/cryptobot/lib/libjson-1.9.5/include/json -isystem /home/ahc/Desktop/Git/cryptobot/lib/libwebsockets-4.3.0/include -isystem /home/ahc/Desktop/Git/cryptobot/lib/libelog-1.0.0/inc -isystem /home/ahc/Desktop/Git/cryptobot/lib/libsqlite-3.37.2/inc -Wall -Wextra -g -std=gnu++11 -o CMakeFiles/cryptobot.dir/websocket.cpp.o -c /home/ahc/Desktop/Git/cryptobot/src/websocket.cpp",
+  "file": "/home/ahc/Desktop/Git/cryptobot/src/websocket.cpp"
+}
+]
