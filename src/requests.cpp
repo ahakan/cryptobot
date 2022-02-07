@@ -1,5 +1,4 @@
 #include "../inc/requests.h"
-#include "utilities.h"
 
 Requests::Requests(BinanceUtilities *pBu)
 {
@@ -15,7 +14,6 @@ Requests::Requests(BinanceUtilities *pBu)
     }
 
     ELOG(INFO, "Requests constructor initialized.");
-    ELOG(INFO, "mBase: %s, mAPI_KEY: %s, mSECRET_KEY: %s.", mBase.c_str(), mAPI_KEY.c_str(), mSECRET_KEY.c_str());
 }
 
 Requests::~Requests()
@@ -36,7 +34,7 @@ BinanceRequests::~BinanceRequests()
 
 void BinanceRequests::init(float *candle)
 {
-    while (1)
+    while ( 1 )
     {
         getAPIKeyPermission();
 
@@ -68,8 +66,21 @@ void BinanceRequests::getAPIKeyPermission()
                                             {"timestamp", mTimestamp}, 
                                             {"signature", mSignature}});
 
-    std::cout << mReq.url << std::endl;                  
-    std::cout << mReq.status_code << std::endl;
-    std::cout << mReq.header["content-type"] << std::endl;
-    std::cout << mReq.text << std::endl;      
+    // std::cout << mReq.url << std::endl;                  
+    // std::cout << mReq.status_code << std::endl;
+    // std::cout << mReq.header["content-type"] << std::endl;
+    // std::cout << mReq.text << std::endl;
+
+    Json::Value mAPIJson;
+    Json::Reader reader;
+    bool parsingSuccessful = reader.parse( mReq.text.c_str(), mAPIJson );
+
+    if ( !parsingSuccessful )
+    {
+        ELOG(ERROR, "Failed to JSON parse.");
+    }
+
+    bool enableSpotAndMarginTrading = mAPIJson.get("enableSpotAndMarginTrading", true).asBool();
+
+    std::cout << enableSpotAndMarginTrading << std::endl;
 }

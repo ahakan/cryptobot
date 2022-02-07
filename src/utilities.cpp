@@ -180,7 +180,7 @@ std::string BinanceUtilities::getSignature(std::string query) {
     std::string mSecretKey  = getAPISECRETKEY();
 	std::string signature   = encryptWithHMAC(mSecretKey.c_str(), query.c_str());
 
-    ELOG(INFO, "Generated a signature: %s.", signature.c_str());
+    // ELOG(INFO, "Generated a signature: %s.", signature.c_str());
 
 	return signature;
 }

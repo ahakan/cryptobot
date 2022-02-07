@@ -26,7 +26,35 @@ namespace                       net = boost::asio;            // from <boost/asi
 namespace                       ssl = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
 using                           tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-class Websocket
+class Websocket : public std::enable_shared_from_this<Websocket>
+{
+    private:
+        tcp::resolver               mResolver;
+        websocket::stream
+        <beast::ssl_stream
+        <beast::tcp_stream>>        ws_;
+        beast::flat_buffer          mBuffer;
+        std::string                 mHost;
+        std::string                 mEndpoint;
+
+        float                       *pCandle = NULL;
+
+        void                        on_resolve(beast::error_code ec, tcp::resolver::results_type results);
+        void                        on_connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type ep);
+        void                        on_ssl_handshake(beast::error_code ec);
+        void                        on_handshake(beast::error_code ec);
+        void                        on_read( beast::error_code ec, std::size_t bytes_transferred);
+        void                        on_close(beast::error_code ec);
+
+    public:
+        explicit                    Websocket(net::io_context& ioc, ssl::context& ctx);
+                                    ~Websocket();
+
+        void                        run(std::string host, std::string port, std::string endpoint, float *cand);
+    
+};
+
+class BinanceWebsocket 
 {
     private:
         std::string             mHost;
@@ -35,36 +63,10 @@ class Websocket
         float                   *pCand = NULL;
 
     public:
-                                Websocket(BinanceUtilities *a, float *cand);
+                                BinanceWebsocket(BinanceUtilities *pBu, float *cand);
 
         void                    init();
-};
 
-class BinanceWebsocket : public std::enable_shared_from_this<BinanceWebsocket>
-{
-private:
-    tcp::resolver               mResolver;
-    websocket::stream
-    <beast::ssl_stream
-    <beast::tcp_stream>>        ws_;
-    beast::flat_buffer          mBuffer;
-    std::string                 host_;
-    std::string                 mEndpoint;
-
-    float                       *pCandle = NULL;
-
-    void                        on_resolve(beast::error_code ec, tcp::resolver::results_type results);
-    void                        on_connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type ep);
-    void                        on_ssl_handshake(beast::error_code ec);
-    void                        on_handshake(beast::error_code ec);
-    void                        on_read( beast::error_code ec, std::size_t bytes_transferred);
-    void                        on_close(beast::error_code ec);
-
-public:
-    explicit                    BinanceWebsocket(net::io_context& ioc, ssl::context& ctx);
-                                ~BinanceWebsocket();
-
-    void                        run(std::string host, std::string port, std::string endpoint, float *cand);
 };
 
 #endif

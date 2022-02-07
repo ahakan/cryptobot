@@ -14,6 +14,7 @@
 
 // Libraries
 #include "cpr/cpr.h"
+#include "json/json.h"
 
 // Includes
 #include "utilities.h"

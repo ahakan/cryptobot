@@ -1,59 +1,23 @@
 #include "../inc/websocket.h"
 #include <boost/beast/core/buffers_to_string.hpp>
 
-Websocket::Websocket(BinanceUtilities *a, float *cand)
-{
-    mHost       = a->getWebsocketBase();
-    mPort       = a->getWebsocketPort();
 
-    mEndpoint   = a->getWebsocketEndpoint();
-
-    // std::cout << cand << std::endl;
-    // std::cout << *cand << std::endl;
-    pCand = cand;
-
-    ELOG(INFO, "Websocket constructor initialized. mHost: %s, mPort: %s, mEndpoint: %s.", 
-                mHost.c_str(), mPort.c_str(), mEndpoint.c_str());
-}
-
-void Websocket::init()
-{
-    // The io_context is required for all I/O
-    net::io_context ioc;
-
-    // The SSL context is required, and holds certificates
-    ssl::context ctx{ssl::context::tlsv12_client};
-
-    // This holds the root certificate used for verification
-    load_root_certificates(ctx);
-
-    ELOG(INFO, "Websocket init function.");
-
-    // Launch the asynchronous operation
-    std::make_shared<BinanceWebsocket>(ioc, ctx)->run(mHost, mPort, mEndpoint, pCand);
-
-    // Run the I/O service. The call will return when
-    // the socket is closed.
-
-    ioc.run();
-}
-
-
-BinanceWebsocket::BinanceWebsocket(net::io_context& ioc, ssl::context& ctx)
+Websocket::Websocket(net::io_context& ioc, ssl::context& ctx)
     : mResolver(net::make_strand(ioc))
     , ws_(net::make_strand(ioc), ctx)
 {
+    ELOG(INFO, "Websocket constructor initialized.");
 }
 
-BinanceWebsocket::~BinanceWebsocket()
+Websocket::~Websocket()
 {
-    ELOG(INFO, "BinanceWebsocket destructor.");
+    ELOG(INFO, "Websocket destructor.");
 }
 
-void BinanceWebsocket::run(std::string host, std::string port, std::string endpoint, float *cand)
+void Websocket::run(std::string host, std::string port, std::string endpoint, float *cand)
 {
     // Save these for later
-    host_       = host;
+    mHost       = host;
     mEndpoint   = endpoint;
     pCandle     = cand;
 
@@ -64,11 +28,11 @@ void BinanceWebsocket::run(std::string host, std::string port, std::string endpo
         host,
         port,
         beast::bind_front_handler(
-            &BinanceWebsocket::on_resolve,
+            &Websocket::on_resolve,
             shared_from_this()));
 }
 
-void BinanceWebsocket::on_resolve(beast::error_code ec, tcp::resolver::results_type results)
+void Websocket::on_resolve(beast::error_code ec, tcp::resolver::results_type results)
 {
     if(ec)
     {
@@ -84,11 +48,11 @@ void BinanceWebsocket::on_resolve(beast::error_code ec, tcp::resolver::results_t
     beast::get_lowest_layer(ws_).async_connect(
         results,
         beast::bind_front_handler(
-            &BinanceWebsocket::on_connect,
+            &Websocket::on_connect,
             shared_from_this()));
 }
 
-void BinanceWebsocket::on_connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type ep)
+void Websocket::on_connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type ep)
 {
     if(ec)
     {
@@ -97,10 +61,10 @@ void BinanceWebsocket::on_connect(beast::error_code ec, tcp::resolver::results_t
 
     ELOG(INFO, "BinanceWebsocket connected successfully.");
 
-    // Update the host_ string. This will provide the value of the
+    // Update the mHost string. This will provide the value of the
     // Host HTTP header during the WebSocket handshake.
     // See https://tools.ietf.org/html/rfc7230#section-5.4
-    host_ += ':' + std::to_string(ep.port());
+    mHost += ':' + std::to_string(ep.port());
 
     // Set a timeout on the operation
     beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
@@ -108,7 +72,7 @@ void BinanceWebsocket::on_connect(beast::error_code ec, tcp::resolver::results_t
     // Set SNI Hostname (many hosts need this to handshake successfully)
     if(! SSL_set_tlsext_host_name(
             ws_.next_layer().native_handle(),
-            host_.c_str()))
+            mHost.c_str()))
     {
         ec = beast::error_code(static_cast<int>(::ERR_get_error()),
             net::error::get_ssl_category());
@@ -119,11 +83,11 @@ void BinanceWebsocket::on_connect(beast::error_code ec, tcp::resolver::results_t
     ws_.next_layer().async_handshake(
         ssl::stream_base::client,
         beast::bind_front_handler(
-            &BinanceWebsocket::on_ssl_handshake,
+            &Websocket::on_ssl_handshake,
             shared_from_this()));
 }
 
-void BinanceWebsocket::on_ssl_handshake(beast::error_code ec)
+void Websocket::on_ssl_handshake(beast::error_code ec)
 {
     if(ec)
     {
@@ -150,13 +114,13 @@ void BinanceWebsocket::on_ssl_handshake(beast::error_code ec)
         }));
 
     // Perform the websocket handshake
-    ws_.async_handshake(host_, mEndpoint,
+    ws_.async_handshake(mHost, mEndpoint,
         beast::bind_front_handler(
-            &BinanceWebsocket::on_handshake,
+            &Websocket::on_handshake,
             shared_from_this()));
 }
 
-void BinanceWebsocket::on_handshake(beast::error_code ec)
+void Websocket::on_handshake(beast::error_code ec)
 {
     if(ec)
     {
@@ -169,11 +133,11 @@ void BinanceWebsocket::on_handshake(beast::error_code ec)
     ws_.async_read(
         mBuffer,
         beast::bind_front_handler(
-            &BinanceWebsocket::on_read,
+            &Websocket::on_read,
             shared_from_this()));
 }
 
-void BinanceWebsocket::on_read( beast::error_code ec, std::size_t bytes_transferred)
+void Websocket::on_read( beast::error_code ec, std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
 
@@ -182,11 +146,9 @@ void BinanceWebsocket::on_read( beast::error_code ec, std::size_t bytes_transfer
         ELOG(ERROR, "Read error: %s", ec.message().c_str());
     }
 
-    ELOG(INFO, "BinanceWebsocket on read. %d", mBuffer.size());
-    
     if (mBuffer.size() > 0)
     {
-        ELOG(INFO, "Reading buffer. %d", mBuffer.size());
+        ELOG(INFO, "BinanceWebsocket on read. Buffer size: %dKB", mBuffer.size());
 
         std::string bufferJson = beast::buffers_to_string(mBuffer.data());
 
@@ -207,10 +169,6 @@ void BinanceWebsocket::on_read( beast::error_code ec, std::size_t bytes_transfer
 
         std::cout << "x: " << isClosed << " c: " << mCandlePrice << std::endl;
 
-        // std::cout << beast::make_printable(mBuffer.data()) << std::endl;
-
-        // std::cout << mCandlestickJson << std::endl;
-
         if (isClosed == 1)
             *pCandle = std::stof(mCandlePrice);
         
@@ -224,11 +182,11 @@ void BinanceWebsocket::on_read( beast::error_code ec, std::size_t bytes_transfer
     ws_.async_read(
         mBuffer,
         beast::bind_front_handler(
-            &BinanceWebsocket::on_read,
+            &Websocket::on_read,
             shared_from_this()));
 }
 
-void BinanceWebsocket::on_close(beast::error_code ec)
+void Websocket::on_close(beast::error_code ec)
 {
     if(ec)
     {
@@ -239,4 +197,42 @@ void BinanceWebsocket::on_close(beast::error_code ec)
 
     // The make_printable() function helps print a ConstBufferSequence
     std::cout << beast::make_printable(mBuffer.data()) << std::endl;
+}
+
+
+BinanceWebsocket::BinanceWebsocket(BinanceUtilities *pBu, float *cand)
+{
+    mHost       = pBu->getWebsocketBase();
+    mPort       = pBu->getWebsocketPort();
+
+    mEndpoint   = pBu->getWebsocketEndpoint();
+
+    // std::cout << cand << std::endl;
+    // std::cout << *cand << std::endl;
+    pCand = cand;
+
+    ELOG(INFO, "Websocket constructor initialized. mHost: %s, mPort: %s, mEndpoint: %s.", 
+                mHost.c_str(), mPort.c_str(), mEndpoint.c_str());
+}
+
+void BinanceWebsocket::init()
+{
+    // The io_context is required for all I/O
+    net::io_context ioc;
+
+    // The SSL context is required, and holds certificates
+    ssl::context ctx{ssl::context::tlsv12_client};
+
+    // This holds the root certificate used for verification
+    load_root_certificates(ctx);
+
+    ELOG(INFO, "Websocket init function.");
+
+    // Launch the asynchronous operation
+    std::make_shared<Websocket>(ioc, ctx)->run(mHost, mPort, mEndpoint, pCand);
+
+    // Run the I/O service. The call will return when
+    // the socket is closed.
+
+    ioc.run();
 }

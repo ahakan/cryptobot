@@ -25,7 +25,7 @@ void foo(float *candle, Sql *mSql)
     }
 }
 
-void inp(BinanceUtilities *wsu, Websocket *ws, BinanceRequests *breq)
+void inp(BinanceUtilities *wsu, BinanceWebsocket *ws, BinanceRequests *breq)
 {
     char a[2];
     while( true )
@@ -57,13 +57,11 @@ int main()
     Sql *mSql               = new Sql;
 
     BinanceUtilities *bu    = new BinanceUtilities();
-
-    Websocket *ws           = new Websocket(bu, candle);
-
     BinanceRequests *breq   = new BinanceRequests(bu);
+    BinanceWebsocket *ws    = new BinanceWebsocket(bu, candle);
 
-    std::thread th1         = std::thread(&Websocket::init, ws);
-    std::thread th2         = std::thread(&BinanceRequests::init, breq, candle);
+    std::thread th1         = std::thread(&BinanceRequests::init, breq, candle);
+    std::thread th2         = std::thread(&BinanceWebsocket::init, ws);
     std::thread th3         = std::thread(foo, candle, mSql);
     std::thread th4         = std::thread(inp, bu, ws, breq);
 
