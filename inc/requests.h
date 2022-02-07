@@ -32,8 +32,10 @@ class Requests
         std::string         mAPI_KEY;
         std::string         mSECRET_KEY;
 
+        BinanceUtilities    *pBu; 
+
     public:
-                            Requests(BinanceUtilities *pReqU);
+                            Requests(BinanceUtilities *pBu);
         virtual             ~Requests();
 };
 
@@ -42,7 +44,7 @@ class BinanceRequests : public Requests
     private:
 
     public:
-                            BinanceRequests(BinanceUtilities *pReqU);
+                            BinanceRequests(BinanceUtilities *pBu);
                             ~BinanceRequests();
 
         void                init(float *candle);
