@@ -1,12 +1,12 @@
 #include "../inc/websocket.h"
 #include <boost/beast/core/buffers_to_string.hpp>
 
-Websocket::Websocket(WebsocketUtils *a, float *cand)
+Websocket::Websocket(BinanceUtilities *a, float *cand)
 {
-    mHost       = a->getBase();
-    mPort       = a->getPort();
+    mHost       = a->getWebsocketBase();
+    mPort       = a->getWebsocketPort();
 
-    mEndpoint   = a->getEndpoint();
+    mEndpoint   = a->getWebsocketEndpoint();
 
     // std::cout << cand << std::endl;
     // std::cout << *cand << std::endl;

@@ -1,12 +1,15 @@
 #ifndef Utilities_h
 #define Utilities_h
 
+// Libraries
+#include "elog.h"
+#include "json/json.h"
+
+// Standart libraries
 #include <iostream>
 #include <string>
 #include <fstream>
-
-#include "elog.h"
-#include "json/json.h"
+#include <openssl/hmac.h>
 
 
 /**
@@ -26,44 +29,35 @@ class Utilities
                                 Utilities();
         virtual                 ~Utilities();
 
+        std::string             getTimestamp();
+
 };
 
 
 /**
- * @brief WebsocketUtils class
+ * @brief BinanceUtilities class
  * 
  */
-class WebsocketUtils : public Utilities
+class BinanceUtilities : public Utilities
 {
     private:
         Json::Value             mWebsocketJson;
+        Json::Value             mAPIJson;
 
     public:
-                                WebsocketUtils();
-                                ~WebsocketUtils();
+                                BinanceUtilities();
+                                ~BinanceUtilities();
 
-        std::string             getBase();
-        std::string             getPort();
-        std::string             getEndpoint();
-};
+        std::string             getWebsocketBase();
+        std::string             getWebsocketPort();
+        std::string             getWebsocketEndpoint();
 
-
-/**
- * @brief RequestsUtils class
- * 
- */
-class RequestsUtils : public Utilities
-{
-    private:
-        Json::Value             mRequestsJson;
-
-    public:
-                                RequestsUtils();
-                                ~RequestsUtils();
-        
-        std::string             getBase();
+        std::string             getAPIBase();
         std::string             getAPIKEY();
-        std::string             getSECRETKEY();
+        std::string             getAPISECRETKEY();
+
+        std::string             encryptWithHMAC(const char* key, const char* data);
+        std::string             getSignature(std::string query);
 };
 
 #endif

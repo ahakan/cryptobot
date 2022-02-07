@@ -28,13 +28,13 @@ class Requests
     private:
 
     protected:
-        std::string mBase;
-        std::string mAPI_KEY;
-        std::string mSECRET_KEY;
+        std::string         mBase;
+        std::string         mAPI_KEY;
+        std::string         mSECRET_KEY;
 
     public:
-        Requests(RequestsUtils *pReqU);
-        virtual ~Requests();
+                            Requests(BinanceUtilities *pReqU);
+        virtual             ~Requests();
 };
 
 class BinanceRequests : public Requests
@@ -42,10 +42,11 @@ class BinanceRequests : public Requests
     private:
 
     public:
-        BinanceRequests(RequestsUtils *pReqU);
-        ~BinanceRequests();
+                            BinanceRequests(BinanceUtilities *pReqU);
+                            ~BinanceRequests();
 
-        void sendRequests(float *candle);
+        void                init(float *candle);
+        void                getAPIKeyPermission();
 };
 
 #endif

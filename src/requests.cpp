@@ -1,11 +1,11 @@
 #include "../inc/requests.h"
 #include "utilities.h"
 
-Requests::Requests(RequestsUtils *pReqU)
+Requests::Requests(BinanceUtilities *pReqU)
 {
-    mBase           = pReqU->getBase();
+    mBase           = pReqU->getAPIBase();
     mAPI_KEY        = pReqU->getAPIKEY();
-    mSECRET_KEY     = pReqU->getSECRETKEY();
+    mSECRET_KEY     = pReqU->getAPISECRETKEY();
 
     if (mAPI_KEY.length() == 0 || mSECRET_KEY.length() == 0)
     {
@@ -19,10 +19,10 @@ Requests::Requests(RequestsUtils *pReqU)
 
 Requests::~Requests()
 {
-
+    ELOG(INFO, "Requests destructor.");
 }
 
-BinanceRequests::BinanceRequests(RequestsUtils *pReqU)
+BinanceRequests::BinanceRequests(BinanceUtilities *pReqU)
     : Requests(pReqU)
 {
     ELOG(INFO, "BinanceRequests constructor initialized.");
@@ -30,10 +30,10 @@ BinanceRequests::BinanceRequests(RequestsUtils *pReqU)
 
 BinanceRequests::~BinanceRequests()
 {
-
+    ELOG(INFO, "BinanceRequests destructor.");
 }
 
-void BinanceRequests::sendRequests(float *candle)
+void BinanceRequests::init(float *candle)
 {
     while (1)
     {
@@ -43,7 +43,10 @@ void BinanceRequests::sendRequests(float *candle)
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        
-        // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
+}
+
+void getAPIKeyPermission()
+{
+
 }

@@ -39,28 +39,43 @@ Utilities::~Utilities()
     ELOG(INFO, "Utilities destructor.");
 }
 
+
 /**
- * @brief Construct a new WebsocketUtils::WebsocketUtils object
+ * @brief Return timestamp
  * 
+ * @return std::string 
  */
-WebsocketUtils::WebsocketUtils()
-{
-    mWebsocketJson = mExchangeJson["websocket"];
-
-    if (mWebsocketJson.size() == 0)
-        ELOG(ERROR, "Failed to initialize WebSocketUtils constructor.");
-
-    ELOG(INFO, "WebSocketUtils constructor initialized.");
+std::string Utilities::getTimestamp() {
+	long long ms_since_epoch = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	return std::to_string(ms_since_epoch);
 }
 
 
 /**
- * @brief Destroy the WebsocketUtils::WebsocketUtils object
+ * @brief Construct a new BinanceUtilities::BinanceUtilities object
  * 
  */
-WebsocketUtils::~WebsocketUtils()
+BinanceUtilities::BinanceUtilities()
 {
-    ELOG(INFO, "WebsocketUtils destructor.");
+    mWebsocketJson  = mExchangeJson["websocket"];
+    mAPIJson        = mExchangeJson["api"];
+
+    if (mWebsocketJson.size() == 0 || mAPIJson.size() == 0)
+    {
+        ELOG(ERROR, "Failed to initialize BinanceUtilities constructor.");
+        exit(0);
+    }
+    ELOG(INFO, "BinanceUtilities constructor initialized.");
+}
+
+
+/**
+ * @brief Destroy the BinanceUtilities::BinanceUtilities object
+ * 
+ */
+BinanceUtilities::~BinanceUtilities()
+{
+    ELOG(INFO, "BinanceUtilities destructor.");
 }
 
 
@@ -69,7 +84,7 @@ WebsocketUtils::~WebsocketUtils()
  * 
  * @return std::string 
  */
-std::string WebsocketUtils::getBase()
+std::string BinanceUtilities::getWebsocketBase()
 {
     return mWebsocketJson["base"].asString();
 }
@@ -80,7 +95,7 @@ std::string WebsocketUtils::getBase()
  * 
  * @return std::string 
  */
-std::string WebsocketUtils::getPort()
+std::string BinanceUtilities::getWebsocketPort()
 {
     return mWebsocketJson["port"].asString();
 }
@@ -91,45 +106,19 @@ std::string WebsocketUtils::getPort()
  * 
  * @return std::string 
  */
-std::string WebsocketUtils::getEndpoint()
+std::string BinanceUtilities::getWebsocketEndpoint()
 {
     return mWebsocketJson["endpoint"].asString();
 }
-
-
-/**
- * @brief Construct a new RequestsUtils:: RequestsUtils object
- * 
- */
-RequestsUtils::RequestsUtils()
-{
-    mRequestsJson = mExchangeJson["api"];
-
-    if (mRequestsJson.size() == 0)
-        ELOG(ERROR, "Failed to initialize RequestsUtils constructor.");
-
-    ELOG(INFO, "RequestsUtils constructor initialized.");
-}
-
-
-/**
- * @brief Destroy the RequestsUtils:: RequestsUtils object
- * 
- */
-RequestsUtils::~RequestsUtils()
-{
-    ELOG(INFO, "RequestsUtils destructor.");
-}
-
 
 /**
  * @brief Return api base
  * 
  * @return std::string 
  */
-std::string RequestsUtils::getBase()
+std::string BinanceUtilities::getAPIBase()
 {
-    return mRequestsJson["base"].asString();
+    return mAPIJson["base"].asString();
 }
 
 
@@ -138,9 +127,9 @@ std::string RequestsUtils::getBase()
  * 
  * @return std::string 
  */
-std::string RequestsUtils::getAPIKEY()
+std::string BinanceUtilities::getAPIKEY()
 {
-    return mRequestsJson["API_KEY"].asString();
+    return mAPIJson["API_KEY"].asString();
 }
 
 
@@ -149,7 +138,49 @@ std::string RequestsUtils::getAPIKEY()
  * 
  * @return std::string 
  */
-std::string RequestsUtils::getSECRETKEY()
+std::string BinanceUtilities::getAPISECRETKEY()
 {
-    return mRequestsJson["SECRET_KEY"].asString();
+    return mAPIJson["SECRET_KEY"].asString();
+}
+
+
+/**
+ * @brief encrypt with hmac
+ * 
+ * @param key 
+ * @param data 
+ * @return std::string 
+ */
+std::string BinanceUtilities::encryptWithHMAC(const char* key, const char* data) {
+    int result_len = 32;
+    unsigned char *result;
+    static char res_hexstring[64];
+    std::string signature;
+
+    result = HMAC(EVP_sha256(), key, strlen((char *)key), const_cast<unsigned char *>(reinterpret_cast<const unsigned char*>(data)), strlen((char *)data), NULL, NULL);
+  	for (int i = 0; i < result_len; i++) {
+    	sprintf(&(res_hexstring[i * 2]), "%02x", result[i]);
+  	}
+
+  	for (int i = 0; i < 64; i++) {
+  		signature += res_hexstring[i];
+  	}
+
+  	return signature;
+}
+
+
+/**
+ * @brief generate a signature
+ * 
+ * @param query 
+ * @return std::string 
+ */
+std::string BinanceUtilities::getSignature(std::string query) {
+    std::string mSecretKey  = getAPISECRETKEY();
+	std::string signature   = encryptWithHMAC(mSecretKey.c_str(), query.c_str());
+
+    ELOG(INFO, "Generated a signature: %s.", signature.c_str());
+
+	return signature;
 }

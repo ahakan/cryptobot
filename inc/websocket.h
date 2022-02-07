@@ -35,7 +35,7 @@ class Websocket
         float                   *pCand = NULL;
 
     public:
-                                Websocket(WebsocketUtils *a, float *cand);
+                                Websocket(BinanceUtilities *a, float *cand);
 
         void                    init();
 };
