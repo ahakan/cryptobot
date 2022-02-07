@@ -8,6 +8,11 @@
 #include "elog.h"
 #include "json/json.h"
 
+
+/**
+ * @brief Utilities base class
+ * 
+ */
 class Utilities
 {
     private:
@@ -23,6 +28,11 @@ class Utilities
 
 };
 
+
+/**
+ * @brief WebsocketUtils class
+ * 
+ */
 class WebsocketUtils : public Utilities
 {
     private:
@@ -32,9 +42,28 @@ class WebsocketUtils : public Utilities
                                 WebsocketUtils();
                                 ~WebsocketUtils();
 
-        std::string             getHost();
+        std::string             getBase();
         std::string             getPort();
         std::string             getEndpoint();
+};
+
+
+/**
+ * @brief RequestsUtils class
+ * 
+ */
+class RequestsUtils : public Utilities
+{
+    private:
+        Json::Value             mRequestsJson;
+
+    public:
+                                RequestsUtils();
+                                ~RequestsUtils();
+        
+        std::string             getBase();
+        std::string             getAPIKEY();
+        std::string             getSECRETKEY();
 };
 
 #endif

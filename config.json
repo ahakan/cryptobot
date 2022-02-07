@@ -6,13 +6,14 @@
     },
     "binance": {
         "websocket": {
-            "host": "stream.binance.com",
+            "base": "stream.binance.com",
             "port": "9443",
             "endpoint": "/ws/solbusd@kline_1m"
         },
         "api": {
-            "API_KEY": "",
-            "SECRET_KEY": ""
+            "base": "https://api.binance.com",
+            "API_KEY": "1",
+            "SECRET_KEY": "1"
         }
     }
 }

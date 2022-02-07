@@ -3,7 +3,7 @@
 
 Websocket::Websocket(WebsocketUtils *a, float *cand)
 {
-    mHost       = a->getHost();
+    mHost       = a->getBase();
     mPort       = a->getPort();
 
     mEndpoint   = a->getEndpoint();
@@ -217,6 +217,8 @@ void BinanceWebsocket::on_read( beast::error_code ec, std::size_t bytes_transfer
         // Clear the buffer
         mBuffer.consume(mBuffer.size());
     }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
     
     // Read a message into our buffer
     ws_.async_read(

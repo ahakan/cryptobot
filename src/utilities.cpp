@@ -65,13 +65,13 @@ WebsocketUtils::~WebsocketUtils()
 
 
 /**
- * @brief Return host address
+ * @brief Return websocket base
  * 
  * @return std::string 
  */
-std::string WebsocketUtils::getHost()
+std::string WebsocketUtils::getBase()
 {
-    return mWebsocketJson["host"].asString();
+    return mWebsocketJson["base"].asString();
 }
 
 
@@ -94,4 +94,62 @@ std::string WebsocketUtils::getPort()
 std::string WebsocketUtils::getEndpoint()
 {
     return mWebsocketJson["endpoint"].asString();
+}
+
+
+/**
+ * @brief Construct a new RequestsUtils:: RequestsUtils object
+ * 
+ */
+RequestsUtils::RequestsUtils()
+{
+    mRequestsJson = mExchangeJson["api"];
+
+    if (mRequestsJson.size() == 0)
+        ELOG(ERROR, "Failed to initialize RequestsUtils constructor.");
+
+    ELOG(INFO, "RequestsUtils constructor initialized.");
+}
+
+
+/**
+ * @brief Destroy the RequestsUtils:: RequestsUtils object
+ * 
+ */
+RequestsUtils::~RequestsUtils()
+{
+    ELOG(INFO, "RequestsUtils destructor.");
+}
+
+
+/**
+ * @brief Return api base
+ * 
+ * @return std::string 
+ */
+std::string RequestsUtils::getBase()
+{
+    return mRequestsJson["base"].asString();
+}
+
+
+/**
+ * @brief Return API KEY
+ * 
+ * @return std::string 
+ */
+std::string RequestsUtils::getAPIKEY()
+{
+    return mRequestsJson["API_KEY"].asString();
+}
+
+
+/**
+ * @brief Return SECRET KEY
+ * 
+ * @return std::string 
+ */
+std::string RequestsUtils::getSECRETKEY()
+{
+    return mRequestsJson["SECRET_KEY"].asString();
 }

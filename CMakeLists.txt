@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-# add_executable(cryptobot main.cpp)
+configure_file(${CMAKE_SOURCE_DIR}/config.json ${CMAKE_BINARY_DIR}/config.json)
 
 add_subdirectory(src)
 
