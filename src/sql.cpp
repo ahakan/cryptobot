@@ -12,7 +12,7 @@ Sql::Sql()
     // Save the result of opening the file
     rc = sqlite3_open("crypto.sqlite", &db);
 
-    if( rc )
+    if (rc)
     {
         // Show an error message
         ELOG(ERROR, "Can't open database: %s", sqlite3_errmsg(db));
@@ -21,6 +21,38 @@ Sql::Sql()
         // Return an error
         exit(0);
     }
+
+
+    /* Create USER Table */
+    sql = "CREATE TABLE IF NOT EXISTS BOT("  \
+        "ID                     INT PRIMARY KEY     NOT NULL," \
+        "STATUS                 INT);";
+
+    /* Execute SQL statement */
+    rc = sqlite3_exec(db, sql.c_str(), sqliteCallback, 0, &zErrMsg);
+
+    if (rc != SQLITE_OK) 
+    {
+        ELOG(ERROR, "Can't create table: %s", sqlite3_errmsg(db));
+    }
+
+
+    /* Create USER Table */
+    sql = "CREATE TABLE IF NOT EXISTS USER("  \
+        "ID                     INT PRIMARY KEY     NOT NULL," \
+        "STATUS                 TEXT," \
+        "ENABLEREADING          INT," \
+        "ENABLESPOTANDMARGIN    INT," \
+        "ENABLETRANSFER         INT);";
+
+    /* Execute SQL statement */
+    rc = sqlite3_exec(db, sql.c_str(), sqliteCallback, 0, &zErrMsg);
+
+    if (rc != SQLITE_OK) 
+    {
+        ELOG(ERROR, "Can't create table: %s", sqlite3_errmsg(db));
+    }
+
 
     /* Drop CLOSEDKLINES table*/
     sql = "DROP TABLE IF EXISTS CLOSEDKLINES";
@@ -32,10 +64,7 @@ Sql::Sql()
     {
         ELOG(ERROR, "Can't drop table: %s", sqlite3_errmsg(db));
     }
-    else
-    {
 
-    }
 
     /* Create CLOSEDKLINES Table */
     sql = "CREATE TABLE CLOSEDKLINES("  \
@@ -51,6 +80,7 @@ Sql::Sql()
     {
         ELOG(ERROR, "Can't create table: %s", sqlite3_errmsg(db));
     }
+
 
     // Close the SQL connection
     sqlite3_close(db);
@@ -82,6 +112,44 @@ int Sql::sqliteCallback (void *NotUsed, int argc, char **argv, char **azColName)
 }
 
 
+bool Sql::addUserData(std::string status, bool read, bool spot, bool transfer)
+{
+    /* Open database */
+    rc = sqlite3_open("crypto.sqlite", &db);
+    
+    if (rc) 
+    {
+        // Show an error message
+        ELOG(ERROR, "Can't open database: %s", sqlite3_errmsg(db));
+        // Close the connection
+        sqlite3_close(db);
+        // Return an error
+        return false;
+    }
+
+    /* Create SQL statement */
+    sql = "INSERT INTO USER (ID, STATUS, ENABLEREADING, ENABLESPOTANDMARGIN, ENABLETRANSFER) "  \
+            "VALUES (1, '" \
+            + status + "', " \
+            + std::to_string(read) + ", " \
+            + std::to_string(spot) + ", " \
+            + std::to_string(transfer) + ");";
+
+    /* Execute SQL statement */
+    rc = sqlite3_exec(db, sql.c_str(), sqliteCallback, 0, &zErrMsg);
+    
+    if (rc != SQLITE_OK)
+    {
+        ELOG(ERROR, "SQL error: %s", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    sqlite3_close(db);
+
+    return true;
+}
+
+
 /**
  * @brief Add closed kline price
  * 
@@ -94,24 +162,25 @@ bool Sql::addClosedKlinePrice(float candle)
     /* Open database */
     rc = sqlite3_open("crypto.sqlite", &db);
     
-    if( rc ) 
+    if (rc) 
     {
         // Show an error message
         ELOG(ERROR, "Can't open database: %s", sqlite3_errmsg(db));
         // Close the connection
         sqlite3_close(db);
         // Return an error
-        return(0);
+        return false;
     }
 
     /* Create SQL statement */
     sql = "INSERT INTO CLOSEDKLINES (ID, COINNAME, PRICE) "  \
-            "VALUES (" + std::to_string(mId++) + ", 'SOLBUSD', " + std::to_string(candle) + ");";
+            "VALUES (" + std::to_string(mId++) + \
+            ", 'SOLBUSD', " + std::to_string(candle) + ");";
 
     /* Execute SQL statement */
     rc = sqlite3_exec(db, sql.c_str(), sqliteCallback, 0, &zErrMsg);
     
-    if( rc != SQLITE_OK )
+    if (rc != SQLITE_OK)
     {
         ELOG(ERROR, "SQL error: %s", zErrMsg);
         sqlite3_free(zErrMsg);

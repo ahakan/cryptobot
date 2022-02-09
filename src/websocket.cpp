@@ -211,7 +211,7 @@ BinanceWebsocket::BinanceWebsocket(BinanceUtilities *pBu, float *cand)
     // std::cout << *cand << std::endl;
     pCand = cand;
 
-    ELOG(INFO, "Websocket constructor initialized. mHost: %s, mPort: %s, mEndpoint: %s.", 
+    ELOG(INFO, "Websocket constructor initialized. Host: %s, Port: %s, Endpoint: %s.", 
                 mHost.c_str(), mPort.c_str(), mEndpoint.c_str());
 }
 

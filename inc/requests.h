@@ -33,6 +33,8 @@ class Requests
         std::string         mAPI_KEY;
         std::string         mSECRET_KEY;
 
+        std::string         mRecvWindow = "10000";
+
         BinanceUtilities    *pBu; 
 
     public:
@@ -43,13 +45,18 @@ class Requests
 class BinanceRequests : public Requests
 {
     private:
+        float               *pCandle;
+        void                mainLoop();
+
+        bool                getAccountStatus();
+        bool                getAPIKeyPermission();
 
     public:
                             BinanceRequests(BinanceUtilities *pBu);
                             ~BinanceRequests();
 
         void                init(float *candle);
-        void                getAPIKeyPermission();
+        
 };
 
 #endif

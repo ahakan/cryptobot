@@ -23,6 +23,7 @@ class Sql
                             Sql();
                             ~Sql();
 
+        bool                addUserData(std::string status, bool read, bool spot, bool transfer);
         bool                addClosedKlinePrice(float candle);
 };
 

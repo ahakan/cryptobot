@@ -52,18 +52,18 @@ void inp(BinanceUtilities *wsu, BinanceWebsocket *ws, BinanceRequests *breq)
 int main()
 {
     float a                 = 0;
-    float *candle           = &a;
+    float *mCandle          = &a;
 
     Sql *mSql               = new Sql;
 
-    BinanceUtilities *bu    = new BinanceUtilities();
-    BinanceRequests *breq   = new BinanceRequests(bu);
-    BinanceWebsocket *ws    = new BinanceWebsocket(bu, candle);
+    BinanceUtilities *bUtil = new BinanceUtilities();
+    BinanceRequests  *bReq  = new BinanceRequests(bUtil);
+    BinanceWebsocket *bWs   = new BinanceWebsocket(bUtil, mCandle);
 
-    std::thread th1         = std::thread(&BinanceRequests::init, breq, candle);
-    std::thread th2         = std::thread(&BinanceWebsocket::init, ws);
-    std::thread th3         = std::thread(foo, candle, mSql);
-    std::thread th4         = std::thread(inp, bu, ws, breq);
+    std::thread th1         = std::thread(&BinanceRequests::init, bReq, mCandle);
+    std::thread th2         = std::thread(&BinanceWebsocket::init, bWs);
+    std::thread th3         = std::thread(foo, mCandle, mSql);
+    std::thread th4         = std::thread(inp, bUtil, bWs, bReq);
 
     th1.join();
     th2.join();
