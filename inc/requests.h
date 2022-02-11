@@ -9,17 +9,18 @@
  * 
  */
 
-#ifndef Requests_h
-#define Requests_h
+#ifndef REQUESTS_H
+#define REQUESTS_H
+
+// Includes
+#include "opel.h"
+#include "utilities.h"
 
 // Libraries
 #include "cpr/cpr.h"
 #include "json/json.h"
 
-// Includes
-#include "utilities.h"
-
-// Standart Libraries
+// Standard Libraries
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -29,33 +30,35 @@ class Requests
     private:
 
     protected:
-        std::string         mBase;
-        std::string         mAPI_KEY;
-        std::string         mSECRET_KEY;
+        Opel                    *mOpel = Opel::instance();
 
-        std::string         mRecvWindow = "10000";
+        std::string             mBase;
+        std::string             mAPI_KEY;
+        std::string             mSECRET_KEY;
 
-        BinanceUtilities    *pBu; 
+        std::string             mRecvWindow = "10000";
+
+        BinanceUtilities        *pBu; 
 
     public:
-                            Requests(BinanceUtilities *pBu);
-        virtual             ~Requests();
+                                Requests(BinanceUtilities *pBu);
+        virtual                 ~Requests();
 };
 
 class BinanceRequests : public Requests
 {
     private:
-        float               *pCandle;
-        void                mainLoop();
+        float                   *pCandle;
+        void                    mainLoop();
 
-        bool                getAccountStatus();
-        bool                getAPIKeyPermission();
+        bool                    getAccountStatus();
+        bool                    getAPIKeyPermission();
 
     public:
-                            BinanceRequests(BinanceUtilities *pBu);
-                            ~BinanceRequests();
+                                BinanceRequests(BinanceUtilities *pBu);
+                                ~BinanceRequests();
 
-        void                init(float *candle);
+        void                    init(float *candle);
         
 };
 

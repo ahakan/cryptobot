@@ -1,17 +1,23 @@
-#ifndef BINANCE_WEBSOCKET_H
-#define BINANCE_WEBSOCKET_H
+#ifndef WEBSOCKET_H
+#define WEBSOCKET_H
 
+
+// Includes
+#include "utilities.h"
+#include "certificates.hpp"
+
+// Libraries
 #include "elog.h"
 #include "json/json.h"
 
-#include "utilities.h"
-#include "root_certificates.hpp"
-
+// Boost libraries
 #include <boost/beast/core.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 #include <boost/asio/strand.hpp>
+
+// Standard libraries
 #include <cstdlib>
 #include <functional>
 #include <iostream>

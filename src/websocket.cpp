@@ -144,6 +144,7 @@ void Websocket::on_read( beast::error_code ec, std::size_t bytes_transferred)
     if(ec)
     {
         ELOG(ERROR, "Read error: %s", ec.message().c_str());
+        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
 
     if (mBuffer.size() > 0)

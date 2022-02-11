@@ -1,11 +1,13 @@
-#ifndef Utilities_h
-#define Utilities_h
+#ifndef UTILITIES_H
+#define UTILITIES_H
+
+// Includes
 
 // Libraries
 #include "elog.h"
 #include "json/json.h"
 
-// Standart libraries
+// Standard libraries
 #include <iostream>
 #include <string>
 #include <fstream>

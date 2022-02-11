@@ -1,5 +1,4 @@
 #include "../inc/requests.h"
-#include "sql.h"
 
 /**
  * @brief Construct a new Requests::Requests object
@@ -12,6 +11,8 @@ Requests::Requests(BinanceUtilities *pBu)
     mBase           = pBu->getAPIBase();
     mAPI_KEY        = pBu->getAPIKEY();
     mSECRET_KEY     = pBu->getAPISECRETKEY();
+
+    // Opel mOpel           = opel.instance();
 
     if (mAPI_KEY.length() == 0 || mSECRET_KEY.length() == 0)
     {
@@ -85,6 +86,8 @@ void BinanceRequests::init(float *candle)
             break;
         }
 
+        ELOG(INFO, "Bot is active?: %d", mOpel->getIsActive());
+
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
     
@@ -102,7 +105,7 @@ void BinanceRequests::mainLoop()
 {
     while (1)
     {
-        if (*pCandle != 0)
+        if (mOpel->getIsActive())
         {
             ELOG(INFO, "Sent request.");
 

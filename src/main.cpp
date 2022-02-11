@@ -1,46 +1,65 @@
-#include <iostream>
-#include <string>
-#include <thread>
-#include <chrono>
+/**
+ * @file main.cpp
+ * @author ahc (ahmethakan@pm.me)
+ * @brief 
+ * @version 0.1
+ * @date 2022-02-11
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
-#include "elog.h"
-#include "json/json.h"
-
+// Includes
+#include "../inc/opel.h"
 #include "../inc/websocket.h"
 #include "../inc/requests.h"
 #include "../inc/utilities.h"
 #include "../inc/sql.h"
 
-void foo(float *candle, Sql *mSql)
+// Libraries
+#include "elog.h"
+#include "json/json.h"
+
+// Standard libraries
+#include <iostream>
+#include <string>
+#include <thread>
+#include <chrono>
+
+
+void sqlCheck(Opel mOpel, Sql *pSql)
 {
     while (true)
     {
-        if (*candle != 0)
-        {
-            std::cout << "Candle: " << *candle << std::endl;
-            mSql->addClosedKlinePrice(*candle);
-            *candle = 0;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        bool isActive = pSql->getIsActive();
+        // std::cout << isActive << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+        mOpel.setIsActive(isActive);
+        // if (*candle != 0)
+        // {
+        //     std::cout << "Candle: " << *candle << std::endl;
+        //     pSql->addClosedKlinePrice(*candle);
+        //     *candle = 0;
+        // }
     }
 }
 
-void inp(BinanceUtilities *wsu, BinanceWebsocket *ws, BinanceRequests *breq)
+void inp(BinanceUtilities *util, BinanceWebsocket *ws, BinanceRequests *req)
 {
     char a[2];
-    while( true )
-    {
-        // std::cout << "Değer giriniz(Quit=x|X): \n";
 
+    while (true)
+    {
         std::cin >> a;
 
-        if ( *a == 'x' || *a == 'X' )
+        if (*a == 'x' || *a == 'X')
         {
             ELOG(INFO, "Pressed X. Exiting...");
 
-            delete wsu;
+            delete util;
             delete ws;
-            delete breq;
+            delete req;
 
             exit(0);
         }
@@ -51,23 +70,23 @@ void inp(BinanceUtilities *wsu, BinanceWebsocket *ws, BinanceRequests *breq)
 
 int main()
 {
-    float a                 = 0;
-    float *mCandle          = &a;
+    float a                     = 0;
+    float *mCandle              = &a;
 
-    Sql *mSql               = new Sql;
+    Sql *pSql                   = new Sql;
 
-    BinanceUtilities *bUtil = new BinanceUtilities();
-    BinanceRequests  *bReq  = new BinanceRequests(bUtil);
-    BinanceWebsocket *bWs   = new BinanceWebsocket(bUtil, mCandle);
+    BinanceUtilities *bUtil     = new BinanceUtilities();
+    BinanceRequests  *bReq      = new BinanceRequests(bUtil);
+    BinanceWebsocket *bWs       = new BinanceWebsocket(bUtil, mCandle);
 
-    std::thread th1         = std::thread(&BinanceRequests::init, bReq, mCandle);
-    std::thread th2         = std::thread(&BinanceWebsocket::init, bWs);
-    std::thread th3         = std::thread(foo, mCandle, mSql);
-    std::thread th4         = std::thread(inp, bUtil, bWs, bReq);
+    std::thread sqlTH           = std::thread(&Sql::init, pSql);
+    std::thread reqTH           = std::thread(&BinanceRequests::init, bReq, mCandle);
+    std::thread wsTH            = std::thread(&BinanceWebsocket::init, bWs);
+    std::thread th4             = std::thread(inp, bUtil, bWs, bReq);
 
-    th1.join();
-    th2.join();
-    th3.join();
+    sqlTH.join();
+    reqTH.join();
+    wsTH.join();
     th4.join();
     
     return 0;

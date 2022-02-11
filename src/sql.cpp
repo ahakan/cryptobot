@@ -1,6 +1,4 @@
 #include "../inc/sql.h"
-#include <cstdio>
-#include <string>
 
 
 /**
@@ -9,91 +7,144 @@
  */
 Sql::Sql()
 {
-    // Save the result of opening the file
-    rc = sqlite3_open("crypto.sqlite", &db);
-
-    if (rc)
-    {
-        // Show an error message
-        ELOG(ERROR, "Can't open database: %s", sqlite3_errmsg(db));
-        // Close the connection
-        sqlite3_close(db);
-        // Return an error
-        exit(0);
-    }
-
-
-    /* Create USER Table */
+    // Create USER Table 
     sql = "CREATE TABLE IF NOT EXISTS BOT("  \
-        "ID                     INT PRIMARY KEY     NOT NULL," \
-        "STATUS                 INT);";
+        "id                     INT PRIMARY KEY     NOT NULL," \
+        "status                 INT," \
+        "isActive               INT);";
 
-    /* Execute SQL statement */
-    rc = sqlite3_exec(db, sql.c_str(), sqliteCallback, 0, &zErrMsg);
+    allQuery(sql);
 
-    if (rc != SQLITE_OK) 
-    {
-        ELOG(ERROR, "Can't create table: %s", sqlite3_errmsg(db));
-    }
-
-
-    /* Create USER Table */
+    // Create USER Table
     sql = "CREATE TABLE IF NOT EXISTS USER("  \
-        "ID                     INT PRIMARY KEY     NOT NULL," \
-        "STATUS                 TEXT," \
-        "ENABLEREADING          INT," \
-        "ENABLESPOTANDMARGIN    INT," \
-        "ENABLETRANSFER         INT);";
+        "id                     INT PRIMARY KEY     NOT NULL," \
+        "status                 TEXT," \
+        "enableReading          INT," \
+        "enableSpotAndMargin    INT," \
+        "enableTransfer         INT);";
 
-    /* Execute SQL statement */
-    rc = sqlite3_exec(db, sql.c_str(), sqliteCallback, 0, &zErrMsg);
+    allQuery(sql);
 
-    if (rc != SQLITE_OK) 
-    {
-        ELOG(ERROR, "Can't create table: %s", sqlite3_errmsg(db));
-    }
-
-
-    /* Drop CLOSEDKLINES table*/
+    // Drop CLOSEDKLINES table
     sql = "DROP TABLE IF EXISTS CLOSEDKLINES";
 
-    /* Execute SQL statement */
-    rc = sqlite3_exec(db, sql.c_str(), sqliteCallback, 0, &zErrMsg);
+    allQuery(sql);
 
-    if (rc != SQLITE_OK)
-    {
-        ELOG(ERROR, "Can't drop table: %s", sqlite3_errmsg(db));
-    }
-
-
-    /* Create CLOSEDKLINES Table */
+    // Create CLOSEDKLINES Table 
     sql = "CREATE TABLE CLOSEDKLINES("  \
-        "ID             INT PRIMARY KEY     NOT NULL," \
-        "COINNAME       TEXT    NOT NULL," \
-        "PRICE          REAL    NOT NULL," \
-        "TIMESTAMP      DATETIME DEFAULT (datetime('now','localtime')));";
+        "id             INT PRIMARY KEY     NOT NULL," \
+        "coinName       TEXT    NOT NULL," \
+        "price          REAL    NOT NULL," \
+        "timestamp      DATETIME DEFAULT (datetime('now','localtime')));";
 
-    /* Execute SQL statement */
-    rc = sqlite3_exec(db, sql.c_str(), sqliteCallback, 0, &zErrMsg);
-
-    if (rc != SQLITE_OK) 
-    {
-        ELOG(ERROR, "Can't create table: %s", sqlite3_errmsg(db));
-    }
-
-
-    // Close the SQL connection
-    sqlite3_close(db);
+    allQuery(sql);
 
     ELOG(INFO, "Sql constructor initialized.");
 }
 
 
+/**
+ * @brief Destroy the Sql::Sql object
+ * 
+ */
 Sql::~Sql() {}
 
 
 /**
- * @brief Sqlite callback
+ * @brief Sql init
+ * 
+ */
+void Sql::init()
+{
+    while (true)
+    {
+        bool isActive = getIsActive();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+        mOpel->setIsActive(isActive);
+
+        ELOG(INFO, "getIsActive: %d", mOpel->getIsActive());
+
+    }
+}
+
+
+/**
+ * @brief Select query
+ * 
+ * @param query 
+ * @return Record 
+ */
+Record Sql::selectQuery(std::string query)
+{
+    Record records;
+
+    // Open database
+    rc = sqlite3_open("crypto.sqlite", &db);
+    
+    if (rc) 
+    {
+        ELOG(ERROR, "Can't open database: %s", sqlite3_errmsg(db));
+
+        sqlite3_close(db);
+    }
+
+    // Execute SQL statement
+    rc = sqlite3_exec(db, query.c_str(), selectCallback, &records, &zErrMsg);
+
+    if (rc != SQLITE_OK) 
+    {
+        ELOG(ERROR, "Error in select statement. Query: - Error message: %s", query.c_str(), sqlite3_errmsg(db));
+    }
+
+    // Close the connection
+    sqlite3_close(db);
+
+    return records;
+}
+
+
+/**
+ * @brief All query
+ * 
+ * @param query 
+ * @return true 
+ * @return false 
+ */
+bool Sql::allQuery(std::string query)
+{
+    // Open database
+    rc = sqlite3_open("crypto.sqlite", &db);
+
+    if (rc)
+    {
+        ELOG(ERROR, "Can't open database: %s", sqlite3_errmsg(db));
+
+        sqlite3_close(db);
+
+        return false;
+    }
+
+    // Execute SQL statement
+    rc = sqlite3_exec(db, query.c_str(), allCallback, 0, &zErrMsg);
+
+    if (rc != SQLITE_OK) 
+    {
+        ELOG(ERROR, "Can't create table: %s", sqlite3_errmsg(db));
+
+        return false;
+    }
+
+    // Close the connection
+    sqlite3_close(db);
+
+    return true;
+}
+
+
+/**
+ * @brief Select callback
  * 
  * @param NotUsed 
  * @param argc 
@@ -101,52 +152,89 @@ Sql::~Sql() {}
  * @param azColName 
  * @return int 
  */
-int Sql::sqliteCallback (void *NotUsed, int argc, char **argv, char **azColName)
+int Sql::selectCallback(void *pData, int numFields, char **pFields, char **pColNames)
 {
-    (void)NotUsed;
-    (void)argc;
-    (void)argv;
-    (void)azColName;
+    Record     *records = static_cast<Record *>(pData);
+
+    for (int i = 0; i < numFields; i++)
+    {
+        records->emplace_back(std::make_pair(static_cast<std::string>(pColNames[i]), static_cast<std::string>(pFields[i])));
+
+        // ELOG(INFO, "Added to map. ColName: %s, Field: %s.", pColNames[i], pFields[i]);
+    }
 
     return 0;
 }
 
 
-bool Sql::addUserData(std::string status, bool read, bool spot, bool transfer)
+/**
+ * @brief All callback
+ * 
+ * @param NotUsed 
+ * @param argc 
+ * @param argv 
+ * @param azColName 
+ * @return int 
+ */
+int Sql::allCallback(void *pData, int numFields, char **pFields, char **pColNames)
 {
-    /* Open database */
-    rc = sqlite3_open("crypto.sqlite", &db);
-    
-    if (rc) 
-    {
-        // Show an error message
-        ELOG(ERROR, "Can't open database: %s", sqlite3_errmsg(db));
-        // Close the connection
-        sqlite3_close(db);
-        // Return an error
-        return false;
+    (void)pData;
+    (void)numFields;
+    (void)pFields;
+    (void)pColNames;
+
+    return 0;
+}
+
+
+/**
+ * @brief Get is bot active
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Sql::getIsActive()
+{
+    // Create SQL statement
+    sql = "SELECT * FROM BOT WHERE id=1";
+
+    Record records = selectQuery(sql);
+
+    ELOG(INFO, "Bot activation check. Query: %s.", sql.c_str());
+
+    for (auto& record : records) {
+        // ELOG(INFO, "Check vector data: Field: %s.", record[0]);
+        // std::cout << "Key: " << record.first << " Value: " << record.second << std::endl;
+
+        if (record.first == "isActive" && record.second == "1")
+            return true;
     }
 
-    /* Create SQL statement */
-    sql = "INSERT INTO USER (ID, STATUS, ENABLEREADING, ENABLESPOTANDMARGIN, ENABLETRANSFER) "  \
+    return false;
+}
+
+
+/**
+ * @brief Add user data
+ * 
+ * @param status 
+ * @param read 
+ * @param spot 
+ * @param transfer 
+ * @return true 
+ * @return false 
+ */
+bool Sql::addUserData(std::string status, bool read, bool spot, bool transfer)
+{
+    // Create SQL statement
+    sql = "INSERT INTO USER (id, status, enableReading, enableSpotAndMargin, enableTransfer) "  \
             "VALUES (1, '" \
             + status + "', " \
             + std::to_string(read) + ", " \
             + std::to_string(spot) + ", " \
             + std::to_string(transfer) + ");";
 
-    /* Execute SQL statement */
-    rc = sqlite3_exec(db, sql.c_str(), sqliteCallback, 0, &zErrMsg);
-    
-    if (rc != SQLITE_OK)
-    {
-        ELOG(ERROR, "SQL error: %s", zErrMsg);
-        sqlite3_free(zErrMsg);
-    }
-
-    sqlite3_close(db);
-
-    return true;
+    return allQuery(sql);
 }
 
 
@@ -159,34 +247,10 @@ bool Sql::addUserData(std::string status, bool read, bool spot, bool transfer)
  */
 bool Sql::addClosedKlinePrice(float candle)
 {
-    /* Open database */
-    rc = sqlite3_open("crypto.sqlite", &db);
-    
-    if (rc) 
-    {
-        // Show an error message
-        ELOG(ERROR, "Can't open database: %s", sqlite3_errmsg(db));
-        // Close the connection
-        sqlite3_close(db);
-        // Return an error
-        return false;
-    }
-
-    /* Create SQL statement */
-    sql = "INSERT INTO CLOSEDKLINES (ID, COINNAME, PRICE) "  \
+    // Create SQL statement
+    sql = "INSERT INTO CLOSEDKLINES (id, coinName, price) "  \
             "VALUES (" + std::to_string(mId++) + \
             ", 'SOLBUSD', " + std::to_string(candle) + ");";
 
-    /* Execute SQL statement */
-    rc = sqlite3_exec(db, sql.c_str(), sqliteCallback, 0, &zErrMsg);
-    
-    if (rc != SQLITE_OK)
-    {
-        ELOG(ERROR, "SQL error: %s", zErrMsg);
-        sqlite3_free(zErrMsg);
-    }
-
-    sqlite3_close(db);
-
-    return true;
+    return allQuery(sql);
 }

@@ -45,6 +45,7 @@ set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
 set(SOURCES
   ${SOURCE_DIR}/main.cpp
+  ${SOURCE_DIR}/opel.cpp
   ${SOURCE_DIR}/sql.cpp
   ${SOURCE_DIR}/utilities.cpp
   ${SOURCE_DIR}/websocket.cpp

@@ -1,30 +1,48 @@
-#ifndef Sql_h
-#define Sql_h
+#ifndef SQL_H
+#define SQL_H
 
-#include <iostream>
-#include <string>
+// Includes
+#include "opel.h"
 
+// Libraries
 #include "elog.h"
 #include "sqlite3.h"
+
+// Standard libraries
+#include <iostream>
+#include <string>
+#include <vector>
+#include <thread>
+
+using Record    = std::vector<std::pair<std::string, std::string>>;
 
 class Sql
 {
     private:
-        sqlite3             *db;
-        std::string         sql;
-        char                *zErrMsg = 0;
-        int                 rc;
-        int                 mId = 0;
+        Opel                        *mOpel = Opel::instance();
 
-        
-        static int          sqliteCallback (void *NotUsed, int argc, char **argv, char **azColName);
+        sqlite3                     *db;
+        std::string                 sql;
+        char                        *zErrMsg = 0;
+        int                         rc;
+        int                         mId = 0;
+
+        Record                      mRecord;
+        Record                      selectQuery(std::string query);
+
+        bool                        allQuery(std::string query);
+
+        static int                  selectCallback(void *pData, int numFields, char **pFields, char **pColNames);
+        static int                  allCallback(void *pData, int numFields, char **pFields, char **pColNames);
 
     public:
-                            Sql();
-                            ~Sql();
+                                    Sql();
+                                    ~Sql();
 
-        bool                addUserData(std::string status, bool read, bool spot, bool transfer);
-        bool                addClosedKlinePrice(float candle);
+        void                        init();
+        bool                        getIsActive();
+        bool                        addUserData(std::string status, bool read, bool spot, bool transfer);
+        bool                        addClosedKlinePrice(float candle);
 };
 
 #endif
