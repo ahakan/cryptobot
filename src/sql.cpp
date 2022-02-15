@@ -16,6 +16,13 @@ Sql::Sql()
 
     allQuery(sql);
 
+    // Add user data
+    sql = "INSERT OR IGNORE INTO BOT(id, status, isActive)" \
+          "VALUES(1, 1, 1);";
+
+    allQuery(sql);
+
+
     // Create USER Table
     sql = "CREATE TABLE IF NOT EXISTS USER("  \
         "id                     INT PRIMARY KEY     NOT NULL," \
@@ -63,7 +70,6 @@ void Sql::init()
     {
         bool isActive = getIsActive();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
         pOpel->setIsActive(isActive);
 
@@ -82,6 +88,8 @@ void Sql::init()
 
             pCandleData->isUpdated = false;
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
         // ELOG(INFO, "getIsActive: %d", pOpel->getIsActive());
 

@@ -58,6 +58,7 @@ class BinanceRequests : public Requests
         bool                    getAccountStatus();
         bool                    getAPIKeyPermission();
         bool                    createNewOrder(std::string symbol, std::string side, std::string type, float quantity, float price);
+        bool                    cancelOrder(std::string symbol, uint32_t orderId);
 
     public:
                                 BinanceRequests(BinanceUtilities *pBu);

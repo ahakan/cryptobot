@@ -1,4 +1,5 @@
 #include "../inc/requests.h"
+#include <cpr/timeout.h>
 
 /**
  * @brief Construct a new Requests::Requests object
@@ -107,12 +108,12 @@ void BinanceRequests::requestsLoop()
         {
             ELOG(INFO, "Sent request.");
 
-            // getAPIKeyPermission();
-
             // createNewOrder("SOLBUSD", "SELL", "LIMIT", 0.1, 150.0);
+
+            // cancelOrder("SOLBUSD", 704450650);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(20000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     }
 }
 
@@ -132,8 +133,11 @@ cpr::Response BinanceRequests::getRequest (cpr::Url url, cpr::Header headers, cp
     session.SetUrl(url);
     session.SetHeader(headers);
     session.SetParameters(parameters);
+    session.SetTimeout(cpr::Timeout{2000});
 
-    cpr::Response res = session.Get();
+    cpr::AsyncResponse fr = cpr::GetAsync(url, headers, parameters);
+    fr.wait();                      // This waits until the request is complete
+    cpr::Response res = fr.get();   // Since the request is complete, this returns immediately
 
     return res;
 }
@@ -154,8 +158,11 @@ cpr::Response BinanceRequests::postRequest(cpr::Url url, cpr::Header headers, cp
     session.SetUrl(url);
     session.SetHeader(headers);
     session.SetParameters(parameters);
+    session.SetTimeout(cpr::Timeout{2000});
 
-    cpr::Response res = session.Post();
+    cpr::AsyncResponse fr = cpr::PostAsync(url, headers, parameters);
+    fr.wait();                      // This waits until the request is complete
+    cpr::Response res = fr.get();   // Since the request is complete, this returns immediately
 
     return res;
 }
@@ -176,8 +183,11 @@ cpr::Response BinanceRequests::deleteRequest(cpr::Url url, cpr::Header headers, 
     session.SetUrl(url);
     session.SetHeader(headers);
     session.SetParameters(parameters);
+    session.SetTimeout(cpr::Timeout{2000});
 
-    cpr::Response res = session.Delete();
+    cpr::AsyncResponse fr = cpr::DeleteAsync(url, headers, parameters);
+    fr.wait();                      // This waits until the request is complete
+    cpr::Response res = fr.get();   // Since the request is complete, this returns immediately
 
     return res;
 }
@@ -212,7 +222,7 @@ bool BinanceRequests::getAccountStatus()
 
     ELOG(INFO, "Get Account Status Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
 
-    ELOG(INFO, "Get Account Status Response body: %s.", mReq.text.c_str());
+    ELOG(INFO, "Get Account Status Response Body: %s.", mReq.text.c_str());
 
     Json::Value  mAPIJson;
     Json::Reader mReader;
@@ -267,7 +277,7 @@ bool BinanceRequests::getAPIKeyPermission()
 
     ELOG(INFO, "Get API KEY Permission Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
 
-    ELOG(INFO, "Get API KEY Permission Response body: %s.", mReq.text.c_str());
+    ELOG(INFO, "Get API KEY Permission Response Body: %s.", mReq.text.c_str());
 
     Json::Value  mAPIJson;
     Json::Reader mReader;
@@ -312,7 +322,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
     std::string mParameters     = "symbol="+symbol+"&side="+side;
                 mParameters     += "&type="+type+"&timeInForce=GTC";
                 mParameters     += "&quantity="+std::to_string(quantity)+"&price="+std::to_string(price);
-                mParameters     += "&timestamp="+mTimestamp;
+                mParameters     += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
     std::string mSignature      = pBu->getSignature(mParameters);
 
@@ -328,13 +338,90 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
                                             {"quantity", std::to_string(quantity)},
                                             {"price", std::to_string(price)},
                                             {"timestamp", mTimestamp},
+                                            {"recvWindow", mRecvWindow},
                                             {"signature", mSignature}};
 
     cpr::Response mReq          = postRequest(url, headers, parameters);
 
-    ELOG(INFO, "Get API KEY Permission Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
+    ELOG(INFO, "Create New Order Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
 
-    ELOG(INFO, "Get API KEY Permission Response body: %s.", mReq.text.c_str());
+    ELOG(INFO, "Create New Order Response Body: %s.", mReq.text.c_str());
+
+    Json::Value  mAPIJson;
+    Json::Reader mReader;
+    bool         mParsingSuccessful = mReader.parse(mReq.text.c_str(), mAPIJson);
+
+    if (!mParsingSuccessful)
+    {
+        ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    std::string mStatus = mAPIJson["status"].asString();
+
+    if (mStatus!="NEW")
+    {
+        ELOG(ERROR, "Order could not be created.");
+        return false;
+    }
+
+    uint32_t mOrderId = mAPIJson["orderId"].asInt();
+
+    ELOG(INFO, "Created a New Order. Order ID: %d", mOrderId);
+
+    return true;
+}
+
+
+bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
+{
+    std::string mBaseURL        = mBase + "/api/v3/order";
+
+    std::string mTimestamp      = pBu->getTimestamp();
+
+    std::string mParameters     = "symbol="+symbol+"&orderId="+std::to_string(orderId);
+                mParameters     += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string mSignature      = pBu->getSignature(mParameters);
+
+    cpr::Url url                = cpr::Url{mBaseURL};
+    cpr::Header headers         = cpr::Header{
+                                            {"content-type", "application/json"}, 
+                                            {"X-MBX-APIKEY", mAPI_KEY}};
+    cpr::Parameters parameters  = cpr::Parameters{
+                                            {"symbol", symbol},
+                                            {"orderId", std::to_string(orderId)},
+                                            {"timestamp", mTimestamp},
+                                            {"recvWindow", mRecvWindow},
+                                            {"signature", mSignature}};
+
+    cpr::Response mReq          = deleteRequest(url, headers, parameters);
+
+    ELOG(INFO, "Cancel Order Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
+
+    ELOG(INFO, "Cancel Order Response Body: %s.", mReq.text.c_str());
+
+    Json::Value  mAPIJson;
+    Json::Reader mReader;
+    bool         mParsingSuccessful = mReader.parse(mReq.text.c_str(), mAPIJson);
+
+    if (!mParsingSuccessful)
+    {
+        ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    std::string mStatus = mAPIJson["status"].asString();
+
+    if (mStatus!="CANCELED")
+    {
+        ELOG(ERROR, "Order could not be cancelled.");
+        return false;
+    }
+
+    uint32_t mOrderId = mAPIJson["orderId"].asInt();
+
+    ELOG(INFO, "Canceled a Order. Order ID: %d", mOrderId);
 
     return true;
 }
