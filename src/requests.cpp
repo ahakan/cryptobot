@@ -61,10 +61,8 @@ BinanceRequests::~BinanceRequests()
  * 
  * @param candle 
  */
-void BinanceRequests::init(float *candle)
+void BinanceRequests::init()
 {
-    pCandle                         = candle;
-    
     while (1)
     {
         bool mAccountStatus         = getAccountStatus();
@@ -86,14 +84,14 @@ void BinanceRequests::init(float *candle)
             break;
         }
 
-        ELOG(INFO, "Bot is active?: %d", mOpel->getIsActive());
+        ELOG(INFO, "Bot is active?: %d", pOpel->getIsActive());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
     
     ELOG(INFO, "User account is normal. Entering while loop.");
 
-    mainLoop();
+    requestsLoop();
 }
 
 
@@ -101,19 +99,87 @@ void BinanceRequests::init(float *candle)
  * @brief Requests main loop
  * 
  */
-void BinanceRequests::mainLoop()
+void BinanceRequests::requestsLoop()
 {
     while (1)
     {
-        if (mOpel->getIsActive())
+        if (pOpel->getIsActive())
         {
             ELOG(INFO, "Sent request.");
 
             // getAPIKeyPermission();
+
+            // createNewOrder("SOLBUSD", "SELL", "LIMIT", 0.1, 150.0);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20000));
     }
+}
+
+
+/**
+ * @brief Get request
+ * 
+ * @param url 
+ * @param header 
+ * @param parameters 
+ * @return cpr::Response 
+ */
+cpr::Response BinanceRequests::getRequest (cpr::Url url, cpr::Header headers, cpr::Parameters parameters)
+{
+    cpr::Session session;
+
+    session.SetUrl(url);
+    session.SetHeader(headers);
+    session.SetParameters(parameters);
+
+    cpr::Response res = session.Get();
+
+    return res;
+}
+
+
+/**
+ * @brief Post request
+ * 
+ * @param url 
+ * @param headers 
+ * @param parameters 
+ * @return cpr::Response 
+ */
+cpr::Response BinanceRequests::postRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters)
+{
+    cpr::Session session;
+
+    session.SetUrl(url);
+    session.SetHeader(headers);
+    session.SetParameters(parameters);
+
+    cpr::Response res = session.Post();
+
+    return res;
+}
+
+
+/**
+ * @brief Delete request
+ * 
+ * @param url 
+ * @param headers 
+ * @param parameters 
+ * @return cpr::Response 
+ */
+cpr::Response BinanceRequests::deleteRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters)
+{
+    cpr::Session session;
+
+    session.SetUrl(url);
+    session.SetHeader(headers);
+    session.SetParameters(parameters);
+
+    cpr::Response res = session.Delete();
+
+    return res;
 }
 
 
@@ -133,14 +199,16 @@ bool BinanceRequests::getAccountStatus()
 
     std::string mSignature  = pBu->getSignature(mParameters);
 
-    cpr::Response mReq      = cpr::Get(
-                                cpr::Url{mBaseURL},
-                                cpr::Header{{"content-type", "application/json"}, 
-                                            {"X-MBX-APIKEY", mAPI_KEY}},
-                                cpr::Parameters{
+    cpr::Url url                = cpr::Url{mBaseURL};
+    cpr::Header headers         = cpr::Header{
+                                            {"content-type", "application/json"}, 
+                                            {"X-MBX-APIKEY", mAPI_KEY}};
+    cpr::Parameters parameters  = cpr::Parameters{
                                             {"timestamp", mTimestamp},
                                             {"recvWindow", mRecvWindow},
-                                            {"signature", mSignature}});
+                                            {"signature", mSignature}};
+
+    cpr::Response mReq          = getRequest(url, headers, parameters);
 
     ELOG(INFO, "Get Account Status Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
 
@@ -148,7 +216,7 @@ bool BinanceRequests::getAccountStatus()
 
     Json::Value  mAPIJson;
     Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse( mReq.text.c_str(), mAPIJson );
+    bool         mParsingSuccessful = mReader.parse(mReq.text.c_str(), mAPIJson);
 
     if (!mParsingSuccessful)
     {
@@ -178,22 +246,24 @@ bool BinanceRequests::getAccountStatus()
  */
 bool BinanceRequests::getAPIKeyPermission()
 {
-    std::string mBaseURL    = mBase + "/sapi/v1/account/apiRestrictions";
+    std::string mBaseURL        = mBase + "/sapi/v1/account/apiRestrictions";
 
-    std::string mTimestamp  = pBu->getTimestamp();
+    std::string mTimestamp      = pBu->getTimestamp();
 
-    std::string mParameters = "timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
+    std::string mParameters     = "timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
-    std::string mSignature  = pBu->getSignature(mParameters);
+    std::string mSignature      = pBu->getSignature(mParameters);
 
-    cpr::Response mReq      = cpr::Get(
-                                cpr::Url{mBaseURL},
-                                cpr::Header{{"content-type", "application/json"}, 
-                                            {"X-MBX-APIKEY", mAPI_KEY}},
-                                cpr::Parameters{
+    cpr::Url url                = cpr::Url{mBaseURL};
+    cpr::Header headers         = cpr::Header{
+                                            {"content-type", "application/json"}, 
+                                            {"X-MBX-APIKEY", mAPI_KEY}};
+    cpr::Parameters parameters  = cpr::Parameters{
                                             {"timestamp", mTimestamp},
                                             {"recvWindow", mRecvWindow},
-                                            {"signature", mSignature}});
+                                            {"signature", mSignature}};
+
+    cpr::Response mReq          = getRequest(url, headers, parameters);
 
     ELOG(INFO, "Get API KEY Permission Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
 
@@ -201,7 +271,7 @@ bool BinanceRequests::getAPIKeyPermission()
 
     Json::Value  mAPIJson;
     Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse( mReq.text.c_str(), mAPIJson );
+    bool         mParsingSuccessful = mReader.parse(mReq.text.c_str(), mAPIJson);
 
     if (!mParsingSuccessful)
     {
@@ -218,6 +288,53 @@ bool BinanceRequests::getAPIKeyPermission()
     }
 
     ELOG(INFO, "User API Spot and Margin trading is active.");
+
+    return true;
+}
+
+
+/**
+ * @brief Create a new order
+ * 
+ * @param symbol 
+ * @param side 
+ * @param type 
+ * @param quantity 
+ * @return true 
+ * @return false 
+ */
+bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::string type, float quantity, float price)
+{
+    std::string mBaseURL        = mBase + "/api/v3/order";
+
+    std::string mTimestamp      = pBu->getTimestamp();
+
+    std::string mParameters     = "symbol="+symbol+"&side="+side;
+                mParameters     += "&type="+type+"&timeInForce=GTC";
+                mParameters     += "&quantity="+std::to_string(quantity)+"&price="+std::to_string(price);
+                mParameters     += "&timestamp="+mTimestamp;
+
+    std::string mSignature      = pBu->getSignature(mParameters);
+
+    cpr::Url url                = cpr::Url{mBaseURL};
+    cpr::Header headers         = cpr::Header{
+                                            {"content-type", "application/json"}, 
+                                            {"X-MBX-APIKEY", mAPI_KEY}};
+    cpr::Parameters parameters  = cpr::Parameters{
+                                            {"symbol", symbol},
+                                            {"side", side},
+                                            {"type", type},
+                                            {"timeInForce", "GTC"},
+                                            {"quantity", std::to_string(quantity)},
+                                            {"price", std::to_string(price)},
+                                            {"timestamp", mTimestamp},
+                                            {"signature", mSignature}};
+
+    cpr::Response mReq          = postRequest(url, headers, parameters);
+
+    ELOG(INFO, "Get API KEY Permission Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
+
+    ELOG(INFO, "Get API KEY Permission Response body: %s.", mReq.text.c_str());
 
     return true;
 }

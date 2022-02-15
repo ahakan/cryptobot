@@ -4,7 +4,7 @@
 
 Websocket::Websocket(net::io_context& ioc, ssl::context& ctx)
     : mResolver(net::make_strand(ioc))
-    , ws_(net::make_strand(ioc), ctx)
+    , mWs(net::make_strand(ioc), ctx)
 {
     ELOG(INFO, "Websocket constructor initialized.");
 }
@@ -14,12 +14,11 @@ Websocket::~Websocket()
     ELOG(INFO, "Websocket destructor.");
 }
 
-void Websocket::run(std::string host, std::string port, std::string endpoint, float *cand)
+void Websocket::run(std::string host, std::string port, std::string endpoint)
 {
     // Save these for later
     mHost       = host;
     mEndpoint   = endpoint;
-    pCandle     = cand;
 
     ELOG(INFO, "BinanceWebsocket is running.");
 
@@ -28,13 +27,13 @@ void Websocket::run(std::string host, std::string port, std::string endpoint, fl
         host,
         port,
         beast::bind_front_handler(
-            &Websocket::on_resolve,
+            &Websocket::resolve,
             shared_from_this()));
 }
 
-void Websocket::on_resolve(beast::error_code ec, tcp::resolver::results_type results)
+void Websocket::resolve(beast::error_code ec, tcp::resolver::results_type results)
 {
-    if(ec)
+    if (ec)
     {
         ELOG(ERROR, "Resolve error: %s", ec.message().c_str());
     }
@@ -42,19 +41,19 @@ void Websocket::on_resolve(beast::error_code ec, tcp::resolver::results_type res
     ELOG(INFO, "BinanceWebsocket on resolve.");
 
     // Set a timeout on the operation
-    beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
+    beast::get_lowest_layer(mWs).expires_after(std::chrono::seconds(30));
 
     // Make the connection on the IP address we get from a lookup
-    beast::get_lowest_layer(ws_).async_connect(
+    beast::get_lowest_layer(mWs).async_connect(
         results,
         beast::bind_front_handler(
-            &Websocket::on_connect,
+            &Websocket::connect,
             shared_from_this()));
 }
 
-void Websocket::on_connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type ep)
+void Websocket::connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type ep)
 {
-    if(ec)
+    if (ec)
     {
         ELOG(ERROR, "Connect error: %s", ec.message().c_str());
     }
@@ -67,11 +66,11 @@ void Websocket::on_connect(beast::error_code ec, tcp::resolver::results_type::en
     mHost += ':' + std::to_string(ep.port());
 
     // Set a timeout on the operation
-    beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
+    beast::get_lowest_layer(mWs).expires_after(std::chrono::seconds(30));
 
     // Set SNI Hostname (many hosts need this to handshake successfully)
-    if(! SSL_set_tlsext_host_name(
-            ws_.next_layer().native_handle(),
+    if (! SSL_set_tlsext_host_name(
+            mWs.next_layer().native_handle(),
             mHost.c_str()))
     {
         ec = beast::error_code(static_cast<int>(::ERR_get_error()),
@@ -80,16 +79,16 @@ void Websocket::on_connect(beast::error_code ec, tcp::resolver::results_type::en
     }
 
     // Perform the SSL handshake
-    ws_.next_layer().async_handshake(
+    mWs.next_layer().async_handshake(
         ssl::stream_base::client,
         beast::bind_front_handler(
-            &Websocket::on_ssl_handshake,
+            &Websocket::sslHandshake,
             shared_from_this()));
 }
 
-void Websocket::on_ssl_handshake(beast::error_code ec)
+void Websocket::sslHandshake(beast::error_code ec)
 {
-    if(ec)
+    if (ec)
     {
         ELOG(ERROR, "SSL Handshake error: %s", ec.message().c_str());
     }
@@ -97,15 +96,15 @@ void Websocket::on_ssl_handshake(beast::error_code ec)
 
     // Turn off the timeout on the tcp_stream, because
     // the websocket stream has its own timeout system.
-    beast::get_lowest_layer(ws_).expires_never();
+    beast::get_lowest_layer(mWs).expires_never();
 
     // Set suggested timeout settings for the websocket
-    ws_.set_option(
+    mWs.set_option(
         websocket::stream_base::timeout::suggested(
             beast::role_type::client));
 
     // Set a decorator to change the User-Agent of the handshake
-    ws_.set_option(websocket::stream_base::decorator(
+    mWs.set_option(websocket::stream_base::decorator(
         [](websocket::request_type& req)
         {
             req.set(http::field::user_agent,
@@ -114,15 +113,15 @@ void Websocket::on_ssl_handshake(beast::error_code ec)
         }));
 
     // Perform the websocket handshake
-    ws_.async_handshake(mHost, mEndpoint,
+    mWs.async_handshake(mHost, mEndpoint,
         beast::bind_front_handler(
-            &Websocket::on_handshake,
+            &Websocket::handshake,
             shared_from_this()));
 }
 
-void Websocket::on_handshake(beast::error_code ec)
+void Websocket::handshake(beast::error_code ec)
 {
-    if(ec)
+    if (ec)
     {
         ELOG(ERROR, "Handshake error: %s", ec.message().c_str());
     }
@@ -130,18 +129,18 @@ void Websocket::on_handshake(beast::error_code ec)
     ELOG(INFO, "BinanceWebsocket handshake did successfully.");
 
     // Read a message into our buffer
-    ws_.async_read(
+    mWs.async_read(
         mBuffer,
         beast::bind_front_handler(
-            &Websocket::on_read,
+            &Websocket::read,
             shared_from_this()));
 }
 
-void Websocket::on_read( beast::error_code ec, std::size_t bytes_transferred)
+void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
 
-    if(ec)
+    if (ec)
     {
         ELOG(ERROR, "Read error: %s", ec.message().c_str());
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
@@ -162,16 +161,25 @@ void Websocket::on_read( beast::error_code ec, std::size_t bytes_transferred)
             ELOG(ERROR, "Failed to JSON parse.");
         }
         
-        Json::Value mKData = mCandlestickJson["k"];
+        Json::Value mKData              = mCandlestickJson["k"];
 
-        bool isClosed = mCandlestickJson["k"].get("x", true).asBool();
+        bool mIsClosed                  = mCandlestickJson["k"].get("x", true).asBool();
 
-        std::string mCandlePrice = mKData["c"].asString();
+        std::string mTimestamp          = mKData["t"].asString();
+        std::string mOpenPrice          = mKData["o"].asString();
+        std::string mClosePrice         = mKData["c"].asString();
+        std::string mHighPrice          = mKData["h"].asString();
+        std::string mLowPrice           = mKData["l"].asString();
 
-        std::cout << "x: " << isClosed << " c: " << mCandlePrice << std::endl;
+        struct candle_data *pCandleData = pOpel->getCandleDataStruct();
 
-        if (isClosed == 1)
-            *pCandle = std::stof(mCandlePrice);
+        pCandleData->isUpdated          = true;
+        pCandleData->timestamp          = std::stol(mTimestamp);
+        pCandleData->openPrice          = std::stof(mOpenPrice);
+        pCandleData->closePrice         = std::stof(mClosePrice);
+        pCandleData->highPrice          = std::stof(mHighPrice);
+        pCandleData->lowPrice           = std::stof(mLowPrice);
+        pCandleData->isClosed           = mIsClosed;
         
         // Clear the buffer
         mBuffer.consume(mBuffer.size());
@@ -180,16 +188,16 @@ void Websocket::on_read( beast::error_code ec, std::size_t bytes_transferred)
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
     
     // Read a message into our buffer
-    ws_.async_read(
+    mWs.async_read(
         mBuffer,
         beast::bind_front_handler(
-            &Websocket::on_read,
+            &Websocket::read,
             shared_from_this()));
 }
 
-void Websocket::on_close(beast::error_code ec)
+void Websocket::close(beast::error_code ec)
 {
-    if(ec)
+    if (ec)
     {
         ELOG(ERROR, "Read error: %s", ec.message().c_str());
     }
@@ -201,16 +209,12 @@ void Websocket::on_close(beast::error_code ec)
 }
 
 
-BinanceWebsocket::BinanceWebsocket(BinanceUtilities *pBu, float *cand)
+BinanceWebsocket::BinanceWebsocket(BinanceUtilities *pBu)
 {
     mHost       = pBu->getWebsocketBase();
     mPort       = pBu->getWebsocketPort();
 
     mEndpoint   = pBu->getWebsocketEndpoint();
-
-    // std::cout << cand << std::endl;
-    // std::cout << *cand << std::endl;
-    pCand = cand;
 
     ELOG(INFO, "Websocket constructor initialized. Host: %s, Port: %s, Endpoint: %s.", 
                 mHost.c_str(), mPort.c_str(), mEndpoint.c_str());
@@ -230,7 +234,7 @@ void BinanceWebsocket::init()
     ELOG(INFO, "Websocket init function.");
 
     // Launch the asynchronous operation
-    std::make_shared<Websocket>(ioc, ctx)->run(mHost, mPort, mEndpoint, pCand);
+    std::make_shared<Websocket>(ioc, ctx)->run(mHost, mPort, mEndpoint);
 
     // Run the I/O service. The call will return when
     // the socket is closed.

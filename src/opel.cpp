@@ -2,18 +2,6 @@
 
 
 /**
- * @brief Opel instance
- * 
- * @return Opel& 
- */
-Opel* Opel::instance()
-{
-    static Opel *opel = new Opel();
-    return opel;
-}
-
-
-/**
  * @brief Construct a new Opel::Opel object
  * 
  */
@@ -33,13 +21,43 @@ Opel::~Opel()
 
 
 /**
+ * @brief Opel instance
+ * 
+ * @return Opel& 
+ */
+Opel* Opel::instance()
+{
+    static Opel *opel = new Opel();
+    
+    return opel;
+}
+
+
+/**
+ * @brief Candle data instance
+ * 
+ * @return struct candle_data* 
+ */
+struct candle_data* Opel::getCandleDataStruct()
+{
+    static struct candle_data* pCandleData = new candle_data;
+
+    return pCandleData;
+}
+
+
+/**
  * @brief Set is active
  * 
  * @param isActive 
  */
 void Opel::setIsActive(bool isActive)
 {
+    mMutex.lock();
+
     mIsActive = isActive;
+
+    mMutex.unlock();
 }
 
 

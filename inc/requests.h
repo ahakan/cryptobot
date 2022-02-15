@@ -21,6 +21,7 @@
 #include "json/json.h"
 
 // Standard Libraries
+#include <cpr/response.h>
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -30,7 +31,7 @@ class Requests
     private:
 
     protected:
-        Opel                    *mOpel = Opel::instance();
+        Opel                    *pOpel = Opel::instance();
 
         std::string             mBase;
         std::string             mAPI_KEY;
@@ -47,18 +48,22 @@ class Requests
 
 class BinanceRequests : public Requests
 {
-    private:
-        float                   *pCandle;
-        void                    mainLoop();
+    private:        
+        void                    requestsLoop();
+
+        cpr::Response           getRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters);
+        cpr::Response           postRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters);
+        cpr::Response           deleteRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters);
 
         bool                    getAccountStatus();
         bool                    getAPIKeyPermission();
+        bool                    createNewOrder(std::string symbol, std::string side, std::string type, float quantity, float price);
 
     public:
                                 BinanceRequests(BinanceUtilities *pBu);
                                 ~BinanceRequests();
 
-        void                    init(float *candle);
+        void                    init();
         
 };
 

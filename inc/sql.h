@@ -19,7 +19,7 @@ using Record    = std::vector<std::pair<std::string, std::string>>;
 class Sql
 {
     private:
-        Opel                        *mOpel = Opel::instance();
+        Opel                        *pOpel = Opel::instance();
 
         sqlite3                     *db;
         std::string                 sql;
@@ -42,7 +42,7 @@ class Sql
         void                        init();
         bool                        getIsActive();
         bool                        addUserData(std::string status, bool read, bool spot, bool transfer);
-        bool                        addClosedKlinePrice(float candle);
+        bool                        addClosedKlinePrice(unsigned long long int timestamp, float openPrice, float closePrice, float highPrice, float lowPrice);
 };
 
 #endif

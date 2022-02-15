@@ -1,4 +1,5 @@
 #include "../inc/sql.h"
+#include <string>
 
 
 /**
@@ -32,10 +33,12 @@ Sql::Sql()
 
     // Create CLOSEDKLINES Table 
     sql = "CREATE TABLE CLOSEDKLINES("  \
-        "id             INT PRIMARY KEY     NOT NULL," \
-        "coinName       TEXT    NOT NULL," \
-        "price          REAL    NOT NULL," \
-        "timestamp      DATETIME DEFAULT (datetime('now','localtime')));";
+        "timestamp          INT PRIMARY KEY     NOT NULL," \
+        "openPrice          REAL," \
+        "closePrice         REAL," \
+        "highPrice          REAL," \
+        "lowPrice           REAL," \
+        "datelocal          DATETIME DEFAULT (datetime('now','localtime')));";
 
     allQuery(sql);
 
@@ -62,9 +65,25 @@ void Sql::init()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-        mOpel->setIsActive(isActive);
+        pOpel->setIsActive(isActive);
 
-        ELOG(INFO, "getIsActive: %d", mOpel->getIsActive());
+        struct candle_data *pCandleData = pOpel->getCandleDataStruct();
+
+        if (pCandleData->isUpdated && pCandleData->isClosed)
+        {
+            std::cout << "Timestamp:" << pCandleData->timestamp << std::endl;
+            std::cout << "Open:" << pCandleData->openPrice << std::endl;
+            std::cout << "Close:" <<  pCandleData->closePrice << std::endl;
+            std::cout << "High:" <<  pCandleData->highPrice << std::endl;
+            std::cout << "Low:" <<  pCandleData->lowPrice << std::endl;
+            std::cout << "isClosed:" <<  pCandleData->isClosed << std::endl;
+
+            addClosedKlinePrice(pCandleData->timestamp, pCandleData->openPrice, pCandleData->closePrice, pCandleData->highPrice, pCandleData->lowPrice);
+
+            pCandleData->isUpdated = false;
+        }
+
+        // ELOG(INFO, "getIsActive: %d", pOpel->getIsActive());
 
     }
 }
@@ -95,7 +114,7 @@ Record Sql::selectQuery(std::string query)
 
     if (rc != SQLITE_OK) 
     {
-        ELOG(ERROR, "Error in select statement. Query: - Error message: %s", query.c_str(), sqlite3_errmsg(db));
+        ELOG(ERROR, "Error in select statement. Query: %s - Error message: %s", query.c_str(), sqlite3_errmsg(db));
     }
 
     // Close the connection
@@ -131,7 +150,7 @@ bool Sql::allQuery(std::string query)
 
     if (rc != SQLITE_OK) 
     {
-        ELOG(ERROR, "Can't create table: %s", sqlite3_errmsg(db));
+        ELOG(ERROR, "Error in statement. Query: %s - Error message: %s", query.c_str(), sqlite3_errmsg(db));
 
         return false;
     }
@@ -241,16 +260,22 @@ bool Sql::addUserData(std::string status, bool read, bool spot, bool transfer)
 /**
  * @brief Add closed kline price
  * 
- * @param candle 
+ * @param openPrice 
+ * @param closePrice 
+ * @param higPrice 
+ * @param lowPrice 
  * @return true 
  * @return false 
  */
-bool Sql::addClosedKlinePrice(float candle)
+bool Sql::addClosedKlinePrice(unsigned long long int timestamp, float openPrice, float closePrice, float highPrice, float lowPrice)
 {
     // Create SQL statement
-    sql = "INSERT INTO CLOSEDKLINES (id, coinName, price) "  \
-            "VALUES (" + std::to_string(mId++) + \
-            ", 'SOLBUSD', " + std::to_string(candle) + ");";
+    sql = "INSERT INTO CLOSEDKLINES (timestamp, openPrice, closePrice, highPrice, lowPrice) "  \
+            "VALUES (" + std::to_string(timestamp) + \
+            ", " + std::to_string(openPrice) + \
+            ", " + std::to_string(closePrice) + \
+            ", " + std::to_string(highPrice) + \
+            ", " + std::to_string(lowPrice) + ");";
 
     return allQuery(sql);
 }
