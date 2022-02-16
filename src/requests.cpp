@@ -85,7 +85,7 @@ void BinanceRequests::init()
             break;
         }
 
-        ELOG(INFO, "Bot is active?: %d", pOpel->getIsActive());
+        // ELOG(INFO, "Bot is active?: %d", Opel::getIsActive());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
@@ -104,6 +104,8 @@ void BinanceRequests::requestsLoop()
 {
     while (1)
     {
+        Opel *pOpel = Opel::instance();
+
         if (pOpel->getIsActive())
         {
             ELOG(INFO, "Sent request.");
@@ -111,6 +113,7 @@ void BinanceRequests::requestsLoop()
             // createNewOrder("SOLBUSD", "SELL", "LIMIT", 0.1, 150.0);
 
             // cancelOrder("SOLBUSD", 704450650);
+            currentOpenOrders("SOLBUSD");
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10000));
@@ -373,6 +376,15 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
 }
 
 
+
+/**
+ * @brief Cancel order
+ * 
+ * @param symbol 
+ * @param orderId 
+ * @return true 
+ * @return false 
+ */
 bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
 {
     std::string mBaseURL        = mBase + "/api/v3/order";
@@ -422,6 +434,180 @@ bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
     uint32_t mOrderId = mAPIJson["orderId"].asInt();
 
     ELOG(INFO, "Canceled a Order. Order ID: %d", mOrderId);
+
+    return true;
+}
+
+
+
+/**
+ * @brief Cancel all open orders
+ * 
+ * @param symbol 
+ * @return true 
+ * @return false 
+ */
+bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
+{
+    std::string mBaseURL        = mBase + "/api/v3/openOrders";
+
+    std::string mTimestamp      = pBu->getTimestamp();
+
+    std::string mParameters     = "symbol="+symbol;
+                mParameters     += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string mSignature      = pBu->getSignature(mParameters);
+
+    cpr::Url url                = cpr::Url{mBaseURL};
+    cpr::Header headers         = cpr::Header{
+                                            {"content-type", "application/json"}, 
+                                            {"X-MBX-APIKEY", mAPI_KEY}};
+    cpr::Parameters parameters  = cpr::Parameters{
+                                            {"symbol", symbol},
+                                            {"timestamp", mTimestamp},
+                                            {"recvWindow", mRecvWindow},
+                                            {"signature", mSignature}};
+
+    cpr::Response mReq          = deleteRequest(url, headers, parameters);
+
+    ELOG(INFO, "Cancel All Open Orders Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
+
+    ELOG(INFO, "Cancel All Open Orders Response Body: %s.", mReq.text.c_str());
+
+    Json::Value  mAPIJson;
+    Json::Reader mReader;
+    bool         mParsingSuccessful = mReader.parse(mReq.text.c_str(), mAPIJson);
+
+    if (!mParsingSuccessful)
+    {
+        ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    std::string mStatus = mAPIJson[0]["status"].asString();
+
+    if (mStatus!="CANCELED")
+    {
+        ELOG(ERROR, "Order could not be cancelled.");
+        return false;
+    }
+
+    ELOG(INFO, "Canceled All Open Orders.");
+
+    return true;
+}
+
+
+/**
+ * @brief Query order
+ * 
+ * @param symbol 
+ * @param orderId 
+ * @return true 
+ * @return false 
+ */
+bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
+{
+    std::string mBaseURL        = mBase + "/api/v3/order";
+
+    std::string mTimestamp      = pBu->getTimestamp();
+
+    std::string mParameters     = "symbol="+symbol+"&orderId="+std::to_string(orderId);
+                mParameters     += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string mSignature      = pBu->getSignature(mParameters);
+
+    cpr::Url url                = cpr::Url{mBaseURL};
+    cpr::Header headers         = cpr::Header{
+                                            {"content-type", "application/json"}, 
+                                            {"X-MBX-APIKEY", mAPI_KEY}};
+    cpr::Parameters parameters  = cpr::Parameters{
+                                            {"symbol", symbol},
+                                            {"orderId", std::to_string(orderId)},
+                                            {"timestamp", mTimestamp},
+                                            {"recvWindow", mRecvWindow},
+                                            {"signature", mSignature}};
+
+    cpr::Response mReq          = getRequest(url, headers, parameters);
+
+    ELOG(INFO, "Query Order Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
+
+    ELOG(INFO, "Query Order Response Body: %s.", mReq.text.c_str());
+
+    Json::Value  mAPIJson;
+    Json::Reader mReader;
+    bool         mParsingSuccessful = mReader.parse(mReq.text.c_str(), mAPIJson);
+
+    if (!mParsingSuccessful)
+    {
+        ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    std::string mStatus = mAPIJson["status"].asString();
+
+    // if (mStatus!="CANCELED")
+    // {
+    //     ELOG(ERROR, "Order could not be cancelled.");
+    //     return false;
+    // }
+
+    uint32_t mOrderId = mAPIJson["orderId"].asInt();
+
+    ELOG(INFO, "Query Order. Status: %s, Order ID: %d", mStatus.c_str(), mOrderId);
+
+    return true;
+}
+
+
+
+/**
+ * @brief Current open orders
+ * 
+ * @param symbol 
+ * @return true 
+ * @return false 
+ */
+bool BinanceRequests::currentOpenOrders(std::string symbol)
+{
+    std::string mBaseURL        = mBase + "/api/v3/openOrders";
+
+    std::string mTimestamp      = pBu->getTimestamp();
+
+    std::string mParameters     = "symbol="+symbol;
+                mParameters     += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string mSignature      = pBu->getSignature(mParameters);
+
+    cpr::Url url                = cpr::Url{mBaseURL};
+    cpr::Header headers         = cpr::Header{
+                                            {"content-type", "application/json"}, 
+                                            {"X-MBX-APIKEY", mAPI_KEY}};
+    cpr::Parameters parameters  = cpr::Parameters{
+                                            {"symbol", symbol},
+                                            {"timestamp", mTimestamp},
+                                            {"recvWindow", mRecvWindow},
+                                            {"signature", mSignature}};
+
+    cpr::Response mReq          = getRequest(url, headers, parameters);
+
+    ELOG(INFO, "Current Open Orders Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
+
+    ELOG(INFO, "Current Open Orders Response Body: %s.", mReq.text.c_str());
+
+    Json::Value  mAPIJson;
+    Json::Reader mReader;
+    bool         mParsingSuccessful = mReader.parse(mReq.text.c_str(), mAPIJson);
+
+    if (!mParsingSuccessful)
+    {
+        ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    // std::string mStatus = mAPIJson[0]["status"].asString();
+
+    ELOG(INFO, "Current Open Orders.");
 
     return true;
 }

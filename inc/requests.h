@@ -31,8 +31,6 @@ class Requests
     private:
 
     protected:
-        Opel                    *pOpel = Opel::instance();
-
         std::string             mBase;
         std::string             mAPI_KEY;
         std::string             mSECRET_KEY;
@@ -59,6 +57,9 @@ class BinanceRequests : public Requests
         bool                    getAPIKeyPermission();
         bool                    createNewOrder(std::string symbol, std::string side, std::string type, float quantity, float price);
         bool                    cancelOrder(std::string symbol, uint32_t orderId);
+        bool                    cancelAllOpenOrders(std::string symbol);
+        bool                    queryOrder(std::string symbol, uint32_t orderId);
+        bool                    currentOpenOrders(std::string symbol);
 
     public:
                                 BinanceRequests(BinanceUtilities *pBu);

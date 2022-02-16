@@ -41,7 +41,9 @@ class Opel
     public:
                                     Opel();
                                     ~Opel();
-        
+                                    Opel(const Opel&)               = delete;
+                                    Opel& operator=(const Opel&)    = delete;
+                                    
         static Opel                 *instance();
         static struct candle_data   *getCandleDataStruct();
 

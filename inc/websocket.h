@@ -36,8 +36,6 @@ using     tcp           = boost::asio::ip::tcp;         // from <boost/asio/ip/t
 class Websocket : public std::enable_shared_from_this<Websocket>
 {
     private:
-        Opel                        *pOpel = Opel::instance();
-
         tcp::resolver               mResolver;
         websocket::stream
         <beast::ssl_stream

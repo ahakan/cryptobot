@@ -1,5 +1,4 @@
 #include "../inc/sql.h"
-#include <string>
 
 
 /**
@@ -18,7 +17,7 @@ Sql::Sql()
 
     // Add user data
     sql = "INSERT OR IGNORE INTO BOT(id, status, isActive)" \
-          "VALUES(1, 1, 1);";
+          "VALUES(1, 1, 0);";
 
     allQuery(sql);
 
@@ -70,10 +69,13 @@ void Sql::init()
     {
         bool isActive = getIsActive();
 
+        Opel *pOpel = Opel::instance();
 
         pOpel->setIsActive(isActive);
 
-        struct candle_data *pCandleData = pOpel->getCandleDataStruct();
+        // Opel::setIsActive(isActive);
+
+        struct candle_data *pCandleData = Opel::getCandleDataStruct();
 
         if (pCandleData->isUpdated && pCandleData->isClosed)
         {

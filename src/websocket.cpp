@@ -171,7 +171,7 @@ void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
         std::string mHighPrice          = mKData["h"].asString();
         std::string mLowPrice           = mKData["l"].asString();
 
-        struct candle_data *pCandleData = pOpel->getCandleDataStruct();
+        struct candle_data *pCandleData = Opel::getCandleDataStruct();
 
         pCandleData->isUpdated          = true;
         pCandleData->timestamp          = std::stol(mTimestamp);

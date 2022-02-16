@@ -23,13 +23,18 @@ Opel::~Opel()
 /**
  * @brief Opel instance
  * 
- * @return Opel& 
+ * @return Opel* 
  */
 Opel* Opel::instance()
 {
-    static Opel *opel = new Opel();
-    
-    return opel;
+    static Opel *pInstance;
+
+    if (pInstance == NULL)
+    {
+            pInstance = new Opel();
+    }
+
+    return pInstance;
 }
 
 

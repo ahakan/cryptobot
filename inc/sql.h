@@ -19,8 +19,6 @@ using Record    = std::vector<std::pair<std::string, std::string>>;
 class Sql
 {
     private:
-        Opel                        *pOpel = Opel::instance();
-
         sqlite3                     *db;
         std::string                 sql;
         char                        *zErrMsg = 0;
