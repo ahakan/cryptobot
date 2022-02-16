@@ -17,8 +17,8 @@
 #include "utilities.h"
 
 // Libraries
-#include "cpr/cpr.h"
-#include "json/json.h"
+#include <cpr/cpr.h>
+#include <json/json.h>
 
 // Standard Libraries
 #include <cpr/response.h>
