@@ -1,6 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/inc)
 
-add_library(libjson SHARED IMPORTED)
+add_library(libjson STATIC IMPORTED)
 set_target_properties(libjson PROPERTIES
   IMPORTED_LOCATION 
     "${CMAKE_SOURCE_DIR}/lib/libjson-1.9.5/lib/libjsoncpp.a"
@@ -8,7 +8,7 @@ set_target_properties(libjson PROPERTIES
     "${CMAKE_SOURCE_DIR}/lib/libjson-1.9.5/inc/json"
 )
 
-add_library(libelog SHARED IMPORTED)
+add_library(libelog STATIC IMPORTED)
 set_target_properties(libelog PROPERTIES
   IMPORTED_LOCATION 
     "${CMAKE_SOURCE_DIR}/lib/libelog-1.0.0/src/libelog.a"
@@ -16,7 +16,7 @@ set_target_properties(libelog PROPERTIES
     "${CMAKE_SOURCE_DIR}/lib/libelog-1.0.0/inc"
 )
 
-add_library(libsqlite SHARED IMPORTED)
+add_library(libsqlite STATIC IMPORTED)
 set_target_properties(libsqlite PROPERTIES
   IMPORTED_LOCATION 
     "${CMAKE_SOURCE_DIR}/lib/libsqlite-3.37.2/lib/libsqlite.a"
