@@ -1,3 +1,13 @@
+/**
+ * @file sql.h
+ * @author ahc (ahmethakan@pm.me)
+ * @brief 
+ * @version 0.1
+ * @date 2022-02-18
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #ifndef SQL_H
 #define SQL_H
 
@@ -38,7 +48,7 @@ class Sql
                                     ~Sql();
 
         void                        init();
-        bool                        getIsActive();
+        void                        getBOTTable();
         bool                        addUserData(std::string status, bool read, bool spot, bool transfer);
         bool                        addClosedKlinePrice(unsigned long long int timestamp, float openPrice, float closePrice, float highPrice, float lowPrice);
 };

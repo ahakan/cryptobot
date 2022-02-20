@@ -10,14 +10,16 @@ Sql::Sql()
     // Create USER Table 
     sql = "CREATE TABLE IF NOT EXISTS BOT("  \
         "id                     INT PRIMARY KEY     NOT NULL," \
-        "status                 INT," \
-        "isActive               INT);";
+        "status                 INT,"   \
+        "isActive               INT,"   \
+        "symbol                 TEXT,"  \
+        "balanceSymbol          TEXT);";
 
     allQuery(sql);
 
     // Add user data
-    sql = "INSERT OR IGNORE INTO BOT(id, status, isActive)" \
-          "VALUES(1, 1, 0);";
+    sql = "INSERT OR IGNORE INTO BOT(id, status, isActive, symbol, balanceSymbol)" \
+          "VALUES(1, 1, 0, '', '');";
 
     allQuery(sql);
 
@@ -67,13 +69,7 @@ void Sql::init()
 {
     while (true)
     {
-        bool isActive = getIsActive();
-
-        Opel *pOpel = Opel::instance();
-
-        pOpel->setIsActive(isActive);
-
-        // Opel::setIsActive(isActive);
+        getBOTTable();
 
         struct candle_data *pCandleData = Opel::getCandleDataStruct();
 
@@ -217,29 +213,25 @@ int Sql::allCallback(void *pData, int numFields, char **pFields, char **pColName
 
 
 /**
- * @brief Get is bot active
+ * @brief Get BOT table
  * 
- * @return true 
- * @return false 
  */
-bool Sql::getIsActive()
+void Sql::getBOTTable()
 {
     // Create SQL statement
     sql = "SELECT * FROM BOT WHERE id=1";
 
-    Record records = selectQuery(sql);
-
     ELOG(INFO, "Bot activation check. Query: %s.", sql.c_str());
 
-    for (auto& record : records) {
-        // ELOG(INFO, "Check vector data: Field: %s.", record[0]);
-        // std::cout << "Key: " << record.first << " Value: " << record.second << std::endl;
+    Record records          = selectQuery(sql);
 
-        if (record.first == "isActive" && record.second == "1")
-            return true;
-    }
+    bool mIsActive          = std::stof(records[2].second);
+    std::string mSymbol     = records[3].second;
 
-    return false;
+    Opel *pOpel = Opel::instance();
+
+    pOpel->setIsActive(mIsActive);
+    pOpel->setSymbol(mSymbol);
 }
 
 

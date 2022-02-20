@@ -35,8 +35,10 @@ struct candle_data
 class Opel
 {
     private:
-        bool                        mIsActive;
         std::mutex                  mMutex;
+
+        bool                        mIsActive;
+        std::string                 mSymbol;
 
     public:
                                     Opel();
@@ -49,6 +51,9 @@ class Opel
 
         void                        setIsActive(bool isActive);
         bool                        getIsActive();
+
+        void                        setSymbol(std::string Symbol);
+        std::string                 getSymbol();
 };
 
 #endif

@@ -26,25 +26,6 @@
 #include <thread>
 #include <chrono>
 
-
-void sqlCheck(Opel mOpel, Sql *pSql)
-{
-    while (true)
-    {
-        bool isActive = pSql->getIsActive();
-        // std::cout << isActive << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-
-        mOpel.setIsActive(isActive);
-        // if (*candle != 0)
-        // {
-        //     std::cout << "Candle: " << *candle << std::endl;
-        //     pSql->addClosedKlinePrice(*candle);
-        //     *candle = 0;
-        // }
-    }
-}
-
 void inp(BinanceUtilities *util, BinanceWebsocket *ws, BinanceRequests *req)
 {
     char a[2];

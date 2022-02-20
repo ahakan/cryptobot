@@ -18,26 +18,39 @@
 
 // Libraries
 #include <cpr/cpr.h>
+#include <cpr/response.h>
+#include <cpr/timeout.h>
 #include <json/json.h>
 
 // Standard Libraries
-#include <cpr/response.h>
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <map>
+#include <iterator>
+
+using OrderMap      = std::map<std::string, std::string>;
+
+using AllOrdersMap  = std::map<int, OrderMap>;
 
 class Requests
 {
     private:
 
     protected:
+        BinanceUtilities        *pBu; 
+
         std::string             mBase;
         std::string             mAPI_KEY;
         std::string             mSECRET_KEY;
 
         std::string             mRecvWindow = "10000";
 
-        BinanceUtilities        *pBu; 
+        AllOrdersMap            mBuyOrders;
+        AllOrdersMap            mBoughtOrders;
+
+        AllOrdersMap            mSellOrders;
+        AllOrdersMap            mSoldOrders;
 
     public:
                                 Requests(BinanceUtilities *pBu);
@@ -55,7 +68,7 @@ class BinanceRequests : public Requests
 
         bool                    getAccountStatus();
         bool                    getAPIKeyPermission();
-        bool                    createNewOrder(std::string symbol, std::string side, std::string type, float quantity, float price);
+        bool                    createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price);
         bool                    cancelOrder(std::string symbol, uint32_t orderId);
         bool                    cancelAllOpenOrders(std::string symbol);
         bool                    queryOrder(std::string symbol, uint32_t orderId);

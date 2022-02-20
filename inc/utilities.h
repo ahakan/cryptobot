@@ -1,3 +1,14 @@
+/**
+ * @file utilities.h
+ * @author ahc (ahmethakan@pm.me)
+ * @brief 
+ * @version 0.1
+ * @date 2022-02-18
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+ 
 #ifndef UTILITIES_H
 #define UTILITIES_H
 

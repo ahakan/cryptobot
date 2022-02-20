@@ -39,7 +39,7 @@ Opel* Opel::instance()
 
 
 /**
- * @brief Candle data instance
+ * @brief Candle data struct
  * 
  * @return struct candle_data* 
  */
@@ -75,4 +75,30 @@ void Opel::setIsActive(bool isActive)
 bool Opel::getIsActive()
 {
     return mIsActive;
+}
+
+
+/**
+ * @brief Set symbol
+ * 
+ * @param Symbol 
+ */
+void Opel::setSymbol(std::string Symbol)
+{
+    mMutex.lock();
+    
+    mSymbol = Symbol;
+
+    mMutex.unlock();
+}
+
+
+/**
+ * @brief Get symbol
+ * 
+ * @return std::string 
+ */
+std::string Opel::getSymbol()
+{
+    return mSymbol;
 }

@@ -1,5 +1,5 @@
 #include "../inc/requests.h"
-#include <cpr/timeout.h>
+
 
 /**
  * @brief Construct a new Requests::Requests object
@@ -85,7 +85,8 @@ void BinanceRequests::init()
             break;
         }
 
-        // ELOG(INFO, "Bot is active?: %d", Opel::getIsActive());
+        Opel *pOpel = Opel::instance();
+        std::cout << pOpel->getSymbol() << std::endl;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
@@ -102,18 +103,59 @@ void BinanceRequests::init()
  */
 void BinanceRequests::requestsLoop()
 {
+    bool mEnough = false;
     while (1)
     {
         Opel *pOpel = Opel::instance();
 
         if (pOpel->getIsActive())
         {
-            ELOG(INFO, "Sent request.");
+            if (mBuyOrders.size() > 0)
+                queryOrder("SOLBUSD", mBuyOrders.begin()->first);
 
-            // createNewOrder("SOLBUSD", "SELL", "LIMIT", 0.1, 150.0);
+            if (mSellOrders.size() > 0)
+                for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
+                    queryOrder("SOLBUSD", it->first);
 
-            // cancelOrder("SOLBUSD", 704450650);
-            currentOpenOrders("SOLBUSD");
+            if (mBoughtOrders.size() > 0)
+                // createNewOrder("SOLBUSD", "SELL", "LIMIT", "0.20", "91.95");
+
+            if (mEnough == false)
+                if (mBuyOrders.size() < 1)
+                    // createNewOrder("SOLBUSD", "BUY", "LIMIT", "0.20", "90.4");
+        
+            mEnough = true;
+            // currentOpenOrders("SOLBUSD");
+
+            // cancelOrder("SOLBUSD", mBuyOrders.begin()->first);
+
+            // cancelAllOpenOrders("SOLBUSD");
+        }
+
+        ELOG(INFO, "mBuyOrders: %d, mBoughtOrders: %d, mSellOrders: %d, mSoldOrders: %d.", mBuyOrders.size(), mBoughtOrders.size(), mSellOrders.size(), mSoldOrders.size());
+
+        std::cout << "Buy Orders" << std::endl;
+        for (AllOrdersMap::iterator it = mBuyOrders.begin(); it != mBuyOrders.end(); it++)
+        {
+            std::cout << it->first << ": " << it->second["Price"] << std::endl;
+        }
+
+        std::cout << "Bought Orders" << std::endl;
+        for (AllOrdersMap::iterator it = mBoughtOrders.begin(); it != mBoughtOrders.end(); it++)
+        {
+            std::cout << it->first << ": " << it->second["BoughtPrice"] << std::endl;
+        }
+
+        std::cout << "Sell Orders" << std::endl;
+        for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
+        {
+            std::cout << it->first << ": " << it->second["Price"] << std::endl;
+        }
+
+        std::cout << "Sold Orders" << std::endl;
+        for (AllOrdersMap::iterator it = mSoldOrders.begin(); it != mSoldOrders.end(); it++)
+        {
+            std::cout << it->first << ": " << it->second["SoldPrice"] << " - " << it->second["BoughtPrice"] << std::endl;
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10000));
@@ -313,10 +355,11 @@ bool BinanceRequests::getAPIKeyPermission()
  * @param side 
  * @param type 
  * @param quantity 
+ * @param price 
  * @return true 
  * @return false 
  */
-bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::string type, float quantity, float price)
+bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price)
 {
     std::string mBaseURL        = mBase + "/api/v3/order";
 
@@ -324,7 +367,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
 
     std::string mParameters     = "symbol="+symbol+"&side="+side;
                 mParameters     += "&type="+type+"&timeInForce=GTC";
-                mParameters     += "&quantity="+std::to_string(quantity)+"&price="+std::to_string(price);
+                mParameters     += "&quantity="+quantity+"&price="+price;
                 mParameters     += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
     std::string mSignature      = pBu->getSignature(mParameters);
@@ -338,8 +381,8 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
                                             {"side", side},
                                             {"type", type},
                                             {"timeInForce", "GTC"},
-                                            {"quantity", std::to_string(quantity)},
-                                            {"price", std::to_string(price)},
+                                            {"quantity", quantity},
+                                            {"price", price},
                                             {"timestamp", mTimestamp},
                                             {"recvWindow", mRecvWindow},
                                             {"signature", mSignature}};
@@ -362,16 +405,46 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
 
     std::string mStatus = mAPIJson["status"].asString();
 
-    if (mStatus!="NEW")
+    if (mStatus!="NEW") //!!!!!!!!!!!
     {
         ELOG(ERROR, "Order could not be created.");
         return false;
     }
 
-    uint32_t mOrderId = mAPIJson["orderId"].asInt();
+    uint32_t mOrderId           = mAPIJson["orderId"].asInt();
+    std::string mSide           = mAPIJson["side"].asString();
+    std::string mSymbol         = mAPIJson["symbol"].asString();
+    std::string mPrice          = mAPIJson["price"].asString();
+    std::string mQuantity       = mAPIJson["origQty"].asString();
+    std::string mTransactTime   = mAPIJson["transactTime"].asString();
 
-    ELOG(INFO, "Created a New Order. Order ID: %d", mOrderId);
+    OrderMap mOrder;
 
+    if (mSide == "BUY")
+    {
+        mOrder.emplace("Symbol", mSymbol);
+        mOrder.emplace("Price", mPrice);
+        mOrder.emplace("Quantity", mQuantity);
+        mOrder.emplace("TransactTime", mTransactTime);
+
+        mBuyOrders.emplace(mOrderId, mOrder);
+
+        ELOG(INFO, "Created a New Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
+    }
+    else if (mSide == "SELL")
+    {
+        mOrder.emplace("Symbol", mSymbol);
+        mOrder.emplace("Price", mPrice);
+        mOrder.emplace("BoughtPrice", mBoughtOrders.begin()->second["BoughtPrice"]);
+        mOrder.emplace("Quantity", mQuantity);
+        mOrder.emplace("TransactTime", mTransactTime);
+
+        mSellOrders.emplace(mOrderId, mOrder);
+        mBoughtOrders.clear();
+
+        ELOG(INFO, "Created a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
+    }
+    
     return true;
 }
 
@@ -432,9 +505,28 @@ bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
     }
 
     uint32_t mOrderId = mAPIJson["orderId"].asInt();
+    std::string mSide = mAPIJson["side"].asString();
 
-    ELOG(INFO, "Canceled a Order. Order ID: %d", mOrderId);
+    if (mSide == "BUY")
+    {
+        if (mBuyOrders.count(orderId) == 1)
+        {
+            ELOG(INFO, "Canceled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSellOrders.find(orderId)->second["Symbol"].c_str(), mSellOrders.find(orderId)->second["Price"].c_str(), mSellOrders.find(orderId)->second["Quantity"].c_str(), mSellOrders.find(orderId)->second["TransactTime"].c_str());
+            
+            mBuyOrders.erase(orderId);
+        }
+    }
+    // else if (mSide == "SELL")
+    // {
+    //     if (mSellOrders.count(orderId) == 1)
+    //     {
+    //         mBuyOrders.erase(orderId);
 
+    //         ELOG(INFO, "Canceled a Order. Order ID: %d", mOrderId);
+    //     }
+    // }
+    
+    
     return true;
 }
 
@@ -544,18 +636,49 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
         return false;
     }
 
-    std::string mStatus = mAPIJson["status"].asString();
-
-    // if (mStatus!="CANCELED")
-    // {
-    //     ELOG(ERROR, "Order could not be cancelled.");
-    //     return false;
-    // }
-
-    uint32_t mOrderId = mAPIJson["orderId"].asInt();
+    uint32_t mOrderId           = mAPIJson["orderId"].asInt();
+    std::string mSide           = mAPIJson["side"].asString();
+    std::string mStatus         = mAPIJson["status"].asString();
+    std::string mSymbol         = mAPIJson["symbol"].asString();
+    std::string mPrice          = mAPIJson["price"].asString();
+    std::string mQuantity       = mAPIJson["origQty"].asString();
+    std::string mTime           = mAPIJson["updateTime"].asString();
 
     ELOG(INFO, "Query Order. Status: %s, Order ID: %d", mStatus.c_str(), mOrderId);
 
+    if (mStatus == "FILLED")
+    {
+        if (mSide == "BUY")
+        {
+            OrderMap mOrder;
+
+            mOrder.emplace("Symbol", mSymbol);
+            mOrder.emplace("BoughtPrice", mPrice);
+            mOrder.emplace("Quantity", mQuantity);
+            mOrder.emplace("BoughtTime", mTime);
+
+            mBoughtOrders.emplace(mOrderId, mOrder);
+            mBuyOrders.erase(orderId);
+
+            ELOG(INFO, "Filled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTime.c_str());
+        }
+        else if (mSide == "SELL")
+        {
+            OrderMap mOrder;
+
+            mOrder.emplace("Symbol", mSymbol);
+            mOrder.emplace("SoldPrice", mPrice);
+            mOrder.emplace("BoughtPrice", mSellOrders.find(orderId)->second["BoughtPrice"]);
+            mOrder.emplace("Quantity", mQuantity);
+            mOrder.emplace("SoldTime", mTime);
+
+            mSoldOrders.emplace(mOrderId, mOrder);
+            mSellOrders.erase(orderId);
+
+            ELOG(INFO, "Filled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str(), mTime.c_str());
+        }
+    }
+ 
     return true;
 }
 
