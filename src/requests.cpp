@@ -85,10 +85,16 @@ void BinanceRequests::init()
             break;
         }
 
-        Opel *pOpel = Opel::instance();
-        std::cout << pOpel->getSymbol() << std::endl;
-
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+        int day = 0;
+        int hour = 12;
+        int minute = 0;
+        int second = 0;
+        int millisecond = 0;
+
+        getCandlesticksData("SOLBUSD", "15m", pBu->getOldTimestamp(day, hour, minute, second, millisecond), "1000");
+        // std::cout << pBu->getOldTimestamp(day, hour, minute, second, millisecond) << std::endl;
     }
     
     ELOG(INFO, "User account is normal. Entering while loop.");
@@ -728,9 +734,64 @@ bool BinanceRequests::currentOpenOrders(std::string symbol)
         return false;
     }
 
-    // std::string mStatus = mAPIJson[0]["status"].asString();
-
     ELOG(INFO, "Current Open Orders.");
+
+    return true;
+}
+
+
+/**
+ * @brief Get candlesticks data
+ * 
+ * @param symbol 
+ * @param interval 
+ * @param startTime 
+ * @param limit 
+ * @return true 
+ * @return false 
+ */
+bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interval, std::string startTime, std::string limit)
+{
+    std::string mBaseURL        = mBase + "/api/v3/klines";
+
+    std::string mTimestamp      = pBu->getTimestamp();
+
+    cpr::Url url                = cpr::Url{mBaseURL};
+    cpr::Header headers         = cpr::Header{
+                                            {"content-type", "application/json"}};
+    cpr::Parameters parameters  = cpr::Parameters{
+                                            {"symbol", symbol},
+                                            {"interval", interval},
+                                            {"startTime", startTime},
+                                            {"limit", limit}};
+
+    cpr::Response mReq          = getRequest(url, headers, parameters);
+
+    ELOG(INFO, "Get Klines/Candlesticks Data Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
+
+    ELOG(INFO, "Get Klines/Candlesticks Data Response Body: %s.", mReq.text.c_str());
+
+    Json::Value  mAPIJson;
+    Json::Reader mReader;
+    bool         mParsingSuccessful = mReader.parse(mReq.text.c_str(), mAPIJson);
+
+    if (!mParsingSuccessful)
+    {
+        ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    // std::cout << mAPIJson.size() << std::endl;
+
+    float average = 0;
+
+    for (int i = 0; i<static_cast<int>(mAPIJson.size()); i++)
+    {
+        std::cout << mAPIJson[i][4] << std::endl;
+        average = average + std::stof(mAPIJson[i][4].asString());
+    }
+
+    average = average / static_cast<int>(mAPIJson.size());
 
     return true;
 }

@@ -26,13 +26,13 @@
                                                         // 2 = Error, Warning, 
                                                         // 3 = Error, Warning, Debug, 
                                                         // 4 = Error, Warning, Debug, Info
-#define  MAX_FILE_SIZE              26214400            // 25MB
+#define  MAX_FILE_SIZE              10485760            // 10MB
 
 #define  MAX_LINE_SIZE              5
 #define  MAX_TID_SIZE               6
 #define  MAX_LEVEL_SIZE             7
-#define  MAX_FILE_NAME_SIZE         20
-#define  MAX_FUNC_NAME_SIZE         20
+#define  MAX_FILE_NAME_SIZE         18
+#define  MAX_FUNC_NAME_SIZE         22
 
 #define  ELOG                       getLog
 
@@ -73,7 +73,7 @@ void getLog(char const *file, unsigned int line, char const * function, unsigned
     if( static_cast<int>(lvl) < MAX_LEVEL )
     {
         char    _Message[256];
-
+        
         _eLog.MutexLock.lock();
 
         // /full/path/to/file.c to file.c

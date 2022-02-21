@@ -40,11 +40,14 @@ class Opel
         bool                        mIsActive;
         std::string                 mSymbol;
 
-    public:
+    protected:
+
                                     Opel();
                                     ~Opel();
-                                    Opel(const Opel&)               = delete;
-                                    Opel& operator=(const Opel&)    = delete;
+
+    public:
+                                    Opel(const Opel&)               = delete;       // Singletons should not be cloneable.
+                                    Opel& operator=(const Opel&)    = delete;       // Singletons should not be assignable.
                                     
         static Opel                 *instance();
         static struct candle_data   *getCandleDataStruct();

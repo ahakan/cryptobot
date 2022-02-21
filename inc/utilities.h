@@ -43,6 +43,7 @@ class Utilities
         virtual                 ~Utilities();
 
         std::string             getTimestamp();
+        std::string             getOldTimestamp(int day = 0, int hour = 0, int minute = 0, int second = 0, int millisecond = 0);
 
 };
 

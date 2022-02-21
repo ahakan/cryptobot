@@ -17,6 +17,7 @@ Opel::Opel()
  */
 Opel::~Opel()
 {
+    ELOG(INFO, "Operational elements destructor.");
 }
 
 
@@ -27,7 +28,7 @@ Opel::~Opel()
  */
 Opel* Opel::instance()
 {
-    static Opel *pInstance;
+    static Opel                 *pInstance;
 
     if (pInstance == NULL)
     {

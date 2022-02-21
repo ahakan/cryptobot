@@ -1,4 +1,5 @@
 #include "../inc/utilities.h"
+#include <string>
 
 
 /**
@@ -52,6 +53,39 @@ std::string Utilities::getTimestamp() {
                                 .count();
                                 
 	return std::to_string(ms_since_epoch);
+}
+
+
+/**
+ * @brief Get old timestamp
+ * 
+ * @param day 
+ * @param hour 
+ * @param minute 
+ * @param second 
+ * @param millisecond 
+ * @return std::string 
+ */
+std::string Utilities::getOldTimestamp(int day, int hour, int minute, int second, int millisecond)
+{
+    long long int mTimestamp = std::stol(getTimestamp());
+
+    if (day != 0)
+        mTimestamp = mTimestamp - day*24*60*60*1000;
+
+    if (hour != 0)
+        mTimestamp = mTimestamp - hour*60*60*1000;
+
+    if (minute != 0)
+        mTimestamp = mTimestamp - minute*60*1000;
+
+    if (second != 0)
+        mTimestamp = mTimestamp - second*1000;
+
+    if (millisecond != 0)
+        mTimestamp = mTimestamp - millisecond;
+
+    return std::to_string(mTimestamp);
 }
 
 

@@ -74,6 +74,8 @@ class BinanceRequests : public Requests
         bool                    queryOrder(std::string symbol, uint32_t orderId);
         bool                    currentOpenOrders(std::string symbol);
 
+        bool                    getCandlesticksData(std::string symbol, std::string interval, std::string startTime, std::string limit);
+
     public:
                                 BinanceRequests(BinanceUtilities *pBu);
                                 ~BinanceRequests();
