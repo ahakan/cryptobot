@@ -23,6 +23,7 @@
 #include <string>
 #include <fstream>
 #include <openssl/hmac.h>
+#include <vector>
 
 
 /**
@@ -35,6 +36,7 @@ class Utilities
     protected:
         std::ifstream           mConfigFile;
         Json::Value             mConfigJson;
+        Json::Value             mUserJson;
         Json::Value             mExchangeJson;
         std::string             mExchangeName;
 
@@ -44,6 +46,14 @@ class Utilities
 
         std::string             getTimestamp();
         std::string             getOldTimestamp(int day = 0, int hour = 0, int minute = 0, int second = 0, int millisecond = 0);
+        std::string             getSymbol();
+        std::string             getInterval();
+        std::string             getBalanceSymbol();
+        std::string             getBalanceAmount();
+
+        std::string             upperToLower(std::string data);
+
+        float                   getAverage(std::vector<float> vector);
 
 };
 

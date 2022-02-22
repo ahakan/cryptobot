@@ -13,7 +13,10 @@ Requests::Requests(BinanceUtilities *pBu)
     mAPI_KEY        = pBu->getAPIKEY();
     mSECRET_KEY     = pBu->getAPISECRETKEY();
 
-    // Opel mOpel           = opel.instance();
+    mSymbol         = pBu->getSymbol();
+    mInterval       = pBu->getInterval();
+    mBalanceSymbol  = pBu->getBalanceSymbol();
+    mBalanceAmount  = pBu->getBalanceAmount();
 
     if (mAPI_KEY.length() == 0 || mSECRET_KEY.length() == 0)
     {
@@ -21,7 +24,8 @@ Requests::Requests(BinanceUtilities *pBu)
         exit(0);
     }
 
-    ELOG(INFO, "Requests constructor initialized.");
+    ELOG(INFO, "Requests constructor initialized. mSymbol: %s, mInterval: %s, mBalanceSymbol: %s, mBalanceAmount: %s.", mSymbol.c_str(), mInterval.c_str(), mBalanceSymbol.c_str(), mBalanceAmount.c_str());
+
 }
 
 
@@ -88,14 +92,16 @@ void BinanceRequests::init()
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
         int day = 0;
-        int hour = 12;
+        int hour = 24;
         int minute = 0;
         int second = 0;
         int millisecond = 0;
 
-        getCandlesticksData("SOLBUSD", "15m", pBu->getOldTimestamp(day, hour, minute, second, millisecond), "1000");
-        // std::cout << pBu->getOldTimestamp(day, hour, minute, second, millisecond) << std::endl;
+        getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
     }
+
+    std::cout << "mCandlesSize: " << mCandlesSize << std::endl;
+    std::cout << "mCandlesOpenPrice: " << mCandlesOpenPrice.size() << " Average: " << pBu->getAverage(mCandlesOpenPrice) << std::endl;
     
     ELOG(INFO, "User account is normal. Entering while loop.");
 
@@ -117,25 +123,25 @@ void BinanceRequests::requestsLoop()
         if (pOpel->getIsActive())
         {
             if (mBuyOrders.size() > 0)
-                queryOrder("SOLBUSD", mBuyOrders.begin()->first);
+                queryOrder(mSymbol, mBuyOrders.begin()->first);
 
             if (mSellOrders.size() > 0)
                 for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
-                    queryOrder("SOLBUSD", it->first);
+                    queryOrder(mSymbol, it->first);
 
             if (mBoughtOrders.size() > 0)
-                // createNewOrder("SOLBUSD", "SELL", "LIMIT", "0.20", "91.95");
+                // createNewOrder(mSymbol, "SELL", "LIMIT", "0.20", "91.95");
 
             if (mEnough == false)
                 if (mBuyOrders.size() < 1)
-                    // createNewOrder("SOLBUSD", "BUY", "LIMIT", "0.20", "90.4");
+                    // createNewOrder(mSymbol, "BUY", "LIMIT", "0.20", "90.4");
         
             mEnough = true;
-            // currentOpenOrders("SOLBUSD");
+            // currentOpenOrders(mSymbol);
 
-            // cancelOrder("SOLBUSD", mBuyOrders.begin()->first);
+            // cancelOrder(mSymbol, mBuyOrders.begin()->first);
 
-            // cancelAllOpenOrders("SOLBUSD");
+            // cancelAllOpenOrders(mSymbol);
         }
 
         ELOG(INFO, "mBuyOrders: %d, mBoughtOrders: %d, mSellOrders: %d, mSoldOrders: %d.", mBuyOrders.size(), mBoughtOrders.size(), mSellOrders.size(), mSoldOrders.size());
@@ -750,7 +756,7 @@ bool BinanceRequests::currentOpenOrders(std::string symbol)
  * @return true 
  * @return false 
  */
-bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interval, std::string startTime, std::string limit)
+bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interval, std::string startTime)
 {
     std::string mBaseURL        = mBase + "/api/v3/klines";
 
@@ -763,7 +769,7 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
                                             {"symbol", symbol},
                                             {"interval", interval},
                                             {"startTime", startTime},
-                                            {"limit", limit}};
+                                            {"limit", "1000"}};
 
     cpr::Response mReq          = getRequest(url, headers, parameters);
 
@@ -783,15 +789,18 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
 
     // std::cout << mAPIJson.size() << std::endl;
 
-    float average = 0;
+    mCandlesSize = static_cast<int>(mAPIJson.size());
 
     for (int i = 0; i<static_cast<int>(mAPIJson.size()); i++)
     {
         std::cout << mAPIJson[i][4] << std::endl;
-        average = average + std::stof(mAPIJson[i][4].asString());
-    }
 
-    average = average / static_cast<int>(mAPIJson.size());
+        mCandlesOpenPrice.push_back(std::stof(mAPIJson[i][1].asString()));
+        mCandlesHighPrice.push_back(std::stof(mAPIJson[i][2].asString()));
+        mCandlesLowPrice.push_back(std::stof(mAPIJson[i][3].asString()));
+        mCandlesClosePrice.push_back(std::stof(mAPIJson[i][4].asString()));
+
+    }
 
     return true;
 }

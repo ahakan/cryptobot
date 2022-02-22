@@ -27,22 +27,29 @@
 #include <thread>
 #include <chrono>
 #include <map>
+#include <vector>
 #include <iterator>
 
 using OrderMap      = std::map<std::string, std::string>;
-
 using AllOrdersMap  = std::map<int, OrderMap>;
+
+using AverageVector = std::vector<float>;
 
 class Requests
 {
     private:
 
     protected:
-        BinanceUtilities        *pBu; 
+        BinanceUtilities        *pBu = NULL; 
 
         std::string             mBase;
         std::string             mAPI_KEY;
         std::string             mSECRET_KEY;
+        
+        std::string             mSymbol;
+        std::string             mInterval;
+        std::string             mBalanceSymbol;
+        std::string             mBalanceAmount;
 
         std::string             mRecvWindow = "10000";
 
@@ -51,6 +58,18 @@ class Requests
 
         AllOrdersMap            mSellOrders;
         AllOrdersMap            mSoldOrders;
+
+        int                     mCandlesSize;
+
+        float                   mCandlesOpenPriceAverage;
+        float                   mCandlesHighPriceAverage;
+        float                   mCandlesLowPriceAverage;
+        float                   mCandlesClosePriceAverage;
+
+        AverageVector           mCandlesOpenPrice;
+        AverageVector           mCandlesHighPrice;
+        AverageVector           mCandlesLowPrice;
+        AverageVector           mCandlesClosePrice;
 
     public:
                                 Requests(BinanceUtilities *pBu);
@@ -74,7 +93,7 @@ class BinanceRequests : public Requests
         bool                    queryOrder(std::string symbol, uint32_t orderId);
         bool                    currentOpenOrders(std::string symbol);
 
-        bool                    getCandlesticksData(std::string symbol, std::string interval, std::string startTime, std::string limit);
+        bool                    getCandlesticksData(std::string symbol, std::string interval, std::string startTime);
 
     public:
                                 BinanceRequests(BinanceUtilities *pBu);

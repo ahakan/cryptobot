@@ -54,9 +54,6 @@ class Opel
 
         void                        setIsActive(bool isActive);
         bool                        getIsActive();
-
-        void                        setSymbol(std::string Symbol);
-        std::string                 getSymbol();
 };
 
 #endif

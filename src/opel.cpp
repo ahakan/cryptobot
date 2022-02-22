@@ -77,29 +77,3 @@ bool Opel::getIsActive()
 {
     return mIsActive;
 }
-
-
-/**
- * @brief Set symbol
- * 
- * @param Symbol 
- */
-void Opel::setSymbol(std::string Symbol)
-{
-    mMutex.lock();
-    
-    mSymbol = Symbol;
-
-    mMutex.unlock();
-}
-
-
-/**
- * @brief Get symbol
- * 
- * @return std::string 
- */
-std::string Opel::getSymbol()
-{
-    return mSymbol;
-}

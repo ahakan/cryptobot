@@ -1,5 +1,4 @@
 #include "../inc/utilities.h"
-#include <string>
 
 
 /**
@@ -18,6 +17,10 @@ Utilities::Utilities()
         ELOG(ERROR, "Failed to initialize Utilities constructor.");
         exit(0);
     }
+
+    // Get user config
+
+    mUserJson       = mConfigJson["user"];
 
     // Get preferred exchange name
     mExchangeName   = mConfigJson["user"]["exchange"]["name"].asString();
@@ -90,6 +93,93 @@ std::string Utilities::getOldTimestamp(int day, int hour, int minute, int second
 
 
 /**
+ * @brief Get symbol
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getSymbol()
+{
+    return mUserJson["symbol"].asString();
+}
+
+
+/**
+ * @brief Get interval
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getInterval()
+{
+    return mUserJson["interval"].asString();
+}
+
+
+/**
+ * @brief Get balance symbol
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getBalanceSymbol()
+{
+    return mUserJson["balance"]["symbol"].asString();
+}
+
+
+/**
+ * @brief Get balance amount
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getBalanceAmount()
+{
+    return mUserJson["balance"]["amount"].asString();
+}
+
+
+/**
+ * @brief Upper to lower
+ * 
+ * @param data 
+ * @return std::string 
+ */
+std::string Utilities::upperToLower(std::string data)
+{
+    for (int i = 0; i < static_cast<int>(data.length()); i++)
+        data[i] = tolower(data[i]);
+
+    return data;
+}
+
+
+/**
+ * @brief Get average
+ * 
+ * @param vector 
+ * @return float 
+ */
+float Utilities::getAverage(std::vector<float> vector)
+{
+    if (vector.empty())
+    {
+        ELOG(ERROR, "Vector is empty.");
+        return 0;
+    }
+
+    int size = vector.size();
+    float average;
+
+    for (int i=0; i<size; i++)
+    {
+        average = average + vector[i];
+    }
+
+    average = average / size;
+
+    return average;
+}
+
+
+/**
  * @brief Construct a new BinanceUtilities::BinanceUtilities object
  * 
  */
@@ -146,7 +236,10 @@ std::string BinanceUtilities::getWebsocketPort()
  */
 std::string BinanceUtilities::getWebsocketEndpoint()
 {
-    return mWebsocketJson["endpoint"].asString();
+    std::string symbol = upperToLower(mUserJson["symbol"].asString());
+    std::string endpoint = "/ws/" + symbol + "@kline_" + mUserJson["interval"].asString();
+        
+    return endpoint;
 }
 
 /**

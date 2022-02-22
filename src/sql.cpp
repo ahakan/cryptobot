@@ -226,12 +226,10 @@ void Sql::getBOTTable()
     Record records          = selectQuery(sql);
 
     bool mIsActive          = std::stof(records[2].second);
-    std::string mSymbol     = records[3].second;
 
     Opel *pOpel = Opel::instance();
 
     pOpel->setIsActive(mIsActive);
-    pOpel->setSymbol(mSymbol);
 }
 
 

@@ -1,5 +1,11 @@
 {
     "user": {
+        "symbol": "SOLBUSD",
+        "balance": {
+            "symbol": "BUSD",
+            "amount": "400"
+        },
+        "interval": "15m",
         "exchange": {
             "name": "binance"
         }
@@ -7,8 +13,7 @@
     "binance": {
         "websocket": {
             "base": "stream.binance.com",
-            "port": "9443",
-            "endpoint": "/ws/solbnb@kline_1m"
+            "port": "9443"
         },
         "api": {
             "base": "https://api.binance.com",
