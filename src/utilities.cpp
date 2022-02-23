@@ -19,7 +19,6 @@ Utilities::Utilities()
     }
 
     // Get user config
-
     mUserJson       = mConfigJson["user"];
 
     // Get preferred exchange name
@@ -29,8 +28,6 @@ Utilities::Utilities()
     mExchangeJson   = mConfigJson[mExchangeName];
 
     ELOG(INFO, "Utilities constructor initialized.");
-
-    
 }
 
 
@@ -99,7 +96,18 @@ std::string Utilities::getOldTimestamp(int day, int hour, int minute, int second
  */
 std::string Utilities::getSymbol()
 {
-    return mUserJson["symbol"].asString();
+    return mUserJson["trade"]["symbol"].asString();
+}
+
+
+/**
+ * @brief Get follow symbol
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getFollowSymbol()
+{
+    return mUserJson["follow"]["symbol"].asString();
 }
 
 
@@ -121,7 +129,7 @@ std::string Utilities::getInterval()
  */
 std::string Utilities::getBalanceSymbol()
 {
-    return mUserJson["balance"]["symbol"].asString();
+    return mUserJson["trade"]["balance"]["symbol"].asString();
 }
 
 
@@ -132,7 +140,7 @@ std::string Utilities::getBalanceSymbol()
  */
 std::string Utilities::getBalanceAmount()
 {
-    return mUserJson["balance"]["amount"].asString();
+    return mUserJson["trade"]["balance"]["amount"].asString();
 }
 
 
@@ -230,17 +238,32 @@ std::string BinanceUtilities::getWebsocketPort()
 
 
 /**
- * @brief Return endpoint
+ * @brief Return trade symbol endpoint
  * 
  * @return std::string 
  */
-std::string BinanceUtilities::getWebsocketEndpoint()
+std::string BinanceUtilities::getWebsocketEndpointT()
 {
-    std::string symbol = upperToLower(mUserJson["symbol"].asString());
-    std::string endpoint = "/ws/" + symbol + "@kline_" + mUserJson["interval"].asString();
+    std::string symbol = upperToLower(getSymbol());
+    std::string endpoint = "/ws/" + symbol + "@kline_" + getInterval();
         
     return endpoint;
 }
+
+
+/**
+ * @brief Return follow symbol endpoint
+ * 
+ * @return std::string 
+ */
+std::string BinanceUtilities::getWebsocketEndpointF()
+{
+    std::string symbol = upperToLower(getFollowSymbol());
+    std::string endpoint = "/ws/" + symbol + "@kline_" + getInterval();
+        
+    return endpoint;
+}
+
 
 /**
  * @brief Return api base

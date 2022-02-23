@@ -47,6 +47,7 @@ class Utilities
         std::string             getTimestamp();
         std::string             getOldTimestamp(int day = 0, int hour = 0, int minute = 0, int second = 0, int millisecond = 0);
         std::string             getSymbol();
+        std::string             getFollowSymbol();
         std::string             getInterval();
         std::string             getBalanceSymbol();
         std::string             getBalanceAmount();
@@ -74,7 +75,8 @@ class BinanceUtilities : public Utilities
 
         std::string             getWebsocketBase();
         std::string             getWebsocketPort();
-        std::string             getWebsocketEndpoint();
+        std::string             getWebsocketEndpointT();
+        std::string             getWebsocketEndpointF();
 
         std::string             getAPIBase();
         std::string             getAPIKEY();

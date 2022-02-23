@@ -1,11 +1,16 @@
 {
     "user": {
-        "symbol": "SOLBUSD",
-        "balance": {
-            "symbol": "BUSD",
-            "amount": "400"
-        },
         "interval": "15m",
+        "trade": {
+            "symbol": "SOLBUSD",
+            "balance": {
+                "symbol": "BUSD",
+                "amount": "400"
+            }
+        },
+        "follow": {
+            "symbol": "BTCBUSD"
+        },
         "exchange": {
             "name": "binance"
         }

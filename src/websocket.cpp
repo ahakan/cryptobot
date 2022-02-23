@@ -2,6 +2,12 @@
 #include <boost/beast/core/buffers_to_string.hpp>
 
 
+/**
+ * @brief Construct a new Websocket::Websocket object
+ * 
+ * @param ioc 
+ * @param ctx 
+ */
 Websocket::Websocket(net::io_context& ioc, ssl::context& ctx)
     : mResolver(net::make_strand(ioc))
     , mWs(net::make_strand(ioc), ctx)
@@ -9,11 +15,24 @@ Websocket::Websocket(net::io_context& ioc, ssl::context& ctx)
     ELOG(INFO, "Websocket constructor initialized.");
 }
 
+
+/**
+ * @brief Destroy the Websocket::Websocket object
+ * 
+ */
 Websocket::~Websocket()
 {
     ELOG(INFO, "Websocket destructor.");
 }
 
+
+/**
+ * @brief Websocket run function
+ * 
+ * @param host 
+ * @param port 
+ * @param endpoint 
+ */
 void Websocket::run(std::string host, std::string port, std::string endpoint)
 {
     // Save these for later
@@ -31,6 +50,13 @@ void Websocket::run(std::string host, std::string port, std::string endpoint)
             shared_from_this()));
 }
 
+
+/**
+ * @brief Websocket resolve function
+ * 
+ * @param ec 
+ * @param results 
+ */
 void Websocket::resolve(beast::error_code ec, tcp::resolver::results_type results)
 {
     if (ec)
@@ -51,6 +77,13 @@ void Websocket::resolve(beast::error_code ec, tcp::resolver::results_type result
             shared_from_this()));
 }
 
+
+/**
+ * @brief Websocket connect function
+ * 
+ * @param ec 
+ * @param ep 
+ */
 void Websocket::connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type ep)
 {
     if (ec)
@@ -86,6 +119,12 @@ void Websocket::connect(beast::error_code ec, tcp::resolver::results_type::endpo
             shared_from_this()));
 }
 
+
+/**
+ * @brief Websocket ssl handshake function
+ * 
+ * @param ec 
+ */
 void Websocket::sslHandshake(beast::error_code ec)
 {
     if (ec)
@@ -119,6 +158,12 @@ void Websocket::sslHandshake(beast::error_code ec)
             shared_from_this()));
 }
 
+
+/**
+ * @brief Websocket handshake function
+ * 
+ * @param ec 
+ */
 void Websocket::handshake(beast::error_code ec)
 {
     if (ec)
@@ -136,6 +181,13 @@ void Websocket::handshake(beast::error_code ec)
             shared_from_this()));
 }
 
+
+/**
+ * @brief Websocket read function
+ * 
+ * @param ec 
+ * @param bytes_transferred 
+ */
 void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
@@ -165,21 +217,24 @@ void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
 
         bool mIsClosed                  = mCandlestickJson["k"].get("x", true).asBool();
 
+        std::string mSymbol             = mCandlestickJson["s"].asString();
         std::string mTimestamp          = mKData["t"].asString();
         std::string mOpenPrice          = mKData["o"].asString();
         std::string mClosePrice         = mKData["c"].asString();
         std::string mHighPrice          = mKData["h"].asString();
         std::string mLowPrice           = mKData["l"].asString();
 
-        struct candle_data *pCandleData = Opel::getCandleDataStruct();
+        std::cout << mSymbol << ": " << mClosePrice << std::endl;
 
-        pCandleData->isUpdated          = true;
-        pCandleData->timestamp          = std::stol(mTimestamp);
-        pCandleData->openPrice          = std::stof(mOpenPrice);
-        pCandleData->closePrice         = std::stof(mClosePrice);
-        pCandleData->highPrice          = std::stof(mHighPrice);
-        pCandleData->lowPrice           = std::stof(mLowPrice);
-        pCandleData->isClosed           = mIsClosed;
+        // struct candle_data *pCandleData = Opel::getCandleDataStruct();
+
+        // pCandleData->isUpdated          = true;
+        // pCandleData->timestamp          = std::stol(mTimestamp);
+        // pCandleData->openPrice          = std::stof(mOpenPrice);
+        // pCandleData->closePrice         = std::stof(mClosePrice);
+        // pCandleData->highPrice          = std::stof(mHighPrice);
+        // pCandleData->lowPrice           = std::stof(mLowPrice);
+        // pCandleData->isClosed           = mIsClosed;
         
         // Clear the buffer
         mBuffer.consume(mBuffer.size());
@@ -195,6 +250,12 @@ void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
             shared_from_this()));
 }
 
+
+/**
+ * @brief Websocket close function
+ * 
+ * @param ec 
+ */
 void Websocket::close(beast::error_code ec)
 {
     if (ec)
@@ -209,17 +270,27 @@ void Websocket::close(beast::error_code ec)
 }
 
 
+/**
+ * @brief Construct a new BinanceWebsocket::BinanceWebsocket object
+ * 
+ * @param pBu 
+ */
 BinanceWebsocket::BinanceWebsocket(BinanceUtilities *pBu)
 {
-    mHost       = pBu->getWebsocketBase();
-    mPort       = pBu->getWebsocketPort();
+    mHost           = pBu->getWebsocketBase();
+    mPort           = pBu->getWebsocketPort();
+    mEndpointT      = pBu->getWebsocketEndpointT();
+    mEndpointF      = pBu->getWebsocketEndpointF();
 
-    mEndpoint   = pBu->getWebsocketEndpoint();
-
-    ELOG(INFO, "Websocket constructor initialized. Host: %s, Port: %s, Endpoint: %s.", 
-                mHost.c_str(), mPort.c_str(), mEndpoint.c_str());
+    ELOG(INFO, "Websocket constructor initialized. Host: %s, Port: %s, Trade Endpoint: %s, Follow Endpoint: %s.", 
+                mHost.c_str(), mPort.c_str(), mEndpointT.c_str(), mEndpointF.c_str());
 }
 
+
+/**
+ * @brief İnitialize
+ * 
+ */
 void BinanceWebsocket::init()
 {
     // The io_context is required for all I/O
@@ -234,10 +305,11 @@ void BinanceWebsocket::init()
     ELOG(INFO, "Websocket init function.");
 
     // Launch the asynchronous operation
-    std::make_shared<Websocket>(ioc, ctx)->run(mHost, mPort, mEndpoint);
+    std::make_shared<Websocket>(ioc, ctx)->run(mHost, mPort, mEndpointT);
+
+    std::make_shared<Websocket>(ioc, ctx)->run(mHost, mPort, mEndpointF);
 
     // Run the I/O service. The call will return when
     // the socket is closed.
-
     ioc.run();
 }

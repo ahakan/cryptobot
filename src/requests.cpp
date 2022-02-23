@@ -91,13 +91,13 @@ void BinanceRequests::init()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
-        int day = 0;
-        int hour = 24;
-        int minute = 0;
-        int second = 0;
-        int millisecond = 0;
+        // int day = 0;
+        // int hour = 24;
+        // int minute = 0;
+        // int second = 0;
+        // int millisecond = 0;
 
-        getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+        // getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
     }
 
     std::cout << "mCandlesSize: " << mCandlesSize << std::endl;

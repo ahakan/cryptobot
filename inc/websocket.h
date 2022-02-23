@@ -75,7 +75,9 @@ class BinanceWebsocket
     private:
         std::string                 mHost;
         std::string                 mPort;
-        std::string                 mEndpoint;
+        std::string                 mEndpointT;
+        std::string                 mEndpointF;
+
 
     public:
                                     BinanceWebsocket(BinanceUtilities *pBu);
