@@ -28,11 +28,11 @@ Opel::~Opel()
  */
 Opel* Opel::instance()
 {
-    static Opel                 *pInstance;
+    static Opel *pInstance;
 
     if (pInstance == NULL)
     {
-            pInstance = new Opel();
+        pInstance = new Opel();
     }
 
     return pInstance;
@@ -46,8 +46,13 @@ Opel* Opel::instance()
  */
 struct candle_data* Opel::getCandleDataStruct()
 {
-    static struct candle_data* pCandleData = new candle_data;
+    static struct candle_data *pCandleData;
 
+    if (pCandleData == NULL)
+    {
+        pCandleData = new candle_data;
+    }
+    
     return pCandleData;
 }
 

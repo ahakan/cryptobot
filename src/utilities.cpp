@@ -159,6 +159,22 @@ std::string Utilities::upperToLower(std::string data)
 }
 
 
+
+std::string Utilities::roundPrice(std::string price, int tickSize)
+{
+    for (int i=static_cast<int>(price.size())-1; i>=0; i--)
+    {
+        if (price[i-tickSize] == 46)                        // 46=>. ASCII
+            break;
+
+        price[i] = 48;                                      // 48=>0 ASCII
+    }
+
+    return price;
+}
+
+
+
 /**
  * @brief Get average
  * 
@@ -184,6 +200,28 @@ float Utilities::getAverage(std::vector<float> vector)
     average = average / size;
 
     return average;
+}
+
+
+/**
+ * @brief Get tick size
+ * 
+ * @param data 
+ * @return int 
+ */
+int Utilities::getTickSize(std::string data)
+{
+    int tickSize = 10;                  // Why 10? Because data has \n and " => +2 
+
+    for (int i=static_cast<int>(data.size())-1; i>=0; i--)
+    {
+        if (data[i] == 49)              // 49=>1 ASCII
+            break;
+
+        tickSize--;
+    }
+
+    return tickSize;
 }
 
 

@@ -53,9 +53,11 @@ class Utilities
         std::string             getBalanceAmount();
 
         std::string             upperToLower(std::string data);
+        std::string             roundPrice(std::string price, int tickSize);
 
         float                   getAverage(std::vector<float> vector);
 
+        int                     getTickSize(std::string data);
 };
 
 

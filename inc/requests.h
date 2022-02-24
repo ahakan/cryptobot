@@ -46,8 +46,12 @@ class Requests
         std::string             mAPI_KEY;
         std::string             mSECRET_KEY;
         
+        int                     mSymbolTickSize;
+        int                     mFollowSymbolTickSize;
+
         std::string             mSymbol;
         std::string             mInterval;
+        std::string             mFollowSymbol;
         std::string             mBalanceSymbol;
         std::string             mBalanceAmount;
 
@@ -66,10 +70,15 @@ class Requests
         float                   mCandlesLowPriceAverage;
         float                   mCandlesClosePriceAverage;
 
-        AverageVector           mCandlesOpenPrice;
-        AverageVector           mCandlesHighPrice;
-        AverageVector           mCandlesLowPrice;
-        AverageVector           mCandlesClosePrice;
+        AverageVector           mTradeCandlesOpenPrices;
+        AverageVector           mTradeCandlesHighPrices;
+        AverageVector           mTradeCandlesLowPrices;
+        AverageVector           mTradeCandlesClosePrices;
+
+        AverageVector           mFollowCandlesOpenPrices;
+        AverageVector           mFollowCandlesHighPrices;
+        AverageVector           mFollowCandlesLowPrices;
+        AverageVector           mFollowCandlesClosePrices;
 
     public:
                                 Requests(BinanceUtilities *pBu);
@@ -79,7 +88,10 @@ class Requests
 class BinanceRequests : public Requests
 {
     private:        
-        void                    requestsLoop();
+        void                    buy();
+        void                    sell();
+        void                    buyAndSell();
+        void                    sellAndBuy();
 
         cpr::Response           getRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters);
         cpr::Response           postRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters);
@@ -94,6 +106,7 @@ class BinanceRequests : public Requests
         bool                    currentOpenOrders(std::string symbol);
 
         bool                    getCandlesticksData(std::string symbol, std::string interval, std::string startTime);
+        bool                    getTickSize(std::string symbol);
 
     public:
                                 BinanceRequests(BinanceUtilities *pBu);

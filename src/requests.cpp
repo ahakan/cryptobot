@@ -1,4 +1,5 @@
 #include "../inc/requests.h"
+#include <string>
 
 
 /**
@@ -15,6 +16,7 @@ Requests::Requests(BinanceUtilities *pBu)
 
     mSymbol         = pBu->getSymbol();
     mInterval       = pBu->getInterval();
+    mFollowSymbol   = pBu->getFollowSymbol();
     mBalanceSymbol  = pBu->getBalanceSymbol();
     mBalanceAmount  = pBu->getBalanceAmount();
 
@@ -24,7 +26,7 @@ Requests::Requests(BinanceUtilities *pBu)
         exit(0);
     }
 
-    ELOG(INFO, "Requests constructor initialized. mSymbol: %s, mInterval: %s, mBalanceSymbol: %s, mBalanceAmount: %s.", mSymbol.c_str(), mInterval.c_str(), mBalanceSymbol.c_str(), mBalanceAmount.c_str());
+    ELOG(INFO, "Requests constructor initialized. mSymbol: %s, mFollowSymbol: %s, mInterval: %s, mBalanceSymbol: %s, mBalanceAmount: %s.", mSymbol.c_str(), mFollowSymbol.c_str(), mInterval.c_str(), mBalanceSymbol.c_str(), mBalanceAmount.c_str());
 
 }
 
@@ -91,21 +93,35 @@ void BinanceRequests::init()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
-        // int day = 0;
-        // int hour = 24;
-        // int minute = 0;
-        // int second = 0;
-        // int millisecond = 0;
+        int day = 0;
+        int hour = 12;
+        int minute = 0;
+        int second = 0;
+        int millisecond = 0;
 
-        // getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+        getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+
+        getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+
+        // std::cout << "mCandlesSize: " << mCandlesSize << std::endl;
+        std::cout << "mTradeCandlesOpenPrices: " << mTradeCandlesOpenPrices.size() << " Average: " << pBu->getAverage(mTradeCandlesOpenPrices) << std::endl;
+        // std::cout << "mFollowCandlesOpenPrices: " << mFollowCandlesOpenPrices.size() << " Average: " << pBu->getAverage(mFollowCandlesOpenPrices) << std::endl;
+
+        std::string price = std::to_string(pBu->getAverage(mTradeCandlesOpenPrices));
+
+        // std::string price2 = std::to_string(pBu->getAverage(mFollowCandlesOpenPrices));
+
+
+        getTickSize(mSymbol);
+
+        std::cout << pBu->roundPrice(price, mSymbolTickSize) << std::endl;
+        // std::cout << pBu->roundPrice(price2, mTickSize) << std::endl;
+
     }
 
-    std::cout << "mCandlesSize: " << mCandlesSize << std::endl;
-    std::cout << "mCandlesOpenPrice: " << mCandlesOpenPrice.size() << " Average: " << pBu->getAverage(mCandlesOpenPrice) << std::endl;
-    
     ELOG(INFO, "User account is normal. Entering while loop.");
 
-    requestsLoop();
+    buy();
 }
 
 
@@ -113,7 +129,7 @@ void BinanceRequests::init()
  * @brief Requests main loop
  * 
  */
-void BinanceRequests::requestsLoop()
+void BinanceRequests::buy()
 {
     bool mEnough = false;
     while (1)
@@ -791,15 +807,80 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
 
     mCandlesSize = static_cast<int>(mAPIJson.size());
 
-    for (int i = 0; i<static_cast<int>(mAPIJson.size()); i++)
+    if (symbol == mSymbol)
     {
-        std::cout << mAPIJson[i][4] << std::endl;
+        for (int i = 0; i<static_cast<int>(mAPIJson.size()); i++)
+        {
+            // std::cout << mAPIJson[i][4] << std::endl;
 
-        mCandlesOpenPrice.push_back(std::stof(mAPIJson[i][1].asString()));
-        mCandlesHighPrice.push_back(std::stof(mAPIJson[i][2].asString()));
-        mCandlesLowPrice.push_back(std::stof(mAPIJson[i][3].asString()));
-        mCandlesClosePrice.push_back(std::stof(mAPIJson[i][4].asString()));
+            mTradeCandlesOpenPrices.push_back(std::stof(mAPIJson[i][1].asString()));
+            mTradeCandlesHighPrices.push_back(std::stof(mAPIJson[i][2].asString()));
+            mTradeCandlesLowPrices.push_back(std::stof(mAPIJson[i][3].asString()));
+            mTradeCandlesClosePrices.push_back(std::stof(mAPIJson[i][4].asString()));
+        }
+    }
 
+    if (symbol == mFollowSymbol)
+    {
+        for (int i = 0; i<static_cast<int>(mAPIJson.size()); i++)
+        {
+            mFollowCandlesOpenPrices.push_back(std::stof(mAPIJson[i][1].asString()));
+            mFollowCandlesHighPrices.push_back(std::stof(mAPIJson[i][2].asString()));
+            mFollowCandlesLowPrices.push_back(std::stof(mAPIJson[i][3].asString()));
+            mFollowCandlesClosePrices.push_back(std::stof(mAPIJson[i][4].asString()));
+        }
+    }
+    
+    return true;
+}
+
+
+bool BinanceRequests::getTickSize (std::string symbol)
+{
+    std::string mBaseURL        = mBase + "/api/v3/exchangeInfo";
+
+    std::string mTimestamp      = pBu->getTimestamp();
+
+    cpr::Url url                = cpr::Url{mBaseURL};
+    cpr::Header headers         = cpr::Header{
+                                            {"content-type", "application/json"}};
+    cpr::Parameters parameters  = cpr::Parameters{
+                                            {"symbol", symbol}};
+
+    cpr::Response mReq          = getRequest(url, headers, parameters);
+
+    ELOG(INFO, "Get Tick Size Request Timestamp: %s, URL: %s", mTimestamp.c_str(), mReq.url.c_str());
+
+    ELOG(INFO, "Get Tick Size Response Body: %s.", mReq.text.c_str());
+
+    Json::Value  mAPIJson;
+    Json::Reader mReader;
+    bool         mParsingSuccessful = mReader.parse(mReq.text.c_str(), mAPIJson);
+
+    if (!mParsingSuccessful)
+    {
+        ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    Json::Value mFiltersJson = mAPIJson["symbols"][0]["filters"];
+
+    for (int i = 0; i<static_cast<int>(mFiltersJson.size()); i++)
+    {
+        if (mFiltersJson[i]["filterType"] == "PRICE_FILTER")
+        {
+            if (symbol == mSymbol)
+            {
+                mSymbolTickSize = pBu->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
+                break;
+            }
+
+            if (symbol == mFollowSymbol)
+            {
+                mFollowSymbolTickSize = pBu->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
+                break;
+            }
+        }
     }
 
     return true;
