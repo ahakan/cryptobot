@@ -226,15 +226,15 @@ void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
 
         std::cout << mSymbol << ": " << mClosePrice << std::endl;
 
-        // struct candle_data *pCandleData = Opel::getCandleDataStruct();
+        struct candle_data *pCandleData = Opel::getCandleDataStruct();
 
-        // pCandleData->isUpdated          = true;
-        // pCandleData->timestamp          = std::stol(mTimestamp);
-        // pCandleData->openPrice          = std::stof(mOpenPrice);
-        // pCandleData->closePrice         = std::stof(mClosePrice);
-        // pCandleData->highPrice          = std::stof(mHighPrice);
-        // pCandleData->lowPrice           = std::stof(mLowPrice);
-        // pCandleData->isClosed           = mIsClosed;
+        pCandleData->isUpdated          = true;
+        pCandleData->timestamp          = mTimestamp;
+        pCandleData->openPrice          = mOpenPrice;
+        pCandleData->closePrice         = mClosePrice;
+        pCandleData->highPrice          = mHighPrice;
+        pCandleData->lowPrice           = mLowPrice;
+        pCandleData->isClosed           = mIsClosed;
         
         // Clear the buffer
         mBuffer.consume(mBuffer.size());

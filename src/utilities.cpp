@@ -159,7 +159,13 @@ std::string Utilities::upperToLower(std::string data)
 }
 
 
-
+/**
+ * @brief Round price
+ * 
+ * @param price 
+ * @param tickSize 
+ * @return std::string 
+ */
 std::string Utilities::roundPrice(std::string price, int tickSize)
 {
     for (int i=static_cast<int>(price.size())-1; i>=0; i--)
@@ -173,6 +179,27 @@ std::string Utilities::roundPrice(std::string price, int tickSize)
     return price;
 }
 
+
+/**
+ * @brief Compare two price if firstPrice high return true, if secondPrice high return false
+ * 
+ * @param firstPrice 
+ * @param secondPrice 
+ * @return float 
+ */
+float Utilities::comparePrice(std::string firstPrice, std::string secondPrice)
+{
+    float first = std::stof(firstPrice);
+
+    float second = std::stof(secondPrice);
+
+    if (first > second)
+    {
+        return true;
+    }
+
+    return false;
+}
 
 
 /**

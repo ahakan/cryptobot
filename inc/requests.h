@@ -65,15 +65,21 @@ class Requests
 
         int                     mCandlesSize;
 
-        float                   mCandlesOpenPriceAverage;
-        float                   mCandlesHighPriceAverage;
-        float                   mCandlesLowPriceAverage;
-        float                   mCandlesClosePriceAverage;
+        std::string             mTradeCandlesOpenPricesAverage;
+        std::string             mTradeCandlesHighPricesAverage;
+        std::string             mTradeCandlesLowPricesAverage;
+        std::string             mTradeCandlesClosePricesAverage;
 
         AverageVector           mTradeCandlesOpenPrices;
         AverageVector           mTradeCandlesHighPrices;
         AverageVector           mTradeCandlesLowPrices;
         AverageVector           mTradeCandlesClosePrices;
+
+
+        std::string             mFollowCandlesOpenPricesAverage;
+        std::string             mFollowCandlesHighPricesAverage;
+        std::string             mFollowCandlesLowPricesAverage;
+        std::string             mFollowCandlesClosePricesAverage;
 
         AverageVector           mFollowCandlesOpenPrices;
         AverageVector           mFollowCandlesHighPrices;

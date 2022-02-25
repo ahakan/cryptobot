@@ -91,35 +91,37 @@ void BinanceRequests::init()
             break;
         }
 
-        // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
-        // int day = 0;
-        // int hour = 12;
-        // int minute = 0;
-        // int second = 0;
-        // int millisecond = 0;
+        int day = 0;
+        int hour = 12;
+        int minute = 0;
+        int second = 0;
+        int millisecond = 0;
 
-        // getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+        getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
 
-        // getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+        getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
 
         // // std::cout << "mCandlesSize: " << mCandlesSize << std::endl;
         // std::cout << "mTradeCandlesOpenPrices: " << mTradeCandlesOpenPrices.size() << " Average: " << pBu->getAverage(mTradeCandlesOpenPrices) << std::endl;
         // // std::cout << "mFollowCandlesOpenPrices: " << mFollowCandlesOpenPrices.size() << " Average: " << pBu->getAverage(mFollowCandlesOpenPrices) << std::endl;
 
-        // std::string price = std::to_string(pBu->getAverage(mTradeCandlesOpenPrices));
+        mTradeCandlesOpenPricesAverage = std::to_string(pBu->getAverage(mTradeCandlesOpenPrices));
 
-        // std::string price2 = std::to_string(pBu->getAverage(mFollowCandlesOpenPrices));
-
-
-        // getTickSize(mSymbol);
-        // getTickSize(mFollowSymbol);
+        mFollowCandlesOpenPricesAverage = std::to_string(pBu->getAverage(mFollowCandlesOpenPrices));
 
 
-        // std::cout << pBu->roundPrice(price, mSymbolTickSize) << std::endl;
-        // std::cout << pBu->roundPrice(price2, mFollowSymbolTickSize) << std::endl;
+        getTickSize(mSymbol);
+        getTickSize(mFollowSymbol);
 
+
+        std::cout << pBu->roundPrice(mTradeCandlesOpenPricesAverage, mSymbolTickSize) << std::endl;
+        std::cout << pBu->roundPrice(mFollowCandlesOpenPricesAverage, mFollowSymbolTickSize) << std::endl;
+
+        std::cout << "Compare: " << pBu->comparePrice("11.22", "11.2") << std::endl;
     }
+
 
     getCoinBalance(mBalanceSymbol);
 

@@ -24,11 +24,11 @@
 struct candle_data
 {
     bool                    isUpdated = false;
-    unsigned long long int  timestamp;
-    float                   openPrice;
-    float                   closePrice;
-    float                   highPrice;
-    float                   lowPrice;
+    std::string             timestamp;
+    std::string             openPrice;
+    std::string             closePrice;
+    std::string             highPrice;
+    std::string             lowPrice;
     bool                    isClosed;
 };
 

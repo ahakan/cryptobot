@@ -41,11 +41,11 @@ Sql::Sql()
 
     // Create CLOSEDKLINES Table 
     sql = "CREATE TABLE CLOSEDKLINES("  \
-        "timestamp          INT PRIMARY KEY     NOT NULL," \
-        "openPrice          REAL," \
-        "closePrice         REAL," \
-        "highPrice          REAL," \
-        "lowPrice           REAL," \
+        "timestamp          TEXT PRIMARY KEY     NOT NULL," \
+        "openPrice          TEXT," \
+        "closePrice         TEXT," \
+        "highPrice          TEXT," \
+        "lowPrice           TEXT," \
         "datelocal          DATETIME DEFAULT (datetime('now','localtime')));";
 
     allQuery(sql);
@@ -267,15 +267,15 @@ bool Sql::addUserData(std::string status, bool read, bool spot, bool transfer)
  * @return true 
  * @return false 
  */
-bool Sql::addClosedKlinePrice(unsigned long long int timestamp, float openPrice, float closePrice, float highPrice, float lowPrice)
+bool Sql::addClosedKlinePrice(std::string timestamp, std::string openPrice, std::string closePrice, std::string highPrice, std::string lowPrice)
 {
     // Create SQL statement
     sql = "INSERT INTO CLOSEDKLINES (timestamp, openPrice, closePrice, highPrice, lowPrice) "  \
-            "VALUES (" + std::to_string(timestamp) + \
-            ", " + std::to_string(openPrice) + \
-            ", " + std::to_string(closePrice) + \
-            ", " + std::to_string(highPrice) + \
-            ", " + std::to_string(lowPrice) + ");";
+            "VALUES (" + timestamp + \
+            ", " + openPrice + \
+            ", " + closePrice + \
+            ", " + highPrice + \
+            ", " + lowPrice + ");";
 
     return allQuery(sql);
 }

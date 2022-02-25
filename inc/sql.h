@@ -50,7 +50,7 @@ class Sql
         void                        init();
         void                        getBOTTable();
         bool                        addUserData(std::string status, bool read, bool spot, bool transfer);
-        bool                        addClosedKlinePrice(unsigned long long int timestamp, float openPrice, float closePrice, float highPrice, float lowPrice);
+        bool                        addClosedKlinePrice(std::string timestamp, std::string openPrice, std::string closePrice, std::string highPrice, std::string lowPrice);
 };
 
 #endif

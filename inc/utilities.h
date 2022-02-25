@@ -54,6 +54,8 @@ class Utilities
 
         std::string             upperToLower(std::string data);
         std::string             roundPrice(std::string price, int tickSize);
+        
+        float                   comparePrice(std::string firstPrice, std::string secondPrice);
 
         float                   getAverage(std::vector<float> vector);
 
