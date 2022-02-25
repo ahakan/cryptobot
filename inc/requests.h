@@ -97,16 +97,21 @@ class BinanceRequests : public Requests
         cpr::Response           postRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters);
         cpr::Response           deleteRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters);
 
+        // Wallet Endpoints
         bool                    getAccountStatus();
         bool                    getAPIKeyPermission();
+        bool                    getCoinBalance(std::string symbol);
+
+        // Market Data Endpoints
+        bool                    getCandlesticksData(std::string symbol, std::string interval, std::string startTime);
+        bool                    getTickSize(std::string symbol);
+
+        // Spot Account/Trade
         bool                    createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price);
         bool                    cancelOrder(std::string symbol, uint32_t orderId);
         bool                    cancelAllOpenOrders(std::string symbol);
         bool                    queryOrder(std::string symbol, uint32_t orderId);
         bool                    currentOpenOrders(std::string symbol);
-
-        bool                    getCandlesticksData(std::string symbol, std::string interval, std::string startTime);
-        bool                    getTickSize(std::string symbol);
 
     public:
                                 BinanceRequests(BinanceUtilities *pBu);
