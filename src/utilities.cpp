@@ -181,13 +181,42 @@ std::string Utilities::roundPrice(std::string price, int tickSize)
 
 
 /**
+ * @brief Get average
+ * 
+ * @param vector 
+ * @return std::string 
+ */
+std::string Utilities::getAverage(std::vector<std::string> vector)
+{
+    if (vector.empty())
+    {
+        ELOG(ERROR, "Vector is empty.");
+        return 0;
+    }
+
+    int size        = vector.size();
+    float average   = 0;
+
+    for (int i=0; i<size; i++)
+    {
+        average += std::stof(vector[i]);
+    }
+
+    average = average / size;
+
+    return std::to_string(average);
+}
+
+
+/**
  * @brief Compare two price if firstPrice high return true, if secondPrice high return false
  * 
  * @param firstPrice 
  * @param secondPrice 
- * @return float 
+ * @return true 
+ * @return false 
  */
-float Utilities::comparePrice(std::string firstPrice, std::string secondPrice)
+bool Utilities::comparePrice(std::string firstPrice, std::string secondPrice)
 {
     float first = std::stof(firstPrice);
 
@@ -199,34 +228,6 @@ float Utilities::comparePrice(std::string firstPrice, std::string secondPrice)
     }
 
     return false;
-}
-
-
-/**
- * @brief Get average
- * 
- * @param vector 
- * @return float 
- */
-float Utilities::getAverage(std::vector<float> vector)
-{
-    if (vector.empty())
-    {
-        ELOG(ERROR, "Vector is empty.");
-        return 0;
-    }
-
-    int size = vector.size();
-    float average;
-
-    for (int i=0; i<size; i++)
-    {
-        average = average + vector[i];
-    }
-
-    average = average / size;
-
-    return average;
 }
 
 

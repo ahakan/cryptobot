@@ -33,7 +33,7 @@
 using OrderMap      = std::map<std::string, std::string>;
 using AllOrdersMap  = std::map<int, OrderMap>;
 
-using AverageVector = std::vector<float>;
+using AverageVector = std::vector<std::string>;
 
 class Requests
 {
@@ -74,7 +74,6 @@ class Requests
         AverageVector           mTradeCandlesHighPrices;
         AverageVector           mTradeCandlesLowPrices;
         AverageVector           mTradeCandlesClosePrices;
-
 
         std::string             mFollowCandlesOpenPricesAverage;
         std::string             mFollowCandlesHighPricesAverage;

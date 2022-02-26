@@ -104,12 +104,12 @@ void BinanceRequests::init()
         getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
 
         // // std::cout << "mCandlesSize: " << mCandlesSize << std::endl;
-        // std::cout << "mTradeCandlesOpenPrices: " << mTradeCandlesOpenPrices.size() << " Average: " << pBu->getAverage(mTradeCandlesOpenPrices) << std::endl;
-        // // std::cout << "mFollowCandlesOpenPrices: " << mFollowCandlesOpenPrices.size() << " Average: " << pBu->getAverage(mFollowCandlesOpenPrices) << std::endl;
+        std::cout << "mTradeCandlesOpenPrices: " << mTradeCandlesOpenPrices.size() << " Average: " << pBu->getAverage(mTradeCandlesOpenPrices) << std::endl;
+        std::cout << "mFollowCandlesOpenPrices: " << mFollowCandlesOpenPrices.size() << " Average: " << pBu->getAverage(mFollowCandlesOpenPrices) << std::endl;
 
-        mTradeCandlesOpenPricesAverage = std::to_string(pBu->getAverage(mTradeCandlesOpenPrices));
+        mTradeCandlesOpenPricesAverage = pBu->getAverage(mTradeCandlesOpenPrices);
 
-        mFollowCandlesOpenPricesAverage = std::to_string(pBu->getAverage(mFollowCandlesOpenPrices));
+        mFollowCandlesOpenPricesAverage = pBu->getAverage(mFollowCandlesOpenPrices);
 
 
         getTickSize(mSymbol);
@@ -429,6 +429,8 @@ bool BinanceRequests::getCoinBalance (std::string symbol)
         if (mAPIJson[i]["coin"] == symbol)
         {
             std::cout << mAPIJson[i]["free"] << std::endl;
+
+            ELOG(INFO, "Get Coin Balance Symbol: %s, Balance: %s.", mAPIJson[i]["coin"].asCString(), mAPIJson[i]["free"].asCString());
         }
     }
 
@@ -487,10 +489,10 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
         {
             // std::cout << mAPIJson[i][4] << std::endl;
 
-            mTradeCandlesOpenPrices.push_back(std::stof(mAPIJson[i][1].asString()));
-            mTradeCandlesHighPrices.push_back(std::stof(mAPIJson[i][2].asString()));
-            mTradeCandlesLowPrices.push_back(std::stof(mAPIJson[i][3].asString()));
-            mTradeCandlesClosePrices.push_back(std::stof(mAPIJson[i][4].asString()));
+            mTradeCandlesOpenPrices.push_back(mAPIJson[i][1].asString());
+            mTradeCandlesHighPrices.push_back(mAPIJson[i][2].asString());
+            mTradeCandlesLowPrices.push_back(mAPIJson[i][3].asString());
+            mTradeCandlesClosePrices.push_back(mAPIJson[i][4].asString());
         }
     }
 
@@ -498,10 +500,10 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
     {
         for (int i = 0; i<static_cast<int>(mAPIJson.size()); i++)
         {
-            mFollowCandlesOpenPrices.push_back(std::stof(mAPIJson[i][1].asString()));
-            mFollowCandlesHighPrices.push_back(std::stof(mAPIJson[i][2].asString()));
-            mFollowCandlesLowPrices.push_back(std::stof(mAPIJson[i][3].asString()));
-            mFollowCandlesClosePrices.push_back(std::stof(mAPIJson[i][4].asString()));
+            mFollowCandlesOpenPrices.push_back(mAPIJson[i][1].asString());
+            mFollowCandlesHighPrices.push_back(mAPIJson[i][2].asString());
+            mFollowCandlesLowPrices.push_back(mAPIJson[i][3].asString());
+            mFollowCandlesClosePrices.push_back(mAPIJson[i][4].asString());
         }
     }
     
