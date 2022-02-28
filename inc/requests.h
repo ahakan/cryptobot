@@ -17,13 +17,13 @@
 #include "utilities.h"
 
 // Libraries
-#include <cpr/cpr.h>
-#include <cpr/response.h>
-#include <cpr/timeout.h>
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include "lib/httplib.h"
 #include <json/json.h>
 
 // Standard Libraries
 #include <iostream>
+#include <string>
 #include <thread>
 #include <chrono>
 #include <map>
@@ -98,9 +98,9 @@ class BinanceRequests : public Requests
         void                    buyAndSell();
         void                    sellAndBuy();
 
-        cpr::Response           getRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters);
-        cpr::Response           postRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters);
-        cpr::Response           deleteRequest(cpr::Url url, cpr::Header headers, cpr::Parameters parameters);
+        std::string             getRequest(std::string endpoint, std::string parameters, httplib::Headers headers);
+        std::string             postRequest(std::string endpoint, std::string parameters, httplib::Params signature, httplib::Headers headers);
+        std::string             deleteRequest(std::string endpoint, std::string parameters, httplib::Headers headers);
 
         // Wallet Endpoints
         bool                    getAccountStatus();

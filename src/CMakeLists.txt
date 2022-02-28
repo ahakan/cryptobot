@@ -24,14 +24,6 @@ set_target_properties(libsqlite PROPERTIES
     "${CMAKE_SOURCE_DIR}/lib/libsqlite-3.37.2/inc"
 )
 
-add_library(libcpr SHARED IMPORTED)
-set_target_properties(libcpr PROPERTIES
-  IMPORTED_LOCATION 
-    "${CMAKE_SOURCE_DIR}/lib/libcpr-1.7.2/lib/libcpr.so"
-  INTERFACE_INCLUDE_DIRECTORIES 
-    "${CMAKE_SOURCE_DIR}/lib/libcpr-1.7.2/inc"
-)
-
 find_package(Threads REQUIRED)
 
 set(Boost_USE_STATIC_LIBS OFF) 
@@ -53,4 +45,4 @@ set(SOURCES
 )
 
 add_executable(cryptobot ${SOURCES}) 
-target_link_libraries(cryptobot libjson libelog libsqlite libcpr -lssl -lcrypto -lcap -lcurl ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+target_link_libraries(cryptobot libjson libelog libsqlite -lssl -lcrypto -lcap -lcurl ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})

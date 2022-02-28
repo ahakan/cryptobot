@@ -16,7 +16,7 @@
 // Includes
 #include "opel.h"
 #include "utilities.h"
-#include "certificates.hpp"
+#include "certificates/certificates.hpp"
 
 // Libraries
 #include <elog.h>
