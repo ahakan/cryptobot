@@ -2,10 +2,14 @@
     "user": {
         "interval": "15m",
         "trade": {
-            "symbol": "SOLBNB",
+            "symbol": "SOLBUSD",
             "balance": {
-                "symbol": "BNB",
+                "symbol": "BUSD",
                 "amount": "400"
+            },
+            "average": {
+                "auto-calculate": 0,
+                "amount": "0.20"
             }
         },
         "follow": {

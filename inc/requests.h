@@ -54,6 +54,9 @@ class Requests
         std::string             mFollowSymbol;
         std::string             mBalanceSymbol;
         std::string             mBalanceAmount;
+        std::string             mAverageAmount;
+
+        bool                    mAverageAutoCalculate;
 
         std::string             mRecvWindow = "10000";
 

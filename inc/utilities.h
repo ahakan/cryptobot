@@ -51,10 +51,14 @@ class Utilities
         std::string             getInterval();
         std::string             getBalanceSymbol();
         std::string             getBalanceAmount();
+        std::string             getAverageAmount();
+
+        bool                    getAverageAutoCalculate();
 
         std::string             upperToLower(std::string data);
         std::string             roundPrice(std::string price, int tickSize);
-        std::string             getAverage(std::vector<std::string> vector);
+        std::string             calculateAverage(std::vector<std::string> vector);
+        std::string             calculateRSI(std::vector<std::string> vector, int period = 24);
         
         bool                    comparePrice(std::string firstPrice, std::string secondPrice);
 

@@ -8,16 +8,18 @@
  */
 Requests::Requests(BinanceUtilities *pBu)
 {
-    this->pBu       = pBu;
-    mBase           = pBu->getAPIBase();
-    mAPI_KEY        = pBu->getAPIKEY();
-    mSECRET_KEY     = pBu->getAPISECRETKEY();
+    this->pBu               = pBu;
+    mBase                   = pBu->getAPIBase();
+    mAPI_KEY                = pBu->getAPIKEY();
+    mSECRET_KEY             = pBu->getAPISECRETKEY();
 
-    mSymbol         = pBu->getSymbol();
-    mInterval       = pBu->getInterval();
-    mFollowSymbol   = pBu->getFollowSymbol();
-    mBalanceSymbol  = pBu->getBalanceSymbol();
-    mBalanceAmount  = pBu->getBalanceAmount();
+    mSymbol                 = pBu->getSymbol();
+    mInterval               = pBu->getInterval();
+    mFollowSymbol           = pBu->getFollowSymbol();
+    mBalanceSymbol          = pBu->getBalanceSymbol();
+    mBalanceAmount          = pBu->getBalanceAmount();
+    mAverageAmount          = pBu->getAverageAmount();
+    mAverageAutoCalculate   = pBu->getAverageAutoCalculate();
 
     if (mAPI_KEY.length() == 0 || mSECRET_KEY.length() == 0)
     {
@@ -69,6 +71,14 @@ BinanceRequests::~BinanceRequests()
  */
 void BinanceRequests::init()
 {
+    int day = 0;
+    int hour = 12;
+    int minute = 0;
+    int second = 0;
+    int millisecond = 0;
+
+    getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+
     while (1)
     {
         bool mAccountStatus         = getAccountStatus();
@@ -95,23 +105,25 @@ void BinanceRequests::init()
         
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
-        int day = 0;
-        int hour = 12;
-        int minute = 0;
-        int second = 0;
-        int millisecond = 0;
+        // int day = 0;
+        // int hour = 12;
+        // int minute = 0;
+        // int second = 0;
+        // int millisecond = 0;
 
-        getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+        // getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+
+        std::cout << pBu->calculateRSI(mTradeCandlesClosePrices) << std::endl;
 
         // getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
 
         // // // std::cout << "mCandlesSize: " << mCandlesSize << std::endl;
-        // std::cout << "mTradeCandlesOpenPrices: " << mTradeCandlesOpenPrices.size() << " Average: " << pBu->getAverage(mTradeCandlesOpenPrices) << std::endl;
-        // std::cout << "mFollowCandlesOpenPrices: " << mFollowCandlesOpenPrices.size() << " Average: " << pBu->getAverage(mFollowCandlesOpenPrices) << std::endl;
+        // std::cout << "mTradeCandlesOpenPrices: " << mTradeCandlesOpenPrices.size() << " Average: " << pBu->calculateAverage(mTradeCandlesOpenPrices) << std::endl;
+        // std::cout << "mFollowCandlesOpenPrices: " << mFollowCandlesOpenPrices.size() << " Average: " << pBu->calculateAverage(mFollowCandlesOpenPrices) << std::endl;
 
-        // mTradeCandlesOpenPricesAverage = pBu->getAverage(mTradeCandlesOpenPrices);
+        // mTradeCandlesOpenPricesAverage = pBu->calculateAverage(mTradeCandlesOpenPrices);
 
-        // mFollowCandlesOpenPricesAverage = pBu->getAverage(mFollowCandlesOpenPrices);
+        // mFollowCandlesOpenPricesAverage = pBu->calculateAverage(mFollowCandlesOpenPrices);
 
         getTickSize(mSymbol);
         // getTickSize(mFollowSymbol);
@@ -222,10 +234,14 @@ std::string BinanceRequests::getRequest(std::string endpoint, std::string parame
     {
         return res->body;
     } 
-    
-    // auto err = res.error();
-        
-    return "{'Message': 'Error.'}";
+    else
+    {
+        auto err = res.error();
+
+        std::string errorMessage = "{'Error': '"+httplib::to_string(err)+"'}"; 
+
+        return errorMessage;
+    }
 }
 
 
@@ -253,10 +269,14 @@ std::string BinanceRequests::postRequest(std::string endpoint, std::string param
     {
         return res->body;
     } 
-    
-    // auto err = res.error();
-        
-    return "{'Message': 'Error.'}";
+    else
+    {
+        auto err = res.error();
+
+        std::string errorMessage = "{'Error': '"+httplib::to_string(err)+"'}"; 
+
+        return errorMessage;
+    }
 }
 
 
@@ -284,10 +304,14 @@ std::string BinanceRequests::deleteRequest(std::string endpoint, std::string par
     {
         return res->body;
     } 
-    
-    // auto err = res.error();
-        
-    return "{'Message': 'Error.'}";
+    else
+    {
+        auto err = res.error();
+
+        std::string errorMessage = "{'Error': '"+httplib::to_string(err)+"'}"; 
+
+        return errorMessage;
+    }
 }
 
 

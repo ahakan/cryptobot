@@ -1,4 +1,5 @@
 #include "../inc/utilities.h"
+#include <string>
 
 
 /**
@@ -145,6 +146,29 @@ std::string Utilities::getBalanceAmount()
 
 
 /**
+ * @brief Get average amount
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getAverageAmount()
+{
+    return mUserJson["trade"]["average"]["amount"].asString();
+}
+
+
+/**
+ * @brief Get average auto calculate
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Utilities::getAverageAutoCalculate()
+{
+    return mUserJson["trade"]["average"]["auto-calculate"].asBool();
+}
+
+
+/**
  * @brief Upper to lower
  * 
  * @param data 
@@ -181,16 +205,16 @@ std::string Utilities::roundPrice(std::string price, int tickSize)
 
 
 /**
- * @brief Get average
+ * @brief Calculate average
  * 
  * @param vector 
  * @return std::string 
  */
-std::string Utilities::getAverage(std::vector<std::string> vector)
+std::string Utilities::calculateAverage(std::vector<std::string> vector)
 {
     if (vector.empty())
     {
-        ELOG(ERROR, "Vector is empty.");
+        ELOG(ERROR, "Average Vector is empty.");
         return 0;
     }
 
@@ -205,6 +229,54 @@ std::string Utilities::getAverage(std::vector<std::string> vector)
     average = average / size;
 
     return std::to_string(average);
+}
+
+
+/**
+ * @brief Calculate RSI
+ * 
+ * @param vector 
+ * @param period 
+ * @return std::string 
+ */
+std::string Utilities::calculateRSI(std::vector<std::string> vector, int period)
+{
+    if (vector.empty())
+    {
+        ELOG(ERROR, "RSI Vector is empty.");
+        return 0;
+    }
+
+    int size            = vector.size();
+    int loopbackPeriod  = size-period;
+    float sumGain       = 0;
+    float sumLoss       = 0;
+
+    // std::cout << "size-1: " << size-1 << "\tloopbackPeriod: " << loopbackPeriod << std::endl;
+
+    for (int i=size-1; i>loopbackPeriod; i--)
+    {
+        float difference = std::stof(vector[i]) - std::stof(vector[i-1]);
+
+        // std::cout << i << ": " << std::stof(vector[i]) << "\t" << i-1 << ": " << std::stof(vector[i-1]) << "\tdifference: " << difference << std::endl;
+
+        if (difference >= 0)
+        {
+            sumGain += difference;
+        }
+        else
+        {
+            sumLoss -= difference;
+        }
+    }
+
+    if (sumGain == 0) return "0";
+
+    float relativeStrength = sumGain / sumLoss;
+
+    std::string RSI = std::to_string(100.0 - (100.0 / (1 + relativeStrength)));
+
+    return RSI;
 }
 
 
