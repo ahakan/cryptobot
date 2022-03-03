@@ -43,6 +43,53 @@ Requests::~Requests()
 
 
 /**
+ * @brief Calculate averages and rsi
+ * 
+ */
+bool Requests::getAveragesAndRSI()
+{
+    if (mTradeCandlesClosePrices.size() != 0)
+    {
+        mTradeCandlesCloseRSI               = pBu->calculateRSI(mTradeCandlesClosePrices);
+
+        mTradeCandlesOpenPricesAverage      = pBu->calculateAverage(mTradeCandlesOpenPrices);
+        mTradeCandlesHighPricesAverage      = pBu->calculateAverage(mTradeCandlesHighPrices);
+        mTradeCandlesLowPricesAverage       = pBu->calculateAverage(mTradeCandlesLowPrices);
+        mTradeCandlesClosePricesAverage     = pBu->calculateAverage(mTradeCandlesClosePrices);
+
+
+        mFollowCandlesCloseRSI              = pBu->calculateRSI(mFollowCandlesClosePrices);
+
+        mFollowCandlesOpenPricesAverage     = pBu->calculateAverage(mFollowCandlesOpenPrices);
+        mFollowCandlesHighPricesAverage     = pBu->calculateAverage(mFollowCandlesHighPrices);
+        mFollowCandlesLowPricesAverage      = pBu->calculateAverage(mFollowCandlesLowPrices);
+        mFollowCandlesClosePricesAverage    = pBu->calculateAverage(mFollowCandlesClosePrices);
+
+        ELOG(INFO, "Calculated Averages and RSI. Trade Close Average: %s, Trade RSI: %s, Follow RSI: %s.", mTradeCandlesClosePricesAverage.c_str(), mTradeCandlesCloseRSI.c_str(), mFollowCandlesCloseRSI.c_str());
+
+        mTradeCandlesOpenPricesAverage      = pBu->roundPrice(mTradeCandlesOpenPricesAverage, mSymbolTickSize);
+        mTradeCandlesHighPricesAverage      = pBu->roundPrice(mTradeCandlesHighPricesAverage, mSymbolTickSize);
+        mTradeCandlesLowPricesAverage       = pBu->roundPrice(mTradeCandlesLowPricesAverage, mSymbolTickSize);
+        mTradeCandlesClosePricesAverage     = pBu->roundPrice(mTradeCandlesClosePricesAverage, mSymbolTickSize);
+
+        mFollowCandlesOpenPricesAverage     = pBu->roundPrice(mFollowCandlesOpenPricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesHighPricesAverage     = pBu->roundPrice(mFollowCandlesHighPricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesLowPricesAverage      = pBu->roundPrice(mFollowCandlesLowPricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesClosePricesAverage    = pBu->roundPrice(mFollowCandlesClosePricesAverage, mFollowSymbolTickSize);
+
+        ELOG(INFO, "Rounded Trade Averages. TOA: %s, THA: %s, TLA: %s, TCA: %s", mTradeCandlesOpenPricesAverage.c_str(), mTradeCandlesHighPricesAverage.c_str(), mTradeCandlesLowPricesAverage.c_str(), mTradeCandlesClosePricesAverage.c_str());
+        ELOG(INFO, "Rounded Follow Averages. FOA: %s, FHA: %s, FLA: %s, FCA: %s", mFollowCandlesOpenPricesAverage.c_str(), mFollowCandlesHighPricesAverage.c_str(), mFollowCandlesLowPricesAverage.c_str(), mFollowCandlesClosePricesAverage.c_str());
+
+        return true;
+    }
+
+    ELOG(ERROR, "Failed to Calculate Averages and RSI.");
+    
+    return false;
+}
+
+
+/**
  * @brief Construct a new BinanceRequests::BinanceRequests object
  * 
  * @param pBu 
@@ -71,76 +118,70 @@ BinanceRequests::~BinanceRequests()
  */
 void BinanceRequests::init()
 {
-    int day = 0;
-    int hour = 12;
-    int minute = 0;
-    int second = 0;
-    int millisecond = 0;
-
-    getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
-
     while (1)
     {
-        bool mAccountStatus         = getAccountStatus();
-
-        if (!mAccountStatus)
+        while (!mAccountStatus)
         {
-            ELOG(ERROR, "User account status is not normal. Can't enter main loop.");
-        }
+            mAccountStatus         = getAccountStatus();
 
-        if (mAccountStatus)
-        {
-            bool mAPIKeyPermission      = getAPIKeyPermission();
-
-            if (!mAPIKeyPermission)
+            if (!mAccountStatus)
             {
-                ELOG(ERROR, "User API Spot and Margin trading is not active. Can't enter main loop.");
+                ELOG(ERROR, "User account status is not normal. Can't enter main loop.");
             }
 
-            if (mAPIKeyPermission)
+            if (mAccountStatus)
             {
-                // break;
+                mAPIKeyPermission      = getAPIKeyPermission();
+
+                if (!mAPIKeyPermission)
+                {
+                    ELOG(ERROR, "User API Spot and Margin trading is not active. Can't enter main loop.");
+                }
+
+                if (mAPIKeyPermission)
+                {
+                    break;
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+        }
+        
+        bool  mGetSymbolTickSize = getTickSize(mSymbol);
+        bool  mGetFollowTickSize = getTickSize(mFollowSymbol);
+
+        if (mGetSymbolTickSize && mGetFollowTickSize)
+        {
+            int day             = 0;
+            int hour            = 12;
+            int minute          = 0;
+            int second          = 0;
+            int millisecond     = 0;
+
+            bool mGetTradeSymbolCandles     = getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+            bool mGetFollowSymbolCandles    = getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+
+            if (mGetTradeSymbolCandles && mGetFollowSymbolCandles)
+            {
+                bool mCalculatesAveragesRSI = getAveragesAndRSI();
+
+                if (mCalculatesAveragesRSI)
+                {
+                    bool mGetWalletBalance  = getCoinBalance(mBalanceSymbol);
+
+                    if (mGetWalletBalance)
+                    {
+                        ELOG(INFO, "Checked User Account and Wallet. Calculated Averages and RSI. Starting Trade...");
+
+                        break;
+                    }
+                }
             }
         }
         
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-
-        // int day = 0;
-        // int hour = 12;
-        // int minute = 0;
-        // int second = 0;
-        // int millisecond = 0;
-
-        // getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
-
-        std::cout << pBu->calculateRSI(mTradeCandlesClosePrices) << std::endl;
-
-        // getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
-
-        // // // std::cout << "mCandlesSize: " << mCandlesSize << std::endl;
-        // std::cout << "mTradeCandlesOpenPrices: " << mTradeCandlesOpenPrices.size() << " Average: " << pBu->calculateAverage(mTradeCandlesOpenPrices) << std::endl;
-        // std::cout << "mFollowCandlesOpenPrices: " << mFollowCandlesOpenPrices.size() << " Average: " << pBu->calculateAverage(mFollowCandlesOpenPrices) << std::endl;
-
-        // mTradeCandlesOpenPricesAverage = pBu->calculateAverage(mTradeCandlesOpenPrices);
-
-        // mFollowCandlesOpenPricesAverage = pBu->calculateAverage(mFollowCandlesOpenPrices);
-
-        getTickSize(mSymbol);
-        // getTickSize(mFollowSymbol);
-
-        // std::cout << pBu->roundPrice(mTradeCandlesOpenPricesAverage, mSymbolTickSize) << std::endl;
-        // std::cout << pBu->roundPrice(mFollowCandlesOpenPricesAverage, mFollowSymbolTickSize) << std::endl;
-
-        // std::cout << "Compare: " << pBu->comparePrice("11.22", "11.2") << std::endl;
     }
 
-
-    getCoinBalance(mBalanceSymbol);
-
-
-    ELOG(INFO, "User account is normal. Entering while loop.");
-
-    // buy();
+    // newBuy();
 }
 
 
@@ -148,7 +189,7 @@ void BinanceRequests::init()
 //  * @brief Requests main loop
 //  * 
 //  */
-// void BinanceRequests::buy()
+// void BinanceRequests::newBuy()
 // {
 //     bool mEnough = false;
 //     while (1)
@@ -337,10 +378,10 @@ bool BinanceRequests::getAccountStatus()
 
     httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
+    
+    ELOG(INFO, "Get Account Status Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
 
     std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
-
-    ELOG(INFO, "Get Account Status Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
 
     ELOG(INFO, "Get Account Status Response Body: %s.", mResponseBody.c_str());
 
@@ -389,11 +430,11 @@ bool BinanceRequests::getAPIKeyPermission()
 
 
     httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
-
-
-    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
+    
 
     ELOG(INFO, "Get API KEY Permission Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+
+    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
     ELOG(INFO, "Get API KEY Permission Response Body: %s.", mResponseBody.c_str());
 
@@ -445,9 +486,9 @@ bool BinanceRequests::getCoinBalance (std::string symbol)
     httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
-
     ELOG(INFO, "Get Coin Balance Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+
+    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
     ELOG(INFO, "Get Coin Balance Response Body: %s.", mResponseBody.c_str());
 
@@ -465,9 +506,16 @@ bool BinanceRequests::getCoinBalance (std::string symbol)
     {
         if (mAPIJson[i]["coin"] == symbol)
         {
-            std::cout << mAPIJson[i]["free"] << std::endl;
+            std::string mWalletBalanceAmount = mAPIJson[i]["free"].asString();
 
             ELOG(INFO, "Get Coin Balance Symbol: %s, Balance: %s.", mAPIJson[i]["coin"].asCString(), mAPIJson[i]["free"].asCString());
+
+            bool isAmountEnough = pBu->comparePrice(mWalletBalanceAmount, mBalanceAmount);
+
+            if (!isAmountEnough)
+            {
+                ELOG(WARNING, "Balance Amount is Greater Than Wallet Balance Amount. Balance Amount: %s, Wallet Balance: %s.", mBalanceAmount.c_str(), mWalletBalanceAmount.c_str());
+            }
         }
     }
 
@@ -498,9 +546,9 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
     httplib::Headers mHeaders           = {{"content-type", "application/json"}};
 
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParams, mHeaders);
-
     ELOG(INFO, "Get Klines/Candlesticks Data Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+
+    std::string mResponseBody           = getRequest(mEndpoint, mParams, mHeaders);
 
     ELOG(INFO, "Get Klines/Candlesticks Data Response Body: %s.", mResponseBody.c_str());
 
@@ -566,9 +614,9 @@ bool BinanceRequests::getTickSize (std::string symbol)
     httplib::Headers mHeaders           = {{"content-type", "application/json"}};
 
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParams, mHeaders);
-
     ELOG(INFO, "Get Tick Size Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+
+    std::string mResponseBody           = getRequest(mEndpoint, mParams, mHeaders);
 
     ELOG(INFO, "Get Tick Size Response Body: %s.", mResponseBody.c_str());
 
@@ -591,18 +639,18 @@ bool BinanceRequests::getTickSize (std::string symbol)
             if (symbol == mSymbol)
             {
                 mSymbolTickSize = pBu->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
-                break;
+                return true;
             }
 
             if (symbol == mFollowSymbol)
             {
                 mFollowSymbolTickSize = pBu->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
-                break;
+                return true;
             }
         }
     }
 
-    return true;
+    return false;
 }
 
 
@@ -637,9 +685,9 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
     httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
 
-    std::string mResponseBody           = postRequest(mEndpoint, mParams, mSignatureParams, mHeaders);
-
     ELOG(INFO, "Create New Order Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+
+    std::string mResponseBody           = postRequest(mEndpoint, mParams, mSignatureParams, mHeaders);
 
     ELOG(INFO, "Create New Order Response Body: %s.", mResponseBody.c_str());
 
@@ -726,9 +774,9 @@ bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
     httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
 
-    std::string mResponseBody           = deleteRequest(mEndpoint, mParamsWithSignature, mHeaders);
-
     ELOG(INFO, "Cancel Order Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+
+    std::string mResponseBody           = deleteRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
     ELOG(INFO, "Cancel Order Response Body: %s.", mResponseBody.c_str());
 
@@ -743,15 +791,14 @@ bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
     }
 
     std::string mStatus = mAPIJson["status"].asString();
+    uint32_t mOrderId   = mAPIJson["orderId"].asInt();
+    std::string mSide   = mAPIJson["side"].asString();
 
     if (mStatus!="CANCELED")
     {
-        ELOG(ERROR, "Order could not be cancelled.");
+        ELOG(ERROR, "Failed to Cancel the Order. Order id: %d.", mOrderId);
         return false;
     }
-
-    uint32_t mOrderId = mAPIJson["orderId"].asInt();
-    std::string mSide = mAPIJson["side"].asString();
 
     if (mSide == "BUY")
     {
@@ -802,9 +849,9 @@ bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
     httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
 
-    std::string mResponseBody           = deleteRequest(mEndpoint, mParamsWithSignature, mHeaders);
-
     ELOG(INFO, "Cancel All Open Orders Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+
+    std::string mResponseBody           = deleteRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
     ELOG(INFO, "Cancel All Open Orders Response Body: %s.", mResponseBody.c_str());
 
@@ -822,7 +869,7 @@ bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
 
     if (mStatus!="CANCELED")
     {
-        ELOG(ERROR, "Order could not be cancelled.");
+        ELOG(ERROR, "Failed to Cancel the All Open Orders.");
         return false;
     }
 
@@ -858,9 +905,9 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
     httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
-
     ELOG(INFO, "Query Order Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+
+    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
     ELOG(INFO, "Query Order Response Body: %s.", mResponseBody.c_str());
 
@@ -946,9 +993,9 @@ bool BinanceRequests::currentOpenOrders(std::string symbol)
     httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
-
     ELOG(INFO, "Current Open Orders Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+
+    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
     ELOG(INFO, "Current Open Orders Response Body: %s.", mResponseBody.c_str());
 

@@ -58,6 +58,9 @@ class Requests
 
         bool                    mAverageAutoCalculate;
 
+        bool                    mAccountStatus = false;
+        bool                    mAPIKeyPermission = false;
+
         std::string             mRecvWindow = "10000";
 
         AllOrdersMap            mBuyOrders;
@@ -73,6 +76,8 @@ class Requests
         std::string             mTradeCandlesLowPricesAverage;
         std::string             mTradeCandlesClosePricesAverage;
 
+        std::string             mTradeCandlesCloseRSI;
+
         AverageVector           mTradeCandlesOpenPrices;
         AverageVector           mTradeCandlesHighPrices;
         AverageVector           mTradeCandlesLowPrices;
@@ -83,10 +88,15 @@ class Requests
         std::string             mFollowCandlesLowPricesAverage;
         std::string             mFollowCandlesClosePricesAverage;
 
+        std::string             mFollowCandlesCloseRSI;
+
         AverageVector           mFollowCandlesOpenPrices;
         AverageVector           mFollowCandlesHighPrices;
         AverageVector           mFollowCandlesLowPrices;
         AverageVector           mFollowCandlesClosePrices;
+
+
+        bool                    getAveragesAndRSI();
 
     public:
                                 Requests(BinanceUtilities *pBu);
@@ -96,10 +106,10 @@ class Requests
 class BinanceRequests : public Requests
 {
     private:        
-        void                    buy();
-        void                    sell();
-        void                    buyAndSell();
-        void                    sellAndBuy();
+        void                    newBuy();
+        void                    newSell();
+        void                    newBuyAndSell();
+        void                    newSellAndBuy();
 
         std::string             getRequest(std::string endpoint, std::string parameters, httplib::Headers headers);
         std::string             postRequest(std::string endpoint, std::string parameters, httplib::Params signature, httplib::Headers headers);
