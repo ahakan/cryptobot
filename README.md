@@ -1,12 +1,83 @@
-# CRYPTOBOT
-Fast, secure and open source crypto trading bot
+<!-- markdownlint-configure-file {
+  "MD013": {
+    "code_blocks": false,
+    "tables": false
+  },
+  "MD033": false,
+  "MD041": false
+} -->
 
-### Requirements
-Linux
-Boost libraries
+<div align="center">
 
-### Exchanges
-Binance
+# cryptobot
 
-### Installation
-Coming soon...
+fast, secure and open source crypto trading bot
+
+[Installation](#installation) •
+[Configuration](#configuration) •
+[Usage](#usage) 
+</div>
+
+
+## Installation
+
+### *Step 1: Install Boost*
+
+crytobot use Boost/Beast library for websocket. You must has Boost library.
+please install it. [Boost C++ Libraries][boost].
+
+
+### *Step 2: Clone cryptobot*
+
+Clone [cryptobot][cryptobot].
+
+```sh
+git clone https://github.com/ahakan/cryptobot.git   
+```
+
+### *Step 3: Build cryptobot*
+```sh
+cd cryptobot
+mkdir build && cd build
+cmake ..
+make  
+```
+
+## Configuration
+
+### Config.json
+
+When use the crypto bot, you have to make some configurations.
+
+- `user`
+  - .
+    | Configuration     | Description                       |
+    | ------------------| --------------------------------- |
+    | `interval`        | Klines interval type (15m)        |
+    | `trade symbol`    | Trade coin symbol (ETH/USDT)      |
+    | `balance symbol`  | Wallet balance symbol (USDT)      |
+    | `balance amount`  | Wallet balance amount (400$)      |
+    | `average amount`  | Average amount for trade (0.25)   |
+    | `follow symbol`   | Follow coin symbol (BTC/USDT)     |
+    | `exchange name`   | Exchange name (Binance)           |
+
+- `binance`
+  - .
+    | Configuration     | Description                       |
+    | ------------------| --------------------------------- |
+    | `websocket base`  | Binance websocket address         |
+    | `websocket port`  | Binance websocket port            |
+    | `api base`        | Binance api address               |
+    | `api key`         | Binance api key                   |
+    | `secret key`      | Binance secret key                |
+
+
+## Usage
+
+```sh
+cd build           
+./cryptobot        
+```
+
+[cryptobot]: https://github.com/ahakan/cryptobot.git
+[boost]: https://www.boost.org/
