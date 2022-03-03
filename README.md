@@ -15,7 +15,8 @@ fast, secure and open source crypto trading bot
 
 [Installation](#installation) •
 [Configuration](#configuration) •
-[Usage](#usage) 
+[Usage](#usage) •
+[Licence](#licence) 
 </div>
 
 
@@ -24,7 +25,7 @@ fast, secure and open source crypto trading bot
 ### *Step 1: Install Boost*
 
 crytobot use Boost/Beast library for websocket. You must has Boost library.
-please install it. [Boost C++ Libraries][boost].
+Please install it. [Boost C++ Libraries][boost].
 
 
 ### *Step 2: Clone cryptobot*
@@ -48,6 +49,43 @@ make
 ### Config.json
 
 When use the crypto bot, you have to make some configurations.
+
+```
+{
+    "user": {
+        "interval": "15m",
+        "trade": {
+            "symbol": "ETHUSDT",
+            "balance": {
+                "symbol": "USDT",
+                "amount": "400"
+            },
+            "average": {
+                "auto-calculate": 0,
+                "amount": "0.20"
+            }
+        },
+        "follow": {
+            "symbol": "BTCUSDT"
+        },
+        "exchange": {
+            "name": "binance"
+        }
+    },
+    "binance": {
+        "websocket": {
+            "base": "stream.binance.com",
+            "port": "9443"
+        },
+        "api": {
+            "base": "https://api.binance.com",
+            "API_KEY": "1",
+            "SECRET_KEY": "1"
+        }
+    }
+}
+
+```
 
 - `user`
   - .
@@ -78,6 +116,8 @@ When use the crypto bot, you have to make some configurations.
 cd build           
 ./cryptobot        
 ```
+
+## Licence
 
 [cryptobot]: https://github.com/ahakan/cryptobot.git
 [boost]: https://www.boost.org/
