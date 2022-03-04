@@ -7,5 +7,5 @@ add_library(${PROJECT_NAME} src/json_reader.cpp src/json_value.cpp src/json_writ
 add_library(sub::libjson ALIAS ${PROJECT_NAME})
 
 target_include_directories( ${PROJECT_NAME}
-    PUBLIC ${PROJECT_SOURCE_DIR}/inc/json
+    PUBLIC ${PROJECT_SOURCE_DIR}/inc
 )
