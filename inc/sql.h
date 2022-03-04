@@ -15,8 +15,8 @@
 #include "opel.h"
 
 // Libraries
-#include <elog.h>
-#include <sqlite3.h>
+#include "elog.h"
+#include "sqlite3.h"
 
 // Standard libraries
 #include <iostream>

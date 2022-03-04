@@ -1,29 +1,5 @@
 include_directories(${CMAKE_SOURCE_DIR}/inc)
 
-add_library(libjsoncpp STATIC IMPORTED)
-set_target_properties(libjsoncpp PROPERTIES
-  IMPORTED_LOCATION 
-    "${CMAKE_SOURCE_DIR}/lib/libjsoncpp-1.9.5/lib/libjsoncpp.a"
-  INTERFACE_INCLUDE_DIRECTORIES 
-    "${CMAKE_SOURCE_DIR}/lib/libjsoncpp-1.9.5/inc/json"
-)
-
-add_library(libelog STATIC IMPORTED)
-set_target_properties(libelog PROPERTIES
-  IMPORTED_LOCATION 
-    "${CMAKE_SOURCE_DIR}/lib/libelog-1.0.0/src/libelog.a"
-  INTERFACE_INCLUDE_DIRECTORIES 
-    "${CMAKE_SOURCE_DIR}/lib/libelog-1.0.0/inc"
-)
-
-add_library(libsqlite STATIC IMPORTED)
-set_target_properties(libsqlite PROPERTIES
-  IMPORTED_LOCATION 
-    "${CMAKE_SOURCE_DIR}/lib/libsqlite-3.37.2/lib/libsqlite.a"
-  INTERFACE_INCLUDE_DIRECTORIES 
-    "${CMAKE_SOURCE_DIR}/lib/libsqlite-3.37.2/inc"
-)
-
 find_package(Threads REQUIRED)
 
 set(Boost_USE_STATIC_LIBS OFF) 
@@ -45,4 +21,4 @@ set(SOURCES
 )
 
 add_executable(cryptobot ${SOURCES}) 
-target_link_libraries(cryptobot libjsoncpp libelog libsqlite -lssl -lcrypto -lcap -lcurl ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+target_link_libraries(cryptobot sub::libelog sub::libjson sub::libsqlite -lssl -lcrypto -lcap -lcurl ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})

@@ -15,7 +15,7 @@
 // Includes
 
 // Libraries
-#include <elog.h>
+#include "elog.h"
 
 // Standard libraries
 #include <mutex>

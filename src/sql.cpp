@@ -77,7 +77,7 @@ void Sql::init()
         if (pTradeCandleData->isUpdated)
         {
             std::cout << "Timestamp:" << pTradeCandleData->timestamp << std::endl;
-            std::cout << "Open:" << pTradeCandleData->symbol << std::endl;
+            std::cout << "Symbol:" << pTradeCandleData->symbol << std::endl;
             std::cout << "Open:" << pTradeCandleData->openPrice << std::endl;
             std::cout << "Close:" <<  pTradeCandleData->closePrice << std::endl;
             std::cout << "High:" <<  pTradeCandleData->highPrice << std::endl;
@@ -96,7 +96,7 @@ void Sql::init()
         if (pFollowCandleData->isUpdated)
         {
             std::cout << "Timestamp:" << pFollowCandleData->timestamp << std::endl;
-            std::cout << "Open:" << pFollowCandleData->symbol << std::endl;
+            std::cout << "Symbol:" << pFollowCandleData->symbol << std::endl;
             std::cout << "Open:" << pFollowCandleData->openPrice << std::endl;
             std::cout << "Close:" <<  pFollowCandleData->closePrice << std::endl;
             std::cout << "High:" <<  pFollowCandleData->highPrice << std::endl;
