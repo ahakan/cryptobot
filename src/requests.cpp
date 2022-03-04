@@ -515,6 +515,8 @@ bool BinanceRequests::getCoinBalance (std::string symbol)
             if (!isAmountEnough)
             {
                 ELOG(WARNING, "Balance Amount is Greater Than Wallet Balance Amount. Balance Amount: %s, Wallet Balance: %s.", mBalanceAmount.c_str(), mWalletBalanceAmount.c_str());
+                
+                return false;
             }
         }
     }

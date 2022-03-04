@@ -21,9 +21,10 @@
 #include <mutex>
 
 // Structs
-struct candle_data
+struct candle_data : public std::mutex
 {
     bool                    isUpdated = false;
+    std::string             symbol;
     std::string             timestamp;
     std::string             openPrice;
     std::string             closePrice;
@@ -35,10 +36,10 @@ struct candle_data
 class Opel
 {
     private:
-        std::mutex                  mMutex;
-
         bool                        mIsActive;
-        std::string                 mSymbol;
+        std::string                 mTradeSymbol;
+        std::string                 mFollowSymbol;
+
 
     protected:
 
@@ -50,10 +51,17 @@ class Opel
                                     Opel& operator=(const Opel&)    = delete;       // Singletons should not be assignable.
                                     
         static Opel                 *instance();
-        static struct candle_data   *getCandleDataStruct();
+        static struct candle_data   *getTradeCandleStruct();
+        static struct candle_data   *getFollowCandleStruct();
 
         void                        setIsActive(bool isActive);
         bool                        getIsActive();
+
+        void                        setTradeSymbol(std::string symbol);
+        std::string                 getTradeSymbol();
+
+        void                        setFollowSymbol(std::string symbol);
+        std::string                 getFollowSymbol();
 };
 
 #endif

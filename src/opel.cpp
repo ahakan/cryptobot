@@ -40,21 +40,40 @@ Opel* Opel::instance()
 
 
 /**
- * @brief Candle data struct
+ * @brief Trade Candle data struct
  * 
  * @return struct candle_data* 
  */
-struct candle_data* Opel::getCandleDataStruct()
+struct candle_data* Opel::getTradeCandleStruct()
 {
-    static struct candle_data *pCandleData;
+    static struct candle_data *pTradeCandleData;
 
-    if (pCandleData == NULL)
+    if (pTradeCandleData == NULL)
     {
-        pCandleData = new candle_data;
+        pTradeCandleData = new candle_data;
     }
     
-    return pCandleData;
+    return pTradeCandleData;
 }
+
+
+/**
+ * @brief Follow Candle data struct
+ * 
+ * @return struct candle_data* 
+ */
+struct candle_data* Opel::getFollowCandleStruct()
+{
+    static struct candle_data *pFollowCandleData;
+
+    if (pFollowCandleData == NULL)
+    {
+        pFollowCandleData = new candle_data;
+    }
+    
+    return pFollowCandleData;
+}
+
 
 
 /**
@@ -64,11 +83,7 @@ struct candle_data* Opel::getCandleDataStruct()
  */
 void Opel::setIsActive(bool isActive)
 {
-    mMutex.lock();
-
     mIsActive = isActive;
-
-    mMutex.unlock();
 }
 
 
@@ -81,4 +96,48 @@ void Opel::setIsActive(bool isActive)
 bool Opel::getIsActive()
 {
     return mIsActive;
+}
+
+
+/**
+ * @brief Set trade symbol
+ * 
+ * @param symbol 
+ */
+void Opel::setTradeSymbol(std::string symbol)
+{
+    mTradeSymbol = symbol;
+}
+
+
+/**
+ * @brief Get trade symbol
+ * 
+ * @return std::string 
+ */
+std::string Opel::getTradeSymbol()
+{
+    return mTradeSymbol;
+}
+
+
+/**
+ * @brief Set follow symbol
+ * 
+ * @param symbol 
+ */
+void Opel::setFollowSymbol(std::string symbol)
+{
+    mFollowSymbol = symbol;
+}
+
+
+/**
+ * @brief Get follow symbol
+ * 
+ * @return std::string 
+ */
+std::string Opel::getFollowSymbol()
+{
+    return mFollowSymbol;
 }

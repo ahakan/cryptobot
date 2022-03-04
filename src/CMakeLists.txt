@@ -1,11 +1,11 @@
 include_directories(${CMAKE_SOURCE_DIR}/inc)
 
-add_library(libjson STATIC IMPORTED)
-set_target_properties(libjson PROPERTIES
+add_library(libjsoncpp STATIC IMPORTED)
+set_target_properties(libjsoncpp PROPERTIES
   IMPORTED_LOCATION 
-    "${CMAKE_SOURCE_DIR}/lib/libjson-1.9.5/lib/libjsoncpp.a"
+    "${CMAKE_SOURCE_DIR}/lib/libjsoncpp-1.9.5/lib/libjsoncpp.a"
   INTERFACE_INCLUDE_DIRECTORIES 
-    "${CMAKE_SOURCE_DIR}/lib/libjson-1.9.5/inc/json"
+    "${CMAKE_SOURCE_DIR}/lib/libjsoncpp-1.9.5/inc/json"
 )
 
 add_library(libelog STATIC IMPORTED)
@@ -45,4 +45,4 @@ set(SOURCES
 )
 
 add_executable(cryptobot ${SOURCES}) 
-target_link_libraries(cryptobot libjson libelog libsqlite -lssl -lcrypto -lcap -lcurl ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+target_link_libraries(cryptobot libjsoncpp libelog libsqlite -lssl -lcrypto -lcap -lcurl ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})

@@ -77,6 +77,8 @@ class BinanceWebsocket
         std::string                 mPort;
         std::string                 mEndpointT;
         std::string                 mEndpointF;
+        std::string                 mTradeSymbol;
+        std::string                 mFollowSymbol;
 
 
     public:
