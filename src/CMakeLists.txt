@@ -19,6 +19,16 @@ else()
     message(WARNING "Could not find libcurl and libcurl-openssl. This dependency will be downloaded. To avoid this you can install curl yourself using the standard methods for your platform.")
 endif()
 
+find_package(OpenSSL REQUIRED) 
+if(OPENSSL_FOUND)
+    message(STATUS "Found SSL version: ${OPENSSL_VERSION}")
+    message(STATUS "Using SSL include dir(s): ${OPENSSL_INCLUDE_DIR}")
+    message(STATUS "Using SSL lib(s): ${OPENSSL_LIBRARIES}")
+    include_directories(${OPENSSL_INCLUDE_DIR})
+else()
+    message(WARNING "Could not find libssl and libcrypto. This dependency will be downloaded. To avoid this you can install curl yourself using the standard methods for your platform.")
+endif()
+
 
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
@@ -32,4 +42,4 @@ set(SOURCES
 )
 
 add_executable(cryptobot ${SOURCES}) 
-target_link_libraries(cryptobot sub::libelog sub::libjson sub::libsqlite -lssl -lcrypto -lcap ${CURL_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+target_link_libraries(cryptobot sub::libelog sub::libjson sub::libsqlite -lcap ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${CURL_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
