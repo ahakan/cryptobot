@@ -42,4 +42,4 @@ set(SOURCES
 )
 
 add_executable(cryptobot ${SOURCES}) 
-target_link_libraries(cryptobot sub::libelog sub::libjson sub::libsqlite -lcap ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${CURL_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+target_link_libraries(cryptobot sub::libelog sub::libjson sub::libsqlite sub::libhttp -lcap ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${CURL_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})

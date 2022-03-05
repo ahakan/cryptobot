@@ -24,7 +24,7 @@
  */
 void eLog::writeLogToFile(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message)
 {
-    if( LogFile.is_open() )
+    if (LogFile.is_open())
     {
         LogFile << "[" << currentDateTime() << "]";
         LogFile << "[" << _FileName << "]";
@@ -66,7 +66,7 @@ void eLog::writeLogToConsole(std::string _FileName, std::string _TID, std::strin
  */
 void eLog::addLogHeadToFile()
 {
-    if( LogFile.is_open() )
+    if (LogFile.is_open())
     {
         LogFile << "[" << "            Date / Time"<< "]";
         LogFile << "[" << addSpacesToConstChar("File", MAX_FILE_NAME_SIZE)<< "]";
@@ -88,7 +88,7 @@ void eLog::changeFile()
 {
     uint32_t _FileSize = fileSize((getLogFileFullName()).c_str());
 
-    if( _FileSize >= MAX_FILE_SIZE )
+    if (_FileSize >= MAX_FILE_SIZE)
     {
         LogFile.close();
 
@@ -115,7 +115,7 @@ std::string eLog::currentDateTime()
 
     strftime(buf, sizeof(buf), "%Y.%m.%d-%X", &tstruct);
 
-    if( milliseconds < 10 )
+    if (milliseconds < 10)
         snprintf(buf + strlen(buf), sizeof buf - strlen(buf), ".00%d", milliseconds);
     else if( 10 <= milliseconds && milliseconds < 100)
         snprintf(buf + strlen(buf), sizeof buf - strlen(buf), ".0%d", milliseconds);
@@ -162,7 +162,7 @@ std::string eLog::addSpacesToConstChar(const char* getChar, uint8_t maxSize)
 {
     std::string     _StringWithSpace;
 
-    if( strlen(getChar) < maxSize )
+    if (strlen(getChar) < maxSize)
         for (size_t i = 0; i < maxSize - strlen(getChar); i++)
             _StringWithSpace = _StringWithSpace + " ";
 
@@ -184,7 +184,7 @@ std::string eLog::addSpacesToUnsignedInt(unsigned int getInt, uint8_t maxSize)
     std::string     _StringWithSpace;
     size_t          _IntLength = std::to_string(getInt).length();
 
-    if( _IntLength < maxSize )
+    if (_IntLength < maxSize)
         for (size_t i = 0; i < maxSize - _IntLength; i++)
             _StringWithSpace = _StringWithSpace + " ";
 

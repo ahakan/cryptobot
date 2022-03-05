@@ -45,6 +45,7 @@
 #define  MAX_LEVEL_SIZE             7
 #define  MAX_FILE_NAME_SIZE         18
 #define  MAX_FUNC_NAME_SIZE         22
+#define  MAX_MESSAGE_LENGTH         2048           
 
 #define  ELOG                       getLog
 
@@ -65,7 +66,6 @@ class eLog
 
         void                        writeLogToFile(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message);
         void                        writeLogToConsole(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message);
-        
         void                        addLogHeadToFile();
         void                        changeFile();
         std::string                 currentDateTime();
@@ -85,40 +85,45 @@ class eLog
  */
 inline eLog::eLog()
 {
-    char            _Message[256];
+    char            *_Message       = (char *)malloc(MAX_MESSAGE_LENGTH);
     const char*     _FileName       = __FILENAME__;
     const char*     _FunctionName   = __FUNCTION__;
 
-    #if LOG_CONSOLE_OR_FILE == 0
+    if (_Message)
+    {
+        #if LOG_CONSOLE_OR_FILE == 0
 
-        snprintf (_Message, 255, "Logging has been successfully started.");
+            snprintf (_Message, 255, "Logging has been successfully started.");
 
-        writeLogToConsole(_FileName,
-                                std::to_string(gettid()),
-                                _FunctionName,
-                                std::to_string(__LINE__),
-                                LevelNames[ 0 ],
+            writeLogToConsole(_FileName,
+                                    std::to_string(gettid()),
+                                    _FunctionName,
+                                    std::to_string(__LINE__),
+                                    LevelNames[ 0 ],
+                                    _Message);
+
+        #else
+
+            if (!LogFile.is_open())
+            {
+                LogFile.open(getLogFileFullName());
+
+                addLogHeadToFile();
+
+                snprintf (_Message, MAX_MESSAGE_LENGTH-1, "Logging has been successfully started. Max log file size: %dKB", MAX_FILE_SIZE);
+
+                writeLogToFile(addSpacesToConstChar(_FileName, MAX_FILE_NAME_SIZE),
+                                addSpacesToUnsignedInt(gettid(), MAX_TID_SIZE),
+                                addSpacesToConstChar(_FunctionName, MAX_FUNC_NAME_SIZE),
+                                addSpacesToUnsignedInt(__LINE__, MAX_LINE_SIZE),
+                                addSpacesToConstChar(LevelNames[ 3 ], MAX_LEVEL_SIZE),
                                 _Message);
+            }
 
-    #else
+        #endif
 
-        if( !LogFile.is_open() )
-        {
-            LogFile.open(getLogFileFullName());
-
-            addLogHeadToFile();
-
-            snprintf (_Message, 255, "Logging has been successfully started. Max log file size: %dKB", MAX_FILE_SIZE);
-
-            writeLogToFile(addSpacesToConstChar(_FileName, MAX_FILE_NAME_SIZE),
-                            addSpacesToUnsignedInt(gettid(), MAX_TID_SIZE),
-                            addSpacesToConstChar(_FunctionName, MAX_FUNC_NAME_SIZE),
-                            addSpacesToUnsignedInt(__LINE__, MAX_LINE_SIZE),
-                            addSpacesToConstChar(LevelNames[ 3 ], MAX_LEVEL_SIZE),
-                            _Message);
-        }
-
-    #endif
+        free(_Message);
+    }
 }
 
 
@@ -128,31 +133,36 @@ inline eLog::eLog()
  */
 inline eLog::~eLog()
 {
-    char            _Message[256];
+    char            *_Message       = (char *)malloc(MAX_MESSAGE_LENGTH);
     const char*     _FileName       = __FILENAME__;
     const char*     _FunctionName   = __FUNCTION__;
 
-    #if LOG_CONSOLE_OR_FILE == 0
-        snprintf (_Message, 255, "Logging has been successfully terminated.");
+    if (_Message)
+    {
+        #if LOG_CONSOLE_OR_FILE == 0
+            snprintf (_Message, 255, "Logging has been successfully terminated.");
 
-        writeLogToConsole(_FileName,
-                                std::to_string(gettid()),
-                                _FunctionName,
-                                std::to_string(__LINE__),
-                                LevelNames[ 0 ],
-                                _Message);
-    #else
-        snprintf (_Message, 255, "Logging has been successfully terminated. Total log file: %s", LogFileNameInfix.c_str());
+            writeLogToConsole(_FileName,
+                                    std::to_string(gettid()),
+                                    _FunctionName,
+                                    std::to_string(__LINE__),
+                                    LevelNames[ 0 ],
+                                    _Message);
+        #else
+            snprintf (_Message, MAX_MESSAGE_LENGTH-1, "Logging has been successfully terminated. Total log file: %s", LogFileNameInfix.c_str());
 
-        writeLogToFile(addSpacesToConstChar(_FileName, MAX_FILE_NAME_SIZE),
-                        addSpacesToUnsignedInt(gettid(), MAX_TID_SIZE),
-                        addSpacesToConstChar(_FunctionName, MAX_FUNC_NAME_SIZE),
-                        addSpacesToUnsignedInt(__LINE__, MAX_LINE_SIZE),
-                        addSpacesToConstChar(LevelNames[ 3 ], MAX_LEVEL_SIZE),
-                        _Message);
+            writeLogToFile(addSpacesToConstChar(_FileName, MAX_FILE_NAME_SIZE),
+                            addSpacesToUnsignedInt(gettid(), MAX_TID_SIZE),
+                            addSpacesToConstChar(_FunctionName, MAX_FUNC_NAME_SIZE),
+                            addSpacesToUnsignedInt(__LINE__, MAX_LINE_SIZE),
+                            addSpacesToConstChar(LevelNames[ 3 ], MAX_LEVEL_SIZE),
+                            _Message);
 
-        LogFile.close();
-    #endif
+            LogFile.close();
+        #endif
+
+        free(_Message);
+    }
 }
   
 
@@ -171,41 +181,45 @@ extern eLog _eLog;
  * @param args 
  */
 template<typename... Args>
-inline void getLog(char const *file, unsigned int line, char const * function, unsigned char lvl, const char * f, Args... args)
+void getLog(char const *file, unsigned int line, char const * function, unsigned char lvl, const char * f, Args... args)
 {
     
     if( static_cast<int>(lvl) < MAX_LEVEL )
     {
-        char    _Message[256];
-        
-        _eLog.MutexLock.lock();
+        char    *_Message = (char *)malloc(MAX_MESSAGE_LENGTH);
 
-        // /full/path/to/file.c to file.c
-        file = (strrchr(file, '/') ? strrchr(file, '/') + 1 : file);
+        if (_Message)
+        {
+            _eLog.MutexLock.lock();
 
-        // get all args
-        snprintf (_Message, 255, f, args...);
+            // /full/path/to/file.c to file.c
+            file = (strrchr(file, '/') ? strrchr(file, '/') + 1 : file);
 
+            // get all args
+            snprintf (_Message, MAX_MESSAGE_LENGTH-1, f, args...);
 
-        #if LOG_CONSOLE_OR_FILE == 0
-            _eLog.writeLogToConsole(file,
-                                std::to_string(gettid()),
-                                function,
-                                std::to_string(line),
-                                _eLog.LevelNames[ lvl ],
-                                _Message);
-        #else
-            _eLog.writeLogToFile(_eLog.addSpacesToConstChar(file, MAX_FILE_NAME_SIZE),
-                                _eLog.addSpacesToUnsignedInt(gettid(), MAX_TID_SIZE),
-                                _eLog.addSpacesToConstChar(function, MAX_FUNC_NAME_SIZE),
-                                _eLog.addSpacesToUnsignedInt(line, MAX_LINE_SIZE),
-                                _eLog.addSpacesToConstChar(_eLog.LevelNames[ lvl ], MAX_LEVEL_SIZE),
-                                _Message);
+            #if LOG_CONSOLE_OR_FILE == 0
+                _eLog.writeLogToConsole(file,
+                                    std::to_string(gettid()),
+                                    function,
+                                    std::to_string(line),
+                                    _eLog.LevelNames[ lvl ],
+                                    _Message);
+            #else
+                _eLog.writeLogToFile(_eLog.addSpacesToConstChar(file, MAX_FILE_NAME_SIZE),
+                                    _eLog.addSpacesToUnsignedInt(gettid(), MAX_TID_SIZE),
+                                    _eLog.addSpacesToConstChar(function, MAX_FUNC_NAME_SIZE),
+                                    _eLog.addSpacesToUnsignedInt(line, MAX_LINE_SIZE),
+                                    _eLog.addSpacesToConstChar(_eLog.LevelNames[ lvl ], MAX_LEVEL_SIZE),
+                                    _Message);
 
-            _eLog.changeFile();
-        #endif
+                _eLog.changeFile();
+            #endif
 
-        _eLog.MutexLock.unlock();
+            _eLog.MutexLock.unlock();
+
+            free(_Message);
+        }
     }
 }
 

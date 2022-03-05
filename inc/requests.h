@@ -18,7 +18,7 @@
 
 // Libraries
 #define CPPHTTPLIB_OPENSSL_SUPPORT
-#include "lib/httplib.h"
+#include "httplib.h"
 #include "json/json.h"
 
 // Standard Libraries
