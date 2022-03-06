@@ -19,11 +19,11 @@ Utilities::Utilities()
         exit(0);
     }
 
-    // Get user config
-    mUserJson       = mConfigJson["user"];
+    // Get trade config
+    mTradeJson      = mConfigJson["trade"];
 
     // Get preferred exchange name
-    mExchangeName   = mConfigJson["user"]["exchange"]["name"].asString();
+    mExchangeName   = mConfigJson["trade"]["exchange"].asString();
 
     // Get exchange config
     mExchangeJson   = mConfigJson[mExchangeName];
@@ -67,24 +67,28 @@ std::string Utilities::getTimestamp() {
  * @param millisecond 
  * @return std::string 
  */
-std::string Utilities::getOldTimestamp(int day, int hour, int minute, int second, int millisecond)
+std::string Utilities::getOldTimestamp()
 {
-    long long int mTimestamp = std::stol(getTimestamp());
+    int mRSISize                = getRSISize();
 
-    if (day != 0)
-        mTimestamp = mTimestamp - day*24*60*60*1000;
+    std::string mInterval       = getInterval();
 
-    if (hour != 0)
-        mTimestamp = mTimestamp - hour*60*60*1000;
+    long long int mTimestamp    = std::stol(getTimestamp());
 
-    if (minute != 0)
-        mTimestamp = mTimestamp - minute*60*1000;
-
-    if (second != 0)
-        mTimestamp = mTimestamp - second*1000;
-
-    if (millisecond != 0)
-        mTimestamp = mTimestamp - millisecond;
+    if (mInterval == "1m")  mTimestamp  -= 60*mRSISize*1000;
+    if (mInterval == "3m")  mTimestamp  -= 60*mRSISize*3*1000;
+    if (mInterval == "5m")  mTimestamp  -= 60*mRSISize*5*1000;
+    if (mInterval == "15m") mTimestamp  -= 60*mRSISize*15*1000;
+    if (mInterval == "30m") mTimestamp  -= 60*mRSISize*30*1000;
+    if (mInterval == "1h")  mTimestamp  -= 60*mRSISize*60*1000;
+    if (mInterval == "2h")  mTimestamp  -= 60*mRSISize*120*1000;
+    if (mInterval == "4h")  mTimestamp  -= 60*mRSISize*240*1000;
+    if (mInterval == "6h")  mTimestamp  -= 60*mRSISize*360*1000;
+    if (mInterval == "8h")  mTimestamp  -= 60*mRSISize*480*1000;
+    if (mInterval == "12h") mTimestamp  -= 60*mRSISize*720*1000;
+    if (mInterval == "1d")  mTimestamp  -= 60*mRSISize*1440*1000;
+    if (mInterval == "3d")  mTimestamp  -= 60*mRSISize*4320*1000;
+    if (mInterval == "1w")  mTimestamp  -= 60*mRSISize*10080*1000;
 
     return std::to_string(mTimestamp);
 }
@@ -97,7 +101,7 @@ std::string Utilities::getOldTimestamp(int day, int hour, int minute, int second
  */
 std::string Utilities::getSymbol()
 {
-    return mUserJson["trade"]["symbol"].asString();
+    return mTradeJson["symbol"].asString();
 }
 
 
@@ -108,7 +112,7 @@ std::string Utilities::getSymbol()
  */
 std::string Utilities::getFollowSymbol()
 {
-    return mUserJson["follow"]["symbol"].asString();
+    return mTradeJson["follow"]["symbol"].asString();
 }
 
 
@@ -119,7 +123,7 @@ std::string Utilities::getFollowSymbol()
  */
 std::string Utilities::getInterval()
 {
-    return mUserJson["interval"].asString();
+    return mTradeJson["interval"].asString();
 }
 
 
@@ -130,7 +134,7 @@ std::string Utilities::getInterval()
  */
 std::string Utilities::getBalanceSymbol()
 {
-    return mUserJson["trade"]["balance"]["symbol"].asString();
+    return mTradeJson["balance"]["symbol"].asString();
 }
 
 
@@ -141,7 +145,7 @@ std::string Utilities::getBalanceSymbol()
  */
 std::string Utilities::getBalanceAmount()
 {
-    return mUserJson["trade"]["balance"]["amount"].asString();
+    return mTradeJson["balance"]["amount"].asString();
 }
 
 
@@ -152,7 +156,7 @@ std::string Utilities::getBalanceAmount()
  */
 std::string Utilities::getAverageAmount()
 {
-    return mUserJson["trade"]["average"]["amount"].asString();
+    return mTradeJson["average"]["amount"].asString();
 }
 
 
@@ -164,7 +168,18 @@ std::string Utilities::getAverageAmount()
  */
 bool Utilities::getAverageAutoCalculate()
 {
-    return mUserJson["trade"]["average"]["auto-calculate"].asBool();
+    return mTradeJson["average"]["auto-calculate"].asBool();
+}
+
+
+/**
+ * @brief Get RSI size
+ * 
+ * @return int 
+ */
+int Utilities::getRSISize()
+{
+    return mTradeJson["RSI"].asInt();
 }
 
 
@@ -239,7 +254,7 @@ std::string Utilities::calculateAverage(std::vector<std::string> vector)
  * @param period 
  * @return std::string 
  */
-std::string Utilities::calculateRSI(std::vector<std::string> vector, int period)
+std::string Utilities::calculateRSI(std::vector<std::string> vector)
 {
     if (vector.empty())
     {
@@ -248,17 +263,14 @@ std::string Utilities::calculateRSI(std::vector<std::string> vector, int period)
     }
 
     int size            = vector.size();
-    int loopbackPeriod  = size-period;
     float sumGain       = 0;
     float sumLoss       = 0;
 
-    // std::cout << "size-1: " << size-1 << "\tloopbackPeriod: " << loopbackPeriod << std::endl;
+    std::cout << "size: " << size << std::endl;
 
-    for (int i=size-1; i>loopbackPeriod; i--)
+    for (int i=size-1; i>0; i--)
     {
         float difference = std::stof(vector[i]) - std::stof(vector[i-1]);
-
-        // std::cout << i << ": " << std::stof(vector[i]) << "\t" << i-1 << ": " << std::stof(vector[i-1]) << "\tdifference: " << difference << std::endl;
 
         if (difference >= 0)
         {
@@ -410,7 +422,9 @@ std::string BinanceUtilities::getWebsocketEndpointF()
  */
 std::string BinanceUtilities::getAPIBase()
 {
-    return mAPIJson["base"].asString();
+    std::string mAPIBase = "https://" + mAPIJson["base"].asString();
+
+    return mAPIBase;
 }
 
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6.0)
-project(libelog)
+project(elog)
 
 
 # Add a library with the above sources

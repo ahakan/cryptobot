@@ -151,14 +151,8 @@ void BinanceRequests::init()
 
         if (mGetSymbolTickSize && mGetFollowTickSize)
         {
-            int day             = 0;
-            int hour            = 12;
-            int minute          = 0;
-            int second          = 0;
-            int millisecond     = 0;
-
-            bool mGetTradeSymbolCandles     = getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
-            bool mGetFollowSymbolCandles    = getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp(day, hour, minute, second, millisecond));
+            bool mGetTradeSymbolCandles     = getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp());
+            bool mGetFollowSymbolCandles    = getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp());
 
             if (mGetTradeSymbolCandles && mGetFollowSymbolCandles)
             {

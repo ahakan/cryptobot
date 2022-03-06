@@ -84,7 +84,7 @@ void Sql::init()
             std::cout << "Low:" <<  pTradeCandleData->lowPrice << std::endl;
             std::cout << "isClosed:" <<  pTradeCandleData->isClosed << std::endl;
 
-            addClosedKlinePrice(pTradeCandleData->timestamp, pTradeCandleData->openPrice, pTradeCandleData->closePrice, pTradeCandleData->highPrice, pTradeCandleData->lowPrice);
+            // addClosedKlinePrice(pTradeCandleData->timestamp, pTradeCandleData->openPrice, pTradeCandleData->closePrice, pTradeCandleData->highPrice, pTradeCandleData->lowPrice);
 
             pTradeCandleData->isUpdated = false;
         }
@@ -103,7 +103,7 @@ void Sql::init()
             std::cout << "Low:" <<  pFollowCandleData->lowPrice << std::endl;
             std::cout << "isClosed:" <<  pFollowCandleData->isClosed << std::endl;
 
-            addClosedKlinePrice(pFollowCandleData->timestamp, pFollowCandleData->openPrice, pFollowCandleData->closePrice, pFollowCandleData->highPrice, pFollowCandleData->lowPrice);
+            // addClosedKlinePrice(pFollowCandleData->timestamp, pFollowCandleData->openPrice, pFollowCandleData->closePrice, pFollowCandleData->highPrice, pFollowCandleData->lowPrice);
 
             pFollowCandleData->isUpdated = false;
         }

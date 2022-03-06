@@ -36,7 +36,7 @@ class Utilities
     protected:
         std::ifstream           mConfigFile;
         Json::Value             mConfigJson;
-        Json::Value             mUserJson;
+        Json::Value             mTradeJson;
         Json::Value             mExchangeJson;
         std::string             mExchangeName;
 
@@ -45,7 +45,7 @@ class Utilities
         virtual                 ~Utilities();
 
         std::string             getTimestamp();
-        std::string             getOldTimestamp(int day = 0, int hour = 0, int minute = 0, int second = 0, int millisecond = 0);
+        std::string             getOldTimestamp();
         std::string             getSymbol();
         std::string             getFollowSymbol();
         std::string             getInterval();
@@ -55,10 +55,12 @@ class Utilities
 
         bool                    getAverageAutoCalculate();
 
+        int                     getRSISize();
+
         std::string             upperToLower(std::string data);
         std::string             roundPrice(std::string price, int tickSize);
         std::string             calculateAverage(std::vector<std::string> vector);
-        std::string             calculateRSI(std::vector<std::string> vector, int period = 24);
+        std::string             calculateRSI(std::vector<std::string> vector);
         
         bool                    comparePrice(std::string firstPrice, std::string secondPrice);
 
