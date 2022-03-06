@@ -1,5 +1,4 @@
 #include "../inc/websocket.h"
-#include <boost/beast/core/buffers_to_string.hpp>
 
 
 /**
@@ -39,7 +38,7 @@ void Websocket::run(std::string host, std::string port, std::string endpoint)
     mHost       = host;
     mEndpoint   = endpoint;
 
-    ELOG(INFO, "BinanceWebsocket is running.");
+    ELOG(INFO, "Websocket is running.");
 
     // Look up the domain name
     mResolver.async_resolve(
@@ -64,7 +63,7 @@ void Websocket::resolve(beast::error_code ec, tcp::resolver::results_type result
         ELOG(ERROR, "Resolve error: %s", ec.message().c_str());
     }
 
-    ELOG(INFO, "BinanceWebsocket on resolve.");
+    ELOG(INFO, "Websocket on resolve.");
 
     // Set a timeout on the operation
     beast::get_lowest_layer(mWs).expires_after(std::chrono::seconds(30));
@@ -91,7 +90,7 @@ void Websocket::connect(beast::error_code ec, tcp::resolver::results_type::endpo
         ELOG(ERROR, "Connect error: %s", ec.message().c_str());
     }
 
-    ELOG(INFO, "BinanceWebsocket connected successfully.");
+    ELOG(INFO, "Websocket connected successfully.");
 
     // Update the mHost string. This will provide the value of the
     // Host HTTP header during the WebSocket handshake.
@@ -131,7 +130,7 @@ void Websocket::sslHandshake(beast::error_code ec)
     {
         ELOG(ERROR, "SSL Handshake error: %s", ec.message().c_str());
     }
-    ELOG(INFO, "BinanceWebsocket SSL handshake did successfully.");
+    ELOG(INFO, "Websocket SSL handshake did successfully.");
 
     // Turn off the timeout on the tcp_stream, because
     // the websocket stream has its own timeout system.
@@ -171,7 +170,7 @@ void Websocket::handshake(beast::error_code ec)
         ELOG(ERROR, "Handshake error: %s", ec.message().c_str());
     }
 
-    ELOG(INFO, "BinanceWebsocket handshake did successfully.");
+    ELOG(INFO, "Websocket handshake did successfully.");
 
     // Read a message into our buffer
     mWs.async_read(
@@ -200,7 +199,7 @@ void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
 
     if (mBuffer.size() > 0)
     {
-        ELOG(INFO, "BinanceWebsocket on read. Buffer size: %dKB", mBuffer.size());
+        ELOG(INFO, "Websocket on read. Buffer size: %dKB", mBuffer.size());
 
         std::string bufferJson = beast::buffers_to_string(mBuffer.data());
 
@@ -286,10 +285,9 @@ void Websocket::close(beast::error_code ec)
         ELOG(ERROR, "Read error: %s", ec.message().c_str());
     }
 
-    // If we get here then the connection is closed gracefully
+    ELOG(INFO, "Websocket closed.");
 
-    // The make_printable() function helps print a ConstBufferSequence
-    std::cout << beast::make_printable(mBuffer.data()) << std::endl;
+    mBuffer.consume(mBuffer.size());
 }
 
 
@@ -319,28 +317,34 @@ BinanceWebsocket::BinanceWebsocket(BinanceUtilities *pBu)
 
 
 /**
+ * @brief Destroy the BinanceWebsocket::BinanceWebsocket object
+ * 
+ */
+BinanceWebsocket::~BinanceWebsocket()
+{
+    ELOG(INFO, "BinanceWebsocket destructor.");
+
+    mIoc.reset();
+}
+
+
+/**
  * @brief İnitialize
  * 
  */
 void BinanceWebsocket::init()
 {
-    // The io_context is required for all I/O
-    net::io_context ioc;
-
-    // The SSL context is required, and holds certificates
-    ssl::context ctx{ssl::context::tlsv12_client};
-
     // This holds the root certificate used for verification
-    load_root_certificates(ctx);
+    load_root_certificates(mCtx);
 
     ELOG(INFO, "Websocket init function.");
 
     // Launch the asynchronous operation
-    std::make_shared<Websocket>(ioc, ctx)->run(mHost, mPort, mEndpointT);
+    std::make_shared<Websocket>(mIoc, mCtx)->run(mHost, mPort, mEndpointT);
 
-    std::make_shared<Websocket>(ioc, ctx)->run(mHost, mPort, mEndpointF);
+    std::make_shared<Websocket>(mIoc, mCtx)->run(mHost, mPort, mEndpointF);
 
     // Run the I/O service. The call will return when
     // the socket is closed.
-    ioc.run();
+    mIoc.run();
 }

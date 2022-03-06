@@ -73,6 +73,9 @@ class Websocket : public std::enable_shared_from_this<Websocket>
 class BinanceWebsocket 
 {
     private:
+        net::io_context             mIoc;
+        ssl::context                mCtx{ssl::context::tlsv12_client};
+
         std::string                 mHost;
         std::string                 mPort;
         std::string                 mEndpointT;
@@ -83,6 +86,7 @@ class BinanceWebsocket
 
     public:
                                     BinanceWebsocket(BinanceUtilities *pBu);
+                                    ~BinanceWebsocket();
 
         void                        init();
 

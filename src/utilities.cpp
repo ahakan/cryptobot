@@ -266,8 +266,6 @@ std::string Utilities::calculateRSI(std::vector<std::string> vector)
     float sumGain       = 0;
     float sumLoss       = 0;
 
-    std::cout << "size: " << size << std::endl;
-
     for (int i=size-1; i>0; i--)
     {
         float difference = std::stof(vector[i]) - std::stof(vector[i-1]);
