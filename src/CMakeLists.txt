@@ -5,9 +5,10 @@ find_package(Threads REQUIRED)
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost REQUIRED COMPONENTS) # header only libraries must not be added here
-include_directories(${Boost_INCLUDE_DIRS}) 
 
+find_package(Boost REQUIRED COMPONENTS) # header only libraries must not be added here
+
+include_directories(${Boost_INCLUDE_DIRS}) 
 
 find_package(CURL REQUIRED) 
 if(CURL_FOUND)
@@ -29,7 +30,6 @@ else()
     message(WARNING "Could not find libssl and libcrypto. This dependency will be downloaded. To avoid this you can install curl yourself using the standard methods for your platform.")
 endif()
 
-
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
 set(SOURCES
@@ -42,4 +42,5 @@ set(SOURCES
 )
 
 add_executable(cryptobot ${SOURCES}) 
-target_link_libraries(cryptobot sub::libelog sub::libjson sub::libsqlite sub::libhttp -lcap ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${CURL_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+
+target_link_libraries(cryptobot sub::libelog sub::libjson sub::libhttp -lcap ${SQLite3_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${CURL_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})

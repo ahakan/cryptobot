@@ -41,7 +41,7 @@ git clone https://github.com/ahakan/cryptobot.git
 cd cryptobot
 mkdir build && cd build
 cmake ..
-make  
+sudo make  
 ```
 
 ## Configuration
@@ -91,13 +91,14 @@ When use the crypto bot, you have to make some configurations.
   - .
     | Configuration     | Description                       |
     | ------------------| --------------------------------- |
+    | `exchange`        | Exchange name (Binance)           |
     | `interval`        | Klines interval type (15m)        |
-    | `trade symbol`    | Trade coin symbol (ETH/USDT)      |
+    | `symbol`          | Trade coin symbol (ETH/USDT)      |
     | `balance symbol`  | Wallet balance symbol (USDT)      |
     | `balance amount`  | Wallet balance amount (400$)      |
-    | `average amount`  | Average amount for trade (0.25)   |
     | `follow symbol`   | Follow coin symbol (BTC/USDT)     |
-    | `exchange name`   | Exchange name (Binance)           |
+    | `average amount`  | Average amount for trade (0.25)   |
+    | `RSI`             | RSI type                          |
 
 - `binance`
   - .
