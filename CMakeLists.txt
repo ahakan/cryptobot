@@ -5,18 +5,59 @@ project(cryptobot VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-format-security")
-
-
-SET(LIBCAP_BUILD_OWN                "NO")
-
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 include(CheckIncludeFile)
 include(CheckIncludeFileCXX)
 include(CheckIncludeFiles)
 include(ExternalProject)
-include(module/SQlite3.cmake)
-include(module/libcap2.cmake)
+
+SET(LIBCAP_BUILD_OWN "YES")
+
+if(LIBCAP_BUILD_OWN STREQUAL "NO")
+    include(module/libcap2.cmake)
+endif()
+
+find_package(SQLite3 REQUIRED) 
+
+if(SQLite3_FOUND)
+    message(STATUS "Found SQLite3 version: ${SQLite3_VERSION}")
+    message(STATUS "Using SQLite3 include dir(s): ${SQLite3_INCLUDE_DIR}")
+    message(STATUS "Using SQLite3 lib(s): ${SQLite3_LIBRARIES}")
+    include_directories(${SQLite3_INCLUDE_DIR})
+else()
+    include(module/sqlite3.cmake)
+endif()
+
+find_package(Threads REQUIRED)
+
+set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+
+find_package(Boost REQUIRED COMPONENTS) # header only libraries must not be added here
+
+include_directories(${Boost_INCLUDE_DIRS}) 
+
+find_package(CURL REQUIRED) 
+if(CURL_FOUND)
+    message(STATUS "Found CURL version: ${CURL_VERSION_STRING}")
+    message(STATUS "Using CURL include dir(s): ${CURL_INCLUDE_DIRS}")
+    message(STATUS "Using CURL lib(s): ${CURL_LIBRARIES}")
+    include_directories(${CURL_INCLUDE_DIRS})
+else()
+    message(WARNING "Could not find libcurl and libcurl-openssl. This dependency will be downloaded. To avoid this you can install curl yourself using the standard methods for your platform.")
+endif()
+
+find_package(OpenSSL REQUIRED) 
+if(OPENSSL_FOUND)
+    message(STATUS "Found SSL version: ${OPENSSL_VERSION}")
+    message(STATUS "Using SSL include dir(s): ${OPENSSL_INCLUDE_DIR}")
+    message(STATUS "Using SSL lib(s): ${OPENSSL_LIBRARIES}")
+    include_directories(${OPENSSL_INCLUDE_DIR})
+else()
+    message(WARNING "Could not find libssl and libcrypto. This dependency will be downloaded. To avoid this you can install curl yourself using the standard methods for your platform.")
+endif()
 
 configure_file(${CMAKE_SOURCE_DIR}/config.json ${CMAKE_BINARY_DIR}/config.json)
 
