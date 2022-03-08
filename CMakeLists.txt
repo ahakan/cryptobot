@@ -12,7 +12,7 @@ include(CheckIncludeFileCXX)
 include(CheckIncludeFiles)
 include(ExternalProject)
 
-SET(LIBCAP_BUILD_OWN "YES")
+SET(LIBCAP_BUILD_OWN "NO")
 
 if(LIBCAP_BUILD_OWN STREQUAL "NO")
     include(module/libcap2.cmake)

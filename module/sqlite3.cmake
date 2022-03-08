@@ -3,8 +3,8 @@ if (UNIX)
 
     set(SQLite3_PREFIX sqlite3)
     set(SQLite3_CONFIGURE ./configure)
-    set(SQLite3_MAKE make)
-    set(SQLite3_INSTALL make install)
+    set(SQLite3_MAKE sudo make)
+    set(SQLite3_INSTALL sudo make install)
     set(SQLite3_URL https://sqlite.org/2022/sqlite-autoconf-3380000.tar.gz)
     set(SQLite3_SHA3 7b1fb47d0a8137641b0a39e2345bb573b2b9e3e220d099854e1d8522fc449b9d)
 
