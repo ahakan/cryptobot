@@ -36,11 +36,18 @@ Clone [cryptobot][cryptobot].
 git clone https://github.com/ahakan/cryptobot.git   
 ```
 
-### *Step 3: Build cryptobot*
+### *Step 3.1: Build cryptobot with bash script*
+```sh
+cd cryptobot
+chmod +x install.sh
+./install.sh
+```
+
+### *Step 3.2: Build cryptobot with CMake*
 ```sh
 cd cryptobot
 mkdir build && cd build
-cmake ..
+cmake .. -DLIBCAP_BUILD:STRING=YES -DLIBSQLITE_BUILD:STRING=YES
 sudo make  
 ```
 
@@ -52,25 +59,22 @@ When use the crypto bot, you have to make some configurations.
 
 ```
 {
-    "user": {
-        "interval": "15m",
-        "trade": {
-            "symbol": "ETHUSDT",
-            "balance": {
-                "symbol": "USDT",
-                "amount": "400"
-            },
-            "average": {
-                "auto-calculate": 0,
-                "amount": "0.20"
-            }
+    "trade": {
+        "exchange": "binance",
+        "interval": "4h",
+        "symbol": "SOLBUSD",
+        "balance": {
+            "symbol": "BUSD",
+            "amount": "400"
         },
         "follow": {
-            "symbol": "BTCUSDT"
+            "symbol": "BTCBUSD"
         },
-        "exchange": {
-            "name": "binance"
-        }
+        "average": {
+            "auto-calculate": 0,
+            "amount": "0.20"
+        },
+        "RSI": 14
     },
     "binance": {
         "websocket": {
@@ -78,7 +82,7 @@ When use the crypto bot, you have to make some configurations.
             "port": "9443"
         },
         "api": {
-            "base": "https://api.binance.com",
+            "base": "api.binance.com",
             "API_KEY": "1",
             "SECRET_KEY": "1"
         }

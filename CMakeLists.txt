@@ -12,22 +12,30 @@ include(CheckIncludeFileCXX)
 include(CheckIncludeFiles)
 include(ExternalProject)
 
-SET(LIBCAP_BUILD_OWN "NO")
+SET(LIBCAP_BUILD "NO" CACHE STRING "YES")
+SET(LIBSQLITE_BUILD "NO" CACHE STRING "YES")
 
-if(LIBCAP_BUILD_OWN STREQUAL "NO")
+
+if(LIBCAP_BUILD STREQUAL "YES")
     include(module/libcap2.cmake)
 endif()
 
-find_package(SQLite3 REQUIRED) 
 
-if(SQLite3_FOUND)
-    message(STATUS "Found SQLite3 version: ${SQLite3_VERSION}")
-    message(STATUS "Using SQLite3 include dir(s): ${SQLite3_INCLUDE_DIR}")
-    message(STATUS "Using SQLite3 lib(s): ${SQLite3_LIBRARIES}")
-    include_directories(${SQLite3_INCLUDE_DIR})
-else()
+if(LIBSQLITE_BUILD STREQUAL "YES")
     include(module/sqlite3.cmake)
+else()
+    find_package(SQLite3 REQUIRED) 
+
+    if(SQLite3_FOUND)
+        message(STATUS "Found SQLite3 version: ${SQLite3_VERSION}")
+        message(STATUS "Using SQLite3 include dir(s): ${SQLite3_INCLUDE_DIR}")
+        message(STATUS "Using SQLite3 lib(s): ${SQLite3_LIBRARIES}")
+        include_directories(${SQLite3_INCLUDE_DIR})
+    endif()
 endif()
+
+
+
 
 find_package(Threads REQUIRED)
 
