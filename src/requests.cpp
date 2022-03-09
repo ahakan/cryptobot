@@ -43,48 +43,248 @@ Requests::~Requests()
 
 
 /**
- * @brief Calculate averages and rsi
+ * @brief Calculate Symbol RSI
  * 
+ * @return true 
+ * @return false 
  */
-bool Requests::getAveragesAndRSI()
+bool Requests::getSymbolRSI()
 {
     if (mTradeCandlesClosePrices.size() != 0)
     {
         mTradeCandlesCloseRSI               = pBu->calculateRSI(mTradeCandlesClosePrices);
 
+        ELOG(INFO, "Calculated Symbol RSI. Trade Candles Close RSI: %s.", mTradeCandlesCloseRSI.c_str());
+
+        return true;
+    }
+
+    ELOG(ERROR, "Failed to Calculate Symbol RSI.");
+    
+    return false;
+}
+
+
+/**
+ * @brief Calculate follow symbol RSI
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Requests::getFollowRSI()
+{
+    if (mFollowCandlesClosePrices.size() != 0)
+    {
+        mFollowCandlesCloseRSI               = pBu->calculateRSI(mFollowCandlesClosePrices);
+
+        ELOG(INFO, "Calculated Follow Symbol RSI. Follow Candles Close RSI: %s.", mFollowCandlesCloseRSI.c_str());
+
+        return true;
+    }
+
+    ELOG(ERROR, "Failed to Calculate Follow Symbol RSI.");
+    
+    return false;
+}
+
+
+/**
+ * @brief Calculate symbol candles average
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Requests::getSymbolAverages()
+{
+    if (mTradeCandlesClosePrices.size() != 0)
+    {
         mTradeCandlesOpenPricesAverage      = pBu->calculateAverage(mTradeCandlesOpenPrices);
         mTradeCandlesHighPricesAverage      = pBu->calculateAverage(mTradeCandlesHighPrices);
         mTradeCandlesLowPricesAverage       = pBu->calculateAverage(mTradeCandlesLowPrices);
         mTradeCandlesClosePricesAverage     = pBu->calculateAverage(mTradeCandlesClosePrices);
 
-
-        mFollowCandlesCloseRSI              = pBu->calculateRSI(mFollowCandlesClosePrices);
-
-        mFollowCandlesOpenPricesAverage     = pBu->calculateAverage(mFollowCandlesOpenPrices);
-        mFollowCandlesHighPricesAverage     = pBu->calculateAverage(mFollowCandlesHighPrices);
-        mFollowCandlesLowPricesAverage      = pBu->calculateAverage(mFollowCandlesLowPrices);
-        mFollowCandlesClosePricesAverage    = pBu->calculateAverage(mFollowCandlesClosePrices);
-
-        ELOG(INFO, "Calculated Averages and RSI. Trade Close Average: %s, Trade RSI: %s, Follow RSI: %s.", mTradeCandlesClosePricesAverage.c_str(), mTradeCandlesCloseRSI.c_str(), mFollowCandlesCloseRSI.c_str());
+        ELOG(INFO, "Calculated Symbol Averages. Trade Close Average: %s.", mTradeCandlesClosePricesAverage.c_str());
 
         mTradeCandlesOpenPricesAverage      = pBu->roundPrice(mTradeCandlesOpenPricesAverage, mSymbolTickSize);
         mTradeCandlesHighPricesAverage      = pBu->roundPrice(mTradeCandlesHighPricesAverage, mSymbolTickSize);
         mTradeCandlesLowPricesAverage       = pBu->roundPrice(mTradeCandlesLowPricesAverage, mSymbolTickSize);
         mTradeCandlesClosePricesAverage     = pBu->roundPrice(mTradeCandlesClosePricesAverage, mSymbolTickSize);
 
+        ELOG(INFO, "Rounded Trade Averages. TOA: %s, THA: %s, TLA: %s, TCA: %s", mTradeCandlesOpenPricesAverage.c_str(), mTradeCandlesHighPricesAverage.c_str(), mTradeCandlesLowPricesAverage.c_str(), mTradeCandlesClosePricesAverage.c_str());
+
+        return true;
+    }
+
+    ELOG(ERROR, "Failed to Calculate Symbol Averages.");
+    
+    return false;
+}
+
+
+/**
+ * @brief Calculate follow symbol candles average
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Requests::getFollowAverages()
+{
+    if (mFollowCandlesClosePrices.size() != 0)
+    {
+        mFollowCandlesOpenPricesAverage     = pBu->calculateAverage(mFollowCandlesOpenPrices);
+        mFollowCandlesHighPricesAverage     = pBu->calculateAverage(mFollowCandlesHighPrices);
+        mFollowCandlesLowPricesAverage      = pBu->calculateAverage(mFollowCandlesLowPrices);
+        mFollowCandlesClosePricesAverage    = pBu->calculateAverage(mFollowCandlesClosePrices);
+
+        ELOG(INFO, "Calculated Follow Symbol Averages. Follow Close Average: %s.", mFollowCandlesClosePricesAverage.c_str());
+
         mFollowCandlesOpenPricesAverage     = pBu->roundPrice(mFollowCandlesOpenPricesAverage, mFollowSymbolTickSize);
         mFollowCandlesHighPricesAverage     = pBu->roundPrice(mFollowCandlesHighPricesAverage, mFollowSymbolTickSize);
         mFollowCandlesLowPricesAverage      = pBu->roundPrice(mFollowCandlesLowPricesAverage, mFollowSymbolTickSize);
         mFollowCandlesClosePricesAverage    = pBu->roundPrice(mFollowCandlesClosePricesAverage, mFollowSymbolTickSize);
 
-        ELOG(INFO, "Rounded Trade Averages. TOA: %s, THA: %s, TLA: %s, TCA: %s", mTradeCandlesOpenPricesAverage.c_str(), mTradeCandlesHighPricesAverage.c_str(), mTradeCandlesLowPricesAverage.c_str(), mTradeCandlesClosePricesAverage.c_str());
         ELOG(INFO, "Rounded Follow Averages. FOA: %s, FHA: %s, FLA: %s, FCA: %s", mFollowCandlesOpenPricesAverage.c_str(), mFollowCandlesHighPricesAverage.c_str(), mFollowCandlesLowPricesAverage.c_str(), mFollowCandlesClosePricesAverage.c_str());
 
         return true;
     }
 
-    ELOG(ERROR, "Failed to Calculate Averages and RSI.");
+    ELOG(ERROR, "Failed to Calculate Follow Symbol Averages.");
+
+    return false;
+}
+
+
+/**
+ * @brief Check candle data struct
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Requests::readCandleData()
+{
+    struct candle_data *pTradeCandleData = Opel::getTradeCandleStruct();
+
+    pTradeCandleData->lock();
+
+    if (pTradeCandleData->isUpdated)
+    {
+        if (pTradeCandleData->isClosed)
+        {
+            bool areAdded = addClosedCandlePrices(pTradeCandleData->symbol, pTradeCandleData->openPrice, pTradeCandleData->closePrice, pTradeCandleData->highPrice, pTradeCandleData->lowPrice);
+
+            if (areAdded)
+            {
+                bool mCalculateSymbolAverages   = getSymbolAverages();
+                bool mCalculateSymbolRSI        = getSymbolRSI();
+
+                if (mCalculateSymbolAverages && mCalculateSymbolRSI)
+                {
+                    ELOG(INFO, "Added new symbol closed price data and calculated symbol averages and RSI.");
+                }
+            }
+        }
+        else
+        {
+            mSymbolLivePrice = pTradeCandleData->closePrice;
+
+            ELOG(INFO, "Current Trade Symbol: %s, Live Price: %s.", pTradeCandleData->symbol.c_str(), mSymbolLivePrice.c_str());
+        }
+
+        pTradeCandleData->isUpdated = false;
+    }
+
+    pTradeCandleData->unlock();
+
+
+    struct candle_data *pFollowCandleData = Opel::getFollowCandleStruct();
+
+    pFollowCandleData->lock();
+
+    if (pFollowCandleData->isUpdated)
+    {
+        if (pFollowCandleData->isClosed)
+        {
+            bool areAdded = addClosedCandlePrices(pFollowCandleData->symbol, pFollowCandleData->openPrice, pFollowCandleData->closePrice, pFollowCandleData->highPrice, pFollowCandleData->lowPrice);
+
+            if (areAdded)
+            {
+                bool mCalculateFollowAverages   = getFollowAverages();
+                bool mCalculateFollowRSI        = getFollowRSI();
+
+                if (mCalculateFollowAverages && mCalculateFollowRSI)
+                {
+                    ELOG(INFO, "Added new follow symbol closed price data and calculated symbol averages and RSI.");
+                }
+            }
+        }
+        else
+        {
+            mFollowLivePrice = pFollowCandleData->closePrice;
+
+            ELOG(INFO, "Current Follow Symbol: %s, Live Price: %s.", pFollowCandleData->symbol.c_str(), mFollowLivePrice.c_str());
+        }
+
+        pFollowCandleData->isUpdated = false;
+    }
+
+    pFollowCandleData->unlock();
+
+    return true;
+}
+
+
+/**
+ * @brief Add closed candle datas to vectors.
+ * 
+ * @param symbol 
+ * @param open 
+ * @param close 
+ * @param high 
+ * @param low 
+ * @return true 
+ * @return false 
+ */
+bool Requests::addClosedCandlePrices(std::string symbol, std::string open, std::string close, std::string high, std::string low)
+{
+    if (symbol==mSymbol)
+    {
+        mTradeCandlesOpenPrices.push_back(open);
+        mTradeCandlesOpenPrices.erase(mTradeCandlesOpenPrices.begin());
+
+        mTradeCandlesClosePrices.push_back(close);
+        mTradeCandlesClosePrices.erase(mTradeCandlesClosePrices.begin());
+
+        mTradeCandlesHighPrices.push_back(high);
+        mTradeCandlesHighPrices.erase(mTradeCandlesHighPrices.begin());
+
+        mTradeCandlesLowPrices.push_back(low);
+        mTradeCandlesLowPrices.erase(mTradeCandlesLowPrices.begin());
+
+        ELOG(INFO, "Added new trade symbol closed prices. OpenPricesSize: %d, ClosePricesSize: %d, HighPricesSize: %d, LowPricesSize: %d.", mTradeCandlesOpenPrices.size(), mTradeCandlesClosePrices.size(), mTradeCandlesHighPrices.size(), mTradeCandlesLowPrices.size());
     
+        return true;
+    }
+    else if (symbol==mFollowSymbol)
+    {
+        mFollowCandlesOpenPrices.push_back(open);
+        mFollowCandlesOpenPrices.erase(mFollowCandlesOpenPrices.begin());
+
+        mFollowCandlesClosePrices.push_back(close);
+        mFollowCandlesClosePrices.erase(mFollowCandlesClosePrices.begin());
+
+        mFollowCandlesHighPrices.push_back(high);
+        mFollowCandlesHighPrices.erase(mFollowCandlesHighPrices.begin());
+
+        mFollowCandlesLowPrices.push_back(low);
+        mFollowCandlesLowPrices.erase(mFollowCandlesLowPrices.begin());
+
+        ELOG(INFO, "Added new follow symbol closed prices. OpenPricesSize: %d, ClosePricesSize: %d, HighPricesSize: %d, LowPricesSize: %d.", mFollowCandlesOpenPrices.size(), mFollowCandlesClosePrices.size(), mFollowCandlesHighPrices.size(), mFollowCandlesLowPrices.size());
+
+        return true;
+    }
+    
+    ELOG(ERROR, "Failed to add new closed prices data to vectors.");
+
     return false;
 }
 
@@ -156,9 +356,13 @@ void BinanceRequests::init()
 
             if (mGetTradeSymbolCandles && mGetFollowSymbolCandles)
             {
-                bool mCalculatesAveragesRSI = getAveragesAndRSI();
+                bool mCalculateSymbolAverages   = getSymbolAverages();
+                bool mCalculateSymbolRSI        = getSymbolRSI();
 
-                if (mCalculatesAveragesRSI)
+                bool mCalculateFollowAverages   = getFollowAverages();
+                bool mCalculateFollowRSI        = getFollowRSI();
+
+                if (mCalculateSymbolAverages && mCalculateFollowAverages && mCalculateSymbolRSI && mCalculateFollowRSI)
                 {
                     bool mGetWalletBalance  = getCoinBalance(mBalanceSymbol);
 
@@ -175,74 +379,83 @@ void BinanceRequests::init()
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
 
-    // newBuy();
+    newBuy();
 }
 
 
-// /**
-//  * @brief Requests main loop
-//  * 
-//  */
-// void BinanceRequests::newBuy()
-// {
-//     bool mEnough = false;
-//     while (1)
-//     {
-//         Opel *pOpel = Opel::instance();
+/**
+ * @brief Requests main loop
+ * 
+ */
+void BinanceRequests::newBuy()
+{
+    while (1)
+    {
+        Opel *pOpel = Opel::instance();
 
-//         if (pOpel->getIsActive())
-//         {
-//             if (mBuyOrders.size() > 0)
-//                 queryOrder(mSymbol, mBuyOrders.begin()->first);
 
-//             if (mSellOrders.size() > 0)
-//                 for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
-//                     queryOrder(mSymbol, it->first);
+        while(pOpel->getIsActive())
+        {
+            readCandleData();
 
-//             if (mBoughtOrders.size() > 0)
-//                 // createNewOrder(mSymbol, "SELL", "LIMIT", "0.20", "91.95");
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
 
-//             if (mEnough == false)
-//                 if (mBuyOrders.size() < 1)
-//                     // createNewOrder(mSymbol, "BUY", "LIMIT", "0.20", "90.4");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        // if ()
+        // {
+        //     if (mBuyOrders.size() > 0)
+        //         queryOrder(mSymbol, mBuyOrders.begin()->first);
+
+        //     if (mSellOrders.size() > 0)
+        //         for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
+        //             queryOrder(mSymbol, it->first);
+
+        //     if (mBoughtOrders.size() > 0)
+        //         // createNewOrder(mSymbol, "SELL", "LIMIT", "0.20", "91.95");
+
+        //     if (mEnough == false)
+        //         if (mBuyOrders.size() < 1)
+        //             // createNewOrder(mSymbol, "BUY", "LIMIT", "0.20", "90.4");
         
-//             mEnough = true;
-//             // currentOpenOrders(mSymbol);
+        //     mEnough = true;
+        //     // currentOpenOrders(mSymbol);
 
-//             // cancelOrder(mSymbol, mBuyOrders.begin()->first);
+        //     // cancelOrder(mSymbol, mBuyOrders.begin()->first);
 
-//             // cancelAllOpenOrders(mSymbol);
-//         }
+        //     // cancelAllOpenOrders(mSymbol);
+        // }
 
-//         ELOG(INFO, "mBuyOrders: %d, mBoughtOrders: %d, mSellOrders: %d, mSoldOrders: %d.", mBuyOrders.size(), mBoughtOrders.size(), mSellOrders.size(), mSoldOrders.size());
+        // ELOG(INFO, "mBuyOrders: %d, mBoughtOrders: %d, mSellOrders: %d, mSoldOrders: %d.", mBuyOrders.size(), mBoughtOrders.size(), mSellOrders.size(), mSoldOrders.size());
 
-//         std::cout << "Buy Orders" << std::endl;
-//         for (AllOrdersMap::iterator it = mBuyOrders.begin(); it != mBuyOrders.end(); it++)
-//         {
-//             std::cout << it->first << ": " << it->second["Price"] << std::endl;
-//         }
+        // std::cout << "Buy Orders" << std::endl;
+        // for (AllOrdersMap::iterator it = mBuyOrders.begin(); it != mBuyOrders.end(); it++)
+        // {
+        //     std::cout << it->first << ": " << it->second["Price"] << std::endl;
+        // }
 
-//         std::cout << "Bought Orders" << std::endl;
-//         for (AllOrdersMap::iterator it = mBoughtOrders.begin(); it != mBoughtOrders.end(); it++)
-//         {
-//             std::cout << it->first << ": " << it->second["BoughtPrice"] << std::endl;
-//         }
+        // std::cout << "Bought Orders" << std::endl;
+        // for (AllOrdersMap::iterator it = mBoughtOrders.begin(); it != mBoughtOrders.end(); it++)
+        // {
+        //     std::cout << it->first << ": " << it->second["BoughtPrice"] << std::endl;
+        // }
 
-//         std::cout << "Sell Orders" << std::endl;
-//         for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
-//         {
-//             std::cout << it->first << ": " << it->second["Price"] << std::endl;
-//         }
+        // std::cout << "Sell Orders" << std::endl;
+        // for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
+        // {
+        //     std::cout << it->first << ": " << it->second["Price"] << std::endl;
+        // }
 
-//         std::cout << "Sold Orders" << std::endl;
-//         for (AllOrdersMap::iterator it = mSoldOrders.begin(); it != mSoldOrders.end(); it++)
-//         {
-//             std::cout << it->first << ": " << it->second["SoldPrice"] << " - " << it->second["BoughtPrice"] << std::endl;
-//         }
+        // std::cout << "Sold Orders" << std::endl;
+        // for (AllOrdersMap::iterator it = mSoldOrders.begin(); it != mSoldOrders.end(); it++)
+        // {
+        //     std::cout << it->first << ": " << it->second["SoldPrice"] << " - " << it->second["BoughtPrice"] << std::endl;
+        // }
 
-//         std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-//     }
-// }
+        // std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    }
+}
 
 
 /**

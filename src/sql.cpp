@@ -71,43 +71,43 @@ void Sql::init()
     {
         // getBOTTable();
 
-        struct candle_data *pTradeCandleData = Opel::getTradeCandleStruct();
+        // struct candle_data *pTradeCandleData = Opel::getTradeCandleStruct();
 
-        pTradeCandleData->lock();
-        if (pTradeCandleData->isUpdated)
-        {
-            std::cout << "Timestamp:" << pTradeCandleData->timestamp << std::endl;
-            std::cout << "Symbol:" << pTradeCandleData->symbol << std::endl;
-            std::cout << "Open:" << pTradeCandleData->openPrice << std::endl;
-            std::cout << "Close:" <<  pTradeCandleData->closePrice << std::endl;
-            std::cout << "High:" <<  pTradeCandleData->highPrice << std::endl;
-            std::cout << "Low:" <<  pTradeCandleData->lowPrice << std::endl;
-            std::cout << "isClosed:" <<  pTradeCandleData->isClosed << std::endl;
+        // pTradeCandleData->lock();
+        // if (pTradeCandleData->isUpdated)
+        // {
+        //     std::cout << "Timestamp:" << pTradeCandleData->timestamp << std::endl;
+        //     std::cout << "Symbol:" << pTradeCandleData->symbol << std::endl;
+        //     std::cout << "Open:" << pTradeCandleData->openPrice << std::endl;
+        //     std::cout << "Close:" <<  pTradeCandleData->closePrice << std::endl;
+        //     std::cout << "High:" <<  pTradeCandleData->highPrice << std::endl;
+        //     std::cout << "Low:" <<  pTradeCandleData->lowPrice << std::endl;
+        //     std::cout << "isClosed:" <<  pTradeCandleData->isClosed << std::endl;
 
-            // addClosedKlinePrice(pTradeCandleData->timestamp, pTradeCandleData->openPrice, pTradeCandleData->closePrice, pTradeCandleData->highPrice, pTradeCandleData->lowPrice);
+        //     // addClosedKlinePrice(pTradeCandleData->timestamp, pTradeCandleData->openPrice, pTradeCandleData->closePrice, pTradeCandleData->highPrice, pTradeCandleData->lowPrice);
 
-            pTradeCandleData->isUpdated = false;
-        }
-        pTradeCandleData->unlock();
+        //     pTradeCandleData->isUpdated = false;
+        // }
+        // pTradeCandleData->unlock();
 
-        struct candle_data *pFollowCandleData = Opel::getFollowCandleStruct();
+        // struct candle_data *pFollowCandleData = Opel::getFollowCandleStruct();
 
-        pFollowCandleData->lock();
-        if (pFollowCandleData->isUpdated)
-        {
-            std::cout << "Timestamp:" << pFollowCandleData->timestamp << std::endl;
-            std::cout << "Symbol:" << pFollowCandleData->symbol << std::endl;
-            std::cout << "Open:" << pFollowCandleData->openPrice << std::endl;
-            std::cout << "Close:" <<  pFollowCandleData->closePrice << std::endl;
-            std::cout << "High:" <<  pFollowCandleData->highPrice << std::endl;
-            std::cout << "Low:" <<  pFollowCandleData->lowPrice << std::endl;
-            std::cout << "isClosed:" <<  pFollowCandleData->isClosed << std::endl;
+        // pFollowCandleData->lock();
+        // if (pFollowCandleData->isUpdated)
+        // {
+        //     std::cout << "Timestamp:" << pFollowCandleData->timestamp << std::endl;
+        //     std::cout << "Symbol:" << pFollowCandleData->symbol << std::endl;
+        //     std::cout << "Open:" << pFollowCandleData->openPrice << std::endl;
+        //     std::cout << "Close:" <<  pFollowCandleData->closePrice << std::endl;
+        //     std::cout << "High:" <<  pFollowCandleData->highPrice << std::endl;
+        //     std::cout << "Low:" <<  pFollowCandleData->lowPrice << std::endl;
+        //     std::cout << "isClosed:" <<  pFollowCandleData->isClosed << std::endl;
 
-            // addClosedKlinePrice(pFollowCandleData->timestamp, pFollowCandleData->openPrice, pFollowCandleData->closePrice, pFollowCandleData->highPrice, pFollowCandleData->lowPrice);
+        //     // addClosedKlinePrice(pFollowCandleData->timestamp, pFollowCandleData->openPrice, pFollowCandleData->closePrice, pFollowCandleData->highPrice, pFollowCandleData->lowPrice);
 
-            pFollowCandleData->isUpdated = false;
-        }
-        pFollowCandleData->unlock();
+        //     pFollowCandleData->isUpdated = false;
+        // }
+        // pFollowCandleData->unlock();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
 

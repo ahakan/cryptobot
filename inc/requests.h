@@ -63,6 +63,9 @@ class Requests
 
         std::string             mRecvWindow = "10000";
 
+        std::string             mSymbolLivePrice;
+        std::string             mFollowLivePrice;
+
         AllOrdersMap            mBuyOrders;
         AllOrdersMap            mBoughtOrders;
 
@@ -96,7 +99,12 @@ class Requests
         AverageVector           mFollowCandlesClosePrices;
 
 
-        bool                    getAveragesAndRSI();
+        bool                    getSymbolRSI();
+        bool                    getFollowRSI();
+        bool                    getSymbolAverages();
+        bool                    getFollowAverages();
+        bool                    readCandleData();
+        bool                    addClosedCandlePrices(std::string symbol, std::string open, std::string close, std::string high, std::string low);
 
     public:
                                 Requests(BinanceUtilities *pBu);

@@ -199,8 +199,6 @@ void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
 
     if (mBuffer.size() > 0)
     {
-        ELOG(INFO, "Websocket on read. Buffer size: %dKB", mBuffer.size());
-
         std::string bufferJson = beast::buffers_to_string(mBuffer.data());
 
         Json::Value mCandlestickJson;
@@ -223,7 +221,7 @@ void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
         std::string mHighPrice          = mKData["h"].asString();
         std::string mLowPrice           = mKData["l"].asString();
 
-        // std::cout << mSymbol << ": " << mClosePrice << std::endl;
+        ELOG(INFO, "Websocket on read. Symbol: %s, Buffer size: %dKB.", mSymbol.c_str(), mBuffer.size());
 
         Opel *iOpel = Opel::instance();
         
