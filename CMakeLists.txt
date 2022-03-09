@@ -12,16 +12,16 @@ include(CheckIncludeFileCXX)
 include(CheckIncludeFiles)
 include(ExternalProject)
 
-SET(LIBCAP_BUILD "NO" CACHE STRING "YES")
-SET(LIBSQLITE_BUILD "NO" CACHE STRING "YES")
+SET(BUILD_LIBCAP FALSE CACHE BOOL TRUE)
+SET(BUILD_SQLITE3 FALSE CACHE BOOL TRUE)
 
 
-if(LIBCAP_BUILD STREQUAL "YES")
+if(BUILD_LIBCAP STREQUAL TRUE)
     include(module/libcap2.cmake)
 endif()
 
 
-if(LIBSQLITE_BUILD STREQUAL "YES")
+if(BUILD_SQLITE3 STREQUAL TRUE)
     include(module/sqlite3.cmake)
 else()
     find_package(SQLite3 REQUIRED) 
@@ -33,9 +33,6 @@ else()
         include_directories(${SQLite3_INCLUDE_DIR})
     endif()
 endif()
-
-
-
 
 find_package(Threads REQUIRED)
 

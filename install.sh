@@ -1,30 +1,31 @@
 #!/bin/bash
 
+sudo rm -rf build
+
 CMAKE_COMMAND="cmake .. "
 
 # Check libcap
 FINDLIBCAP=$(ldconfig -p | grep libcap)
 
 if [ -n "$FINDLIBCAP" ]; then
-    echo $FINDLIBCAP
-    CMAKE_COMMAND="${CMAKE_COMMAND} -DLIBCAP_BUILD:STRING=NO"
+    echo "-- Found Libcap: TRUE"
+    CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_LIBCAP=FALSE"
 else
     echo "Libcap will be installed."
-    CMAKE_COMMAND="${CMAKE_COMMAND} -DLIBCAP_BUILD:STRING=YES"
+    CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_LIBCAP=TRUE"
 fi
 
 # Check sqlite
-FINDSQLITE=$(ldconfig -p | grep libsqlite)
+FINDSQLITE=$(ldconfig -p | grep libsqlite3)
 
 if [ -n "$FINDSQLITE" ]; then
-    echo $FINDSQLITE
-    CMAKE_COMMAND="${CMAKE_COMMAND} -DLIBSQLITE_BUILD:STRING=NO"
+    echo "-- Found LibSQLite3: TRUE"
+    CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_SQLITE3=FALSE"
 else
-    echo "Libsqlite will be installed."
-    CMAKE_COMMAND="${CMAKE_COMMAND} -DLIBSQLITE_BUILD:STRING=YES"
+    echo "Libsqlite3 will be installed."
+    CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_SQLITE3=TRUE"
 fi
 
-sudo rm -rf build
 mkdir build && cd build
 ${CMAKE_COMMAND}
 sudo make

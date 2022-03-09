@@ -14,8 +14,8 @@
 fast, secure and open source crypto trading bot
 
 [Installation](#installation) •
-[Configuration](#configuration) •
 [Usage](#usage) •
+[Configuration](#configuration) •
 [Licence](#licence) 
 </div>
 
@@ -47,8 +47,15 @@ chmod +x install.sh
 ```sh
 cd cryptobot
 mkdir build && cd build
-cmake .. -DLIBCAP_BUILD:STRING=YES -DLIBSQLITE_BUILD:STRING=YES
+cmake .. -DBUILD_LIBCAP=TRUE -DBUILD_SQLITE3=TRUE
 sudo make  
+```
+
+## Usage
+
+```sh
+cd build           
+./cryptobot        
 ```
 
 ## Configuration
@@ -114,13 +121,6 @@ When use the crypto bot, you have to make some configurations.
     | `api key`         | Binance api key                   |
     | `secret key`      | Binance secret key                |
 
-
-## Usage
-
-```sh
-cd build           
-./cryptobot        
-```
 
 ## Licence
 
