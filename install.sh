@@ -19,11 +19,20 @@ fi
 FINDSQLITE=$(ldconfig -p | grep libsqlite3)
 
 if [ -n "$FINDSQLITE" ]; then
-    echo "-- Found LibSQLite3: TRUE"
     CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_SQLITE3=FALSE"
 else
-    echo "Libsqlite3 will be installed."
+    echo "LibSQLite3 will be installed."
     CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_SQLITE3=TRUE"
+fi
+
+# Check sqlite
+FINDCURL=$(ldconfig -p | grep curl)
+
+if [ -n "$FINDCURL" ]; then
+    CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_CURL=FALSE"
+else
+    echo "Libcurl will be installed."
+    CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_CURL=TRUE"
 fi
 
 mkdir build && cd build

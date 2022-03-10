@@ -47,7 +47,7 @@ chmod +x install.sh
 ```sh
 cd cryptobot
 mkdir build && cd build
-cmake .. -DBUILD_LIBCAP=TRUE -DBUILD_SQLITE3=TRUE
+cmake .. -DBUILD_LIBCAP=TRUE -DBUILD_SQLITE3=TRUE -DBUILD_CURL=TRUE
 sudo make  
 ```
 
