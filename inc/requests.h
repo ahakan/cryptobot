@@ -23,6 +23,7 @@
 
 // Standard Libraries
 #include <iostream>
+#include <algorithm>
 #include <string>
 #include <thread>
 #include <chrono>
@@ -57,6 +58,8 @@ class Requests
         std::string             mAverageAmount;
 
         bool                    mAverageAutoCalculate;
+        
+        int                     mRSISize;
 
         bool                    mAccountStatus = false;
         bool                    mAPIKeyPermission = false;
@@ -65,6 +68,7 @@ class Requests
 
         std::string             mSymbolLivePrice;
         std::string             mFollowLivePrice;
+        std::string             mSellPriceCalculatedAverage;
 
         AllOrdersMap            mBuyOrders;
         AllOrdersMap            mBoughtOrders;
@@ -99,10 +103,11 @@ class Requests
         AverageVector           mFollowCandlesClosePrices;
 
 
-        bool                    getSymbolRSI();
-        bool                    getFollowRSI();
-        bool                    getSymbolAverages();
-        bool                    getFollowAverages();
+        bool                    calcSellPriceAverage();
+        bool                    calcSymbolRSI();
+        bool                    calcFollowRSI();
+        bool                    calcSymbolAverages();
+        bool                    calcFollowAverages();
         bool                    readCandleData();
         bool                    addClosedCandlePrices(std::string symbol, std::string open, std::string close, std::string high, std::string low);
 

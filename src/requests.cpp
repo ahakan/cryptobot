@@ -1,4 +1,5 @@
 #include "../inc/requests.h"
+#include <string>
 
 
 /**
@@ -20,6 +21,7 @@ Requests::Requests(BinanceUtilities *pBu)
     mBalanceAmount          = pBu->getBalanceAmount();
     mAverageAmount          = pBu->getAverageAmount();
     mAverageAutoCalculate   = pBu->getAverageAutoCalculate();
+    mRSISize                = pBu->getRSISize();
 
     if (mAPI_KEY.length() == 0 || mSECRET_KEY.length() == 0)
     {
@@ -43,12 +45,49 @@ Requests::~Requests()
 
 
 /**
+ * @brief Calculate new sell order price average
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Requests::calcSellPriceAverage()
+{
+    if (mAverageAutoCalculate)
+    {
+        float highestPrice          = std::stof(*std::max_element(mTradeCandlesHighPrices.begin(), mTradeCandlesHighPrices.end()));
+        float lowestPrice           = std::stof(*std::min_element(mTradeCandlesLowPrices.begin(), mTradeCandlesLowPrices.end()));
+
+        float calculatedAverage     = (highestPrice-lowestPrice)/(mRSISize/2.0);
+
+        mSellPriceCalculatedAverage = pBu->roundPrice(std::to_string(calculatedAverage), mSymbolTickSize); 
+
+        ELOG(INFO, "Calculated New Trade Average. New Average: %s.", mSellPriceCalculatedAverage.c_str());
+        
+        return true;
+    }
+
+    if (!mAverageAutoCalculate)
+    {
+        mSellPriceCalculatedAverage = mAverageAmount;
+
+        ELOG(INFO, "Average Auto Calculated Disable. Average: %s.", mSellPriceCalculatedAverage.c_str());
+
+        return true;
+    }
+
+    ELOG(ERROR, "Failed to Calculate New Trade Average.");
+
+    return false;
+}
+
+
+/**
  * @brief Calculate Symbol RSI
  * 
  * @return true 
  * @return false 
  */
-bool Requests::getSymbolRSI()
+bool Requests::calcSymbolRSI()
 {
     if (mTradeCandlesClosePrices.size() != 0)
     {
@@ -71,7 +110,7 @@ bool Requests::getSymbolRSI()
  * @return true 
  * @return false 
  */
-bool Requests::getFollowRSI()
+bool Requests::calcFollowRSI()
 {
     if (mFollowCandlesClosePrices.size() != 0)
     {
@@ -94,7 +133,7 @@ bool Requests::getFollowRSI()
  * @return true 
  * @return false 
  */
-bool Requests::getSymbolAverages()
+bool Requests::calcSymbolAverages()
 {
     if (mTradeCandlesClosePrices.size() != 0)
     {
@@ -127,7 +166,7 @@ bool Requests::getSymbolAverages()
  * @return true 
  * @return false 
  */
-bool Requests::getFollowAverages()
+bool Requests::calcFollowAverages()
 {
     if (mFollowCandlesClosePrices.size() != 0)
     {
@@ -174,8 +213,8 @@ bool Requests::readCandleData()
 
             if (areAdded)
             {
-                bool mCalculateSymbolAverages   = getSymbolAverages();
-                bool mCalculateSymbolRSI        = getSymbolRSI();
+                bool mCalculateSymbolAverages   = calcSymbolAverages();
+                bool mCalculateSymbolRSI        = calcSymbolRSI();
 
                 if (mCalculateSymbolAverages && mCalculateSymbolRSI)
                 {
@@ -208,8 +247,8 @@ bool Requests::readCandleData()
 
             if (areAdded)
             {
-                bool mCalculateFollowAverages   = getFollowAverages();
-                bool mCalculateFollowRSI        = getFollowRSI();
+                bool mCalculateFollowAverages   = calcFollowAverages();
+                bool mCalculateFollowRSI        = calcFollowRSI();
 
                 if (mCalculateFollowAverages && mCalculateFollowRSI)
                 {
@@ -356,11 +395,11 @@ void BinanceRequests::init()
 
             if (mGetTradeSymbolCandles && mGetFollowSymbolCandles)
             {
-                bool mCalculateSymbolAverages   = getSymbolAverages();
-                bool mCalculateSymbolRSI        = getSymbolRSI();
+                bool mCalculateSymbolAverages   = calcSymbolAverages();
+                bool mCalculateSymbolRSI        = calcSymbolRSI();
 
-                bool mCalculateFollowAverages   = getFollowAverages();
-                bool mCalculateFollowRSI        = getFollowRSI();
+                bool mCalculateFollowAverages   = calcFollowAverages();
+                bool mCalculateFollowRSI        = calcFollowRSI();
 
                 if (mCalculateSymbolAverages && mCalculateFollowAverages && mCalculateSymbolRSI && mCalculateFollowRSI)
                 {

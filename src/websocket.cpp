@@ -221,7 +221,7 @@ void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
         std::string mHighPrice          = mKData["h"].asString();
         std::string mLowPrice           = mKData["l"].asString();
 
-        ELOG(INFO, "Websocket on read. Symbol: %s, Buffer size: %dKB.", mSymbol.c_str(), mBuffer.size());
+        ELOG(INFO, "Websocket on read. Symbol: %s, Price: %s, Buffer size: %dKB.", mSymbol.c_str(), mClosePrice.c_str(), mBuffer.size());
 
         Opel *iOpel = Opel::instance();
         

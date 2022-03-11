@@ -19,8 +19,8 @@ fi
 CMAKE_COMMAND="cmake .. "
 
 # Check libcap
-CHECKLIBCAP=$(ldconfig -p | grep /usr/lib/libcap)
-CHECKLOCALLIBCAP=$(ldconfig -p | grep /usr/local/libcap)
+CHECKLIBCAP=$(ldconfig -p | grep /lib/libcap)
+CHECKLOCALLIBCAP=$(ldconfig -p | grep /local/lib/libcap)
 
 if [ -n "$CHECKLIBCAP" ]; then
     echo "-- Found Libcap: TRUE"
@@ -36,8 +36,8 @@ else
 fi
 
 # Check sqlite
-CHECKSQLITE=$(ldconfig -p | grep /usr/lib/libsqlite3)
-CHECKLOCALSQLITE=$(ldconfig -p | grep /usr/local/libsqlite3)
+CHECKSQLITE=$(ldconfig -p | grep /lib/libsqlite3)
+CHECKLOCALSQLITE=$(ldconfig -p | grep /local/lib/libsqlite3)
 
 if [ -n "$CHECKSQLITE" ]; then
     CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_SQLITE3=FALSE"
@@ -51,8 +51,8 @@ else
 fi
 
 # Check sqlite
-CHECKCURL=$(ldconfig -p | grep /usr/lib/libcurl)
-CHECKLOCALCURL=$(ldconfig -p | grep /usr/local/libcurl)
+CHECKCURL=$(ldconfig -p | grep /lib/libcurl)
+CHECKLOCALCURL=$(ldconfig -p | grep /local/lib/libcurl)
 
 if [ -n "$CHECKCURL" ]; then
     CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_CURL=FALSE"

@@ -47,9 +47,12 @@ chmod +x install.sh
 ```sh
 cd cryptobot
 mkdir build && cd build
-cmake .. -DBUILD_LIBCAP=TRUE -DBUILD_SQLITE3=TRUE -DBUILD_CURL=TRUE
+cmake .. 
 sudo make  
 ```
+If you won't build some libraries with cmake you can use theese configurations,
+
+ -DBUILD_LIBCAP=FALSE -DBUILD_SQLITE3=FALSE -DBUILD_CURL=FALSE.
 
 ## Usage
 
