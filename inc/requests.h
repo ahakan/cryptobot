@@ -60,7 +60,9 @@ class Requests
 
         bool                    mAverageAutoCalculate;
         
-        int                     mRSISize;
+        int                     mRSIPeriod;
+        std::string             mRSIOversold;
+        std::string             mRSIOverbought;
 
         bool                    mAccountStatus = false;
         bool                    mAPIKeyPermission = false;
@@ -126,10 +128,12 @@ class Requests
 class BinanceRequests : public Requests
 {
     private:        
-        void                    newBuy();
-        void                    newSell();
-        void                    newBuyAndSell();
-        void                    newSellAndBuy();
+        void                    binance();
+
+        bool                    newBuyOrder();
+        bool                    newSellOrder();
+        bool                    checkBuyOrders();
+        bool                    checkSellOrders();
 
         std::string             getRequest(std::string endpoint, std::string parameters, httplib::Headers headers);
         std::string             postRequest(std::string endpoint, std::string parameters, httplib::Params signature, httplib::Headers headers);

@@ -87,7 +87,11 @@ When use the crypto bot, you have to make some configurations.
             "auto-calculate": 0,
             "amount": "0.20"
         },
-        "RSI": 14
+        "RSI": {
+            "period": 14,
+            "oversold"  : "40.00",
+            "overbought": "55.00"
+        }
     },
     "binance": {
         "websocket": {
@@ -116,7 +120,9 @@ When use the crypto bot, you have to make some configurations.
     | `balance amount`  | Wallet balance amount (400$)      |
     | `follow symbol`   | Follow coin symbol (BTC/USDT)     |
     | `average amount`  | Average amount for trade (0.25)   |
-    | `RSI`             | RSI type                          |
+    | `RSI period`      | RSI period                        |
+    | `RSI oversold`    | RSI oversold signal level         |
+    | `RSI overbought`  | RSI overbought signal level       |
 
 - `binance`
   - .

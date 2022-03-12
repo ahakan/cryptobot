@@ -1,6 +1,8 @@
 #!/bin/bash
 
-sudo rm -rf build
+[ -d "build/" ] && sudo rm -rf build
+
+NOTFOUND=0
 
 CHECKCMAKE=$(ldconfig -p | cmake --system-information | grep CMAKE_VERSION | cut -c 16-21)
 
@@ -32,6 +34,7 @@ else
     else
         echo "Libcap will be installed."
         CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_LIBCAP=TRUE"
+        NOTFOUND=1
     fi
 fi
 
@@ -47,6 +50,7 @@ else
     else
         echo "LibSQLite3 will be installed."
         CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_SQLITE3=TRUE"
+        NOTFOUND=1
     fi
 fi
 
@@ -62,9 +66,16 @@ else
     else
         echo "Libcurl will be installed."
         CMAKE_COMMAND="${CMAKE_COMMAND} -DBUILD_CURL=TRUE"
+        NOTFOUND=1
     fi
 fi
 
 mkdir build && cd build
+
 ${CMAKE_COMMAND}
-sudo make
+
+if [ $NOTFOUND -eq 1 ]; then
+    sudo make
+else
+    make
+fi

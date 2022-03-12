@@ -69,7 +69,7 @@ std::string Utilities::getTimestamp() {
  */
 std::string Utilities::getOldTimestamp()
 {
-    int mRSISize                = getRSISize();
+    int mRSISize                = getRSIPeriod();
 
     std::string mInterval       = getInterval();
 
@@ -184,13 +184,35 @@ bool Utilities::getAverageAutoCalculate()
 
 
 /**
- * @brief Get RSI size
+ * @brief Get RSI period
  * 
  * @return int 
  */
-int Utilities::getRSISize()
+int Utilities::getRSIPeriod()
 {
-    return mTradeJson["RSI"].asInt();
+    return mTradeJson["RSI"]["period"].asInt();
+}
+
+
+/**
+ * @brief Get RSI oversold
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getRSIOversold()
+{
+    return mTradeJson["RSI"]["oversold"].asString();
+}
+
+
+/**
+ * @brief Get RSI overbought
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getRSIOverbought()
+{
+    return mTradeJson["RSI"]["overbought"].asString();
 }
 
 

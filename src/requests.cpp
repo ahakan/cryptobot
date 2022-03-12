@@ -22,7 +22,10 @@ Requests::Requests(BinanceUtilities *pBu)
     mBalanceAmount          = pBu->getBalanceAmount();
     mAverageAmount          = pBu->getAverageAmount();
     mAverageAutoCalculate   = pBu->getAverageAutoCalculate();
-    mRSISize                = pBu->getRSISize();
+
+    mRSIPeriod              = pBu->getRSIPeriod();
+    mRSIOversold            = pBu->getRSIOversold();
+    mRSIOverbought          = pBu->getRSIOverbought();
 
     if (mAPI_KEY.length() == 0 || mSECRET_KEY.length() == 0)
     {
@@ -118,9 +121,9 @@ bool Requests::calcOrderPriceAverage()
         float highestPrice          = std::stof(*std::max_element(mTradeCandlesHighPrices.begin(), mTradeCandlesHighPrices.end()));
         float lowestPrice           = std::stof(*std::min_element(mTradeCandlesLowPrices.begin(), mTradeCandlesLowPrices.end()));
 
-        float calculatedAverage     = (highestPrice-lowestPrice)/(mRSISize/2.0);
+        float calculatedAverage     = (highestPrice-lowestPrice)/(mRSIPeriod/2.0);
 
-        mNewOrderCalculatedAverage = pBu->roundPrice(std::to_string(calculatedAverage), mSymbolTickSize); 
+        mNewOrderCalculatedAverage  = pBu->roundPrice(std::to_string(calculatedAverage), mSymbolTickSize); 
 
         ELOG(INFO, "Calculated New Trade Average. New Average: %s.", mNewOrderCalculatedAverage.c_str());
         
@@ -479,15 +482,15 @@ void BinanceRequests::init()
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
 
-    newBuyAndSell();
+    binance();
 }
 
 
 /**
- * @brief Buy and sell loop
+ * @brief Binance main loop
  * 
  */
-void BinanceRequests::newBuyAndSell()
+void BinanceRequests::binance()
 {
     while (1)
     {
@@ -499,28 +502,10 @@ void BinanceRequests::newBuyAndSell()
 
             if (mSymbolLivePrice.length() > 0)
             {
-                // Check buy orders
-                if (mBuyOrders.size() > 0)
-                    queryOrder(mSymbol, mBuyOrders.begin()->first);
-
-                // Check sell orders
-                if (mSellOrders.size() > 0)
-                    for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
-                        queryOrder(mSymbol, it->first);
-
-                // if we bought a coin we create a sell order
-                if (mBoughtOrders.size() > 0)
-                {
-                    std::string newPrice = calcNewSellPrice(mBoughtOrders.begin()->second["BoughtPrice"]);
-                    createNewOrder(mSymbol, mSellSide, mOrderType, mQuantity, newPrice);
-                }
-
-                // if we have not a buy order or bought order we create a new buy order
-                if (mBuyOrders.size() < 1 && mBoughtOrders.size() < 1)
-                {
-                    std::string newPrice = calcNewBuyPrice();
-                    createNewOrder(mSymbol, mBuySide, mOrderType, mQuantity, newPrice);
-                }
+                checkBuyOrders();
+                checkSellOrders();
+                newBuyOrder();
+                newSellOrder();
             }
             
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -528,6 +513,91 @@ void BinanceRequests::newBuyAndSell()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
+}
+
+
+/**
+ * @brief Create a new buy order
+ * 
+ * @return true 
+ * @return false 
+ */
+bool BinanceRequests::newBuyOrder()
+{
+    // if RSI is smaller than 40.00, we create a new buy order
+    if (!pBu->comparePrice(mTradeCandlesCloseRSI, mRSIOversold))
+    {
+        // if we have not a buy order or bought order we create a new buy order
+        if (mBuyOrders.size() < 1 && mBoughtOrders.size() < 1)
+        {
+            std::string newPrice = calcNewBuyPrice();
+
+            ELOG(INFO, "Created a New BUY Order. RSI: %s, Price: %s.", mTradeCandlesCloseRSI.c_str(), newPrice.c_str());
+
+            return createNewOrder(mSymbol, mBuySide, mOrderType, mQuantity, newPrice);
+        }
+    }
+    
+    return false;
+}
+
+
+/**
+ * @brief Create a new sell order
+ * 
+ * @return true 
+ * @return false 
+ */
+bool BinanceRequests::newSellOrder()
+{
+    // if RSI is higher than 55.00, we create a new sell order
+    if (!pBu->comparePrice(mTradeCandlesCloseRSI, mRSIOverbought))
+    {
+        // if we bought a coin we'll create a sell order
+        if (mBoughtOrders.size() > 0)
+        {
+            std::string newPrice = calcNewSellPrice(mBoughtOrders.begin()->second["BoughtPrice"]);
+
+            ELOG(INFO, "Created a New SELL Order. RSI: %s, Price: %s.", mTradeCandlesCloseRSI.c_str(), newPrice.c_str());
+
+            return createNewOrder(mSymbol, mSellSide, mOrderType, mQuantity, newPrice);
+        }
+    }
+
+    return false;
+}
+
+
+/**
+ * @brief Check buy orders
+ * 
+ * @return true 
+ * @return false 
+ */
+bool BinanceRequests::checkBuyOrders()
+{
+    // Check buy orders
+    if (mBuyOrders.size() > 0)
+        return queryOrder(mSymbol, mBuyOrders.begin()->first);
+
+    return false;
+}
+
+
+/**
+ * @brief Check sell orders
+ * 
+ * @return true 
+ * @return false 
+ */
+bool BinanceRequests::checkSellOrders()
+{
+    // Check sell orders
+    if (mSellOrders.size() > 0)
+        for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
+            queryOrder(mSymbol, it->first);
+
+    return true;
 }
 
 

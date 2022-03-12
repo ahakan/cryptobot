@@ -56,7 +56,9 @@ class Utilities
 
         bool                    getAverageAutoCalculate();
 
-        int                     getRSISize();
+        int                     getRSIPeriod();
+        std::string             getRSIOversold();
+        std::string             getRSIOverbought();
 
         std::string             upperToLower(std::string data);
         std::string             roundPrice(std::string price, int tickSize);

@@ -15,7 +15,11 @@
             "auto-calculate": 0,
             "amount": "0.20"
         },
-        "RSI": 14
+        "RSI": {
+            "period": 14,
+            "oversold"  : "40.00",
+            "overbought": "55.00"
+        }
     },
     "binance": {
         "websocket": {
