@@ -50,9 +50,11 @@ mkdir build && cd build
 cmake .. 
 sudo make  
 ```
-If you won't build some libraries with cmake you can use theese configurations,
+If you don't want build some libraries with cmake you can use these configurations,
 
- -DBUILD_LIBCAP=FALSE -DBUILD_SQLITE3=FALSE -DBUILD_CURL=FALSE.
+ -DBUILD_LIBCAP=FALSE 
+ -DBUILD_SQLITE3=FALSE 
+ -DBUILD_CURL=FALSE
 
 ## Usage
 

@@ -103,6 +103,8 @@ class Requests
         AverageVector           mFollowCandlesClosePrices;
 
 
+        std::string             calcNewSellPrice(std::string boughtPrice);
+
         bool                    calcSellPriceAverage();
         bool                    calcSymbolRSI();
         bool                    calcFollowRSI();

@@ -45,6 +45,42 @@ Requests::~Requests()
 
 
 /**
+ * @brief Calculate new sell order price
+ * 
+ * @param boughtPrice 
+ * @return std::string 
+ */
+std::string Requests::calcNewSellPrice(std::string boughtPrice)
+{
+    bool isSellAverageCalculated    = calcSellPriceAverage();
+
+    if (!isSellAverageCalculated)
+    {
+        ELOG(ERROR, "Failed to Calculated New Sell Price Average.");
+    }
+
+    ELOG(INFO, "Calculate New Sell Price. Live Price: %s, Bought Price: %s", mSymbolLivePrice.c_str(), boughtPrice.c_str());
+
+    bool compareLiveAndBoughtPrice  = pBu->comparePrice(mSymbolLivePrice, boughtPrice);     // if return true live price is high, return false bought price is high
+    
+    if (compareLiveAndBoughtPrice)
+    {
+        std::string calculatedPrice = pBu->addTwoStrings(mSymbolLivePrice, mSellPriceCalculatedAverage);
+
+        ELOG(INFO, "Calculated New Sell Price. Live Price: %s, Bought Price: %s, Sell Price: %s.", mSymbolLivePrice.c_str(), boughtPrice.c_str(), calculatedPrice.c_str());
+
+        return pBu->roundPrice(calculatedPrice, mSymbolTickSize);
+    }
+
+    std::string calculatedPrice     = pBu->addTwoStrings(boughtPrice, mSellPriceCalculatedAverage);
+
+    ELOG(INFO, "Calculated New Sell Price. Bought Price: %s, Sell Price: %s.", boughtPrice.c_str(), calculatedPrice.c_str());
+
+    return pBu->roundPrice(calculatedPrice, mSymbolTickSize);
+}
+
+
+/**
  * @brief Calculate new sell order price average
  * 
  * @return true 
@@ -384,7 +420,6 @@ void BinanceRequests::init()
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(3000));
         }
-        
         bool  mGetSymbolTickSize = getTickSize(mSymbol);
         bool  mGetFollowTickSize = getTickSize(mFollowSymbol);
 

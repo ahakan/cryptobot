@@ -291,6 +291,52 @@ std::string Utilities::calculateRSI(std::vector<std::string> vector)
 
 
 /**
+ * @brief Add two strings
+ * 
+ * @param number1 
+ * @param number2 
+ * @return std::string 
+ */
+std::string Utilities::addTwoStrings(std::string number1, std::string number2)
+{
+    if (number1.length() > 0 && number2.length() > 0)
+    {
+        float num1          = std::stof(number1);
+        float num2          = std::stof(number2);
+
+        return std::to_string(num1+num2);
+    }
+
+    ELOG(ERROR, "Some parameters is empty. Number 1: %S, Number 2: %s.", number1.c_str(), number2.c_str());
+    
+    return "ERROR";
+}
+
+
+/**
+ * @brief Subs two strings
+ * 
+ * @param number1 
+ * @param number2 
+ * @return std::string 
+ */
+std::string Utilities::subTwoStrings(std::string number1, std::string number2)
+{
+    if (number1.length() > 0 && number2.length() > 0)
+    {
+        float num1          = std::stof(number1);
+        float num2          = std::stof(number2);
+
+        return (num1 >= num2) ? std::to_string(num1-num2) : std::to_string(num2-num1);
+    }
+    
+    ELOG(ERROR, "Some parameters is empty. Number 1: %S, Number 2: %s.", number1.c_str(), number2.c_str());
+    
+    return "ERROR";
+}
+
+
+/**
  * @brief Compare two price if firstPrice high return true, if secondPrice high return false
  * 
  * @param firstPrice 
@@ -300,14 +346,16 @@ std::string Utilities::calculateRSI(std::vector<std::string> vector)
  */
 bool Utilities::comparePrice(std::string firstPrice, std::string secondPrice)
 {
-    float first = std::stof(firstPrice);
-
-    float second = std::stof(secondPrice);
-
-    if (first > second)
+    if (firstPrice.length() > 0 && secondPrice.length() > 0)
     {
-        return true;
+        float first     = std::stof(firstPrice);
+
+        float second    = std::stof(secondPrice);
+
+        return (first >= second) ? true : false;
     }
+    
+    ELOG(ERROR, "Some parameters is empty. First Price: %S, Second Price: %s.", firstPrice.c_str(), secondPrice.c_str());
 
     return false;
 }
