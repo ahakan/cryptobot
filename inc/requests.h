@@ -52,6 +52,7 @@ class Requests
 
         std::string             mSymbol;
         std::string             mInterval;
+        std::string             mQuantity;
         std::string             mFollowSymbol;
         std::string             mBalanceSymbol;
         std::string             mBalanceAmount;
@@ -64,11 +65,14 @@ class Requests
         bool                    mAccountStatus = false;
         bool                    mAPIKeyPermission = false;
 
+        std::string             mBuySide    = "BUY";
+        std::string             mSellSide   = "SELL";
+        std::string             mOrderType  = "LIMIT";
         std::string             mRecvWindow = "10000";
 
         std::string             mSymbolLivePrice;
         std::string             mFollowLivePrice;
-        std::string             mSellPriceCalculatedAverage;
+        std::string             mNewOrderCalculatedAverage;
 
         AllOrdersMap            mBuyOrders;
         AllOrdersMap            mBoughtOrders;
@@ -104,8 +108,9 @@ class Requests
 
 
         std::string             calcNewSellPrice(std::string boughtPrice);
+        std::string             calcNewBuyPrice();
 
-        bool                    calcSellPriceAverage();
+        bool                    calcOrderPriceAverage();
         bool                    calcSymbolRSI();
         bool                    calcFollowRSI();
         bool                    calcSymbolAverages();

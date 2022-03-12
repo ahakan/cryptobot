@@ -128,6 +128,17 @@ std::string Utilities::getInterval()
 
 
 /**
+ * @brief Get quantity
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getQuantity()
+{
+    return mTradeJson["quantity"].asString();
+}
+
+
+/**
  * @brief Get balance symbol
  * 
  * @return std::string 

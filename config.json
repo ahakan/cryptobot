@@ -1,8 +1,9 @@
 {
     "trade": {
         "exchange": "binance",
+        "symbol"  : "SOLBUSD",
         "interval": "4h",
-        "symbol": "SOLBUSD",
+        "quantity": "2.00",
         "balance": {
             "symbol": "BUSD",
             "amount": "400"

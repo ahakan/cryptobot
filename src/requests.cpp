@@ -16,6 +16,7 @@ Requests::Requests(BinanceUtilities *pBu)
 
     mSymbol                 = pBu->getSymbol();
     mInterval               = pBu->getInterval();
+    mQuantity               = pBu->getQuantity();
     mFollowSymbol           = pBu->getFollowSymbol();
     mBalanceSymbol          = pBu->getBalanceSymbol();
     mBalanceAmount          = pBu->getBalanceAmount();
@@ -52,7 +53,7 @@ Requests::~Requests()
  */
 std::string Requests::calcNewSellPrice(std::string boughtPrice)
 {
-    bool isSellAverageCalculated    = calcSellPriceAverage();
+    bool isSellAverageCalculated    = calcOrderPriceAverage();
 
     if (!isSellAverageCalculated)
     {
@@ -65,14 +66,14 @@ std::string Requests::calcNewSellPrice(std::string boughtPrice)
     
     if (compareLiveAndBoughtPrice)
     {
-        std::string calculatedPrice = pBu->addTwoStrings(mSymbolLivePrice, mSellPriceCalculatedAverage);
+        std::string calculatedPrice = pBu->addTwoStrings(mSymbolLivePrice, mNewOrderCalculatedAverage);
 
         ELOG(INFO, "Calculated New Sell Price. Live Price: %s, Bought Price: %s, Sell Price: %s.", mSymbolLivePrice.c_str(), boughtPrice.c_str(), calculatedPrice.c_str());
 
         return pBu->roundPrice(calculatedPrice, mSymbolTickSize);
     }
 
-    std::string calculatedPrice     = pBu->addTwoStrings(boughtPrice, mSellPriceCalculatedAverage);
+    std::string calculatedPrice     = pBu->addTwoStrings(boughtPrice, mNewOrderCalculatedAverage);
 
     ELOG(INFO, "Calculated New Sell Price. Bought Price: %s, Sell Price: %s.", boughtPrice.c_str(), calculatedPrice.c_str());
 
@@ -81,12 +82,36 @@ std::string Requests::calcNewSellPrice(std::string boughtPrice)
 
 
 /**
- * @brief Calculate new sell order price average
+ * @brief Calculate new buy order price
+ * 
+ * @return std::string 
+ */
+std::string Requests::calcNewBuyPrice()
+{
+    bool isBuyAverageCalculated    = calcOrderPriceAverage();
+
+    if (!isBuyAverageCalculated)
+    {
+        ELOG(ERROR, "Failed to Calculated New Buy Price Average.");
+    }
+
+    ELOG(INFO, "Calculate New Buy Price. Live Price: %s, Calculated Average: %s", mSymbolLivePrice.c_str(), mNewOrderCalculatedAverage.c_str());
+
+    std::string calculatedPrice = pBu->subTwoStrings(mSymbolLivePrice, mNewOrderCalculatedAverage);
+
+    ELOG(INFO, "Calculated New Sell Price. Live Price: %s, Sell Price: %s.", mSymbolLivePrice.c_str(), calculatedPrice.c_str());
+
+    return pBu->roundPrice(calculatedPrice, mSymbolTickSize);
+}
+
+
+/**
+ * @brief Calculate new order price average
  * 
  * @return true 
  * @return false 
  */
-bool Requests::calcSellPriceAverage()
+bool Requests::calcOrderPriceAverage()
 {
     if (mAverageAutoCalculate)
     {
@@ -95,18 +120,18 @@ bool Requests::calcSellPriceAverage()
 
         float calculatedAverage     = (highestPrice-lowestPrice)/(mRSISize/2.0);
 
-        mSellPriceCalculatedAverage = pBu->roundPrice(std::to_string(calculatedAverage), mSymbolTickSize); 
+        mNewOrderCalculatedAverage = pBu->roundPrice(std::to_string(calculatedAverage), mSymbolTickSize); 
 
-        ELOG(INFO, "Calculated New Trade Average. New Average: %s.", mSellPriceCalculatedAverage.c_str());
+        ELOG(INFO, "Calculated New Trade Average. New Average: %s.", mNewOrderCalculatedAverage.c_str());
         
         return true;
     }
 
     if (!mAverageAutoCalculate)
     {
-        mSellPriceCalculatedAverage = mAverageAmount;
+        mNewOrderCalculatedAverage = mAverageAmount;
 
-        ELOG(INFO, "Average Auto Calculated Disable. Average: %s.", mSellPriceCalculatedAverage.c_str());
+        ELOG(INFO, "Average Auto Calculated Disable. Average: %s.", mNewOrderCalculatedAverage.c_str());
 
         return true;
     }
@@ -249,12 +274,13 @@ bool Requests::readCandleData()
 
             if (areAdded)
             {
-                bool mCalculateSymbolAverages   = calcSymbolAverages();
-                bool mCalculateSymbolRSI        = calcSymbolRSI();
+                bool mCalculateSymbolAverages       = calcSymbolAverages();
+                bool mCalculateSymbolRSI            = calcSymbolRSI();
+                bool mCalculateOrderPriceAverage    = calcOrderPriceAverage();
 
-                if (mCalculateSymbolAverages && mCalculateSymbolRSI)
+                if (mCalculateSymbolAverages && mCalculateSymbolRSI && mCalculateOrderPriceAverage)
                 {
-                    ELOG(INFO, "Added new symbol closed price data and calculated symbol averages and RSI.");
+                    ELOG(INFO, "Added new symbol closed price data and calculated symbol averages, RSI and order price average.");
                 }
             }
         }
@@ -453,81 +479,54 @@ void BinanceRequests::init()
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
 
-    newBuy();
+    newBuyAndSell();
 }
 
 
 /**
- * @brief Requests main loop
+ * @brief Buy and sell loop
  * 
  */
-void BinanceRequests::newBuy()
+void BinanceRequests::newBuyAndSell()
 {
     while (1)
     {
         Opel *pOpel = Opel::instance();
 
-
         while(pOpel->getIsActive())
         {
             readCandleData();
 
+            if (mSymbolLivePrice.length() > 0)
+            {
+                // Check buy orders
+                if (mBuyOrders.size() > 0)
+                    queryOrder(mSymbol, mBuyOrders.begin()->first);
+
+                // Check sell orders
+                if (mSellOrders.size() > 0)
+                    for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
+                        queryOrder(mSymbol, it->first);
+
+                // if we bought a coin we create a sell order
+                if (mBoughtOrders.size() > 0)
+                {
+                    std::string newPrice = calcNewSellPrice(mBoughtOrders.begin()->second["BoughtPrice"]);
+                    createNewOrder(mSymbol, mSellSide, mOrderType, mQuantity, newPrice);
+                }
+
+                // if we have not a buy order or bought order we create a new buy order
+                if (mBuyOrders.size() < 1 && mBoughtOrders.size() < 1)
+                {
+                    std::string newPrice = calcNewBuyPrice();
+                    createNewOrder(mSymbol, mBuySide, mOrderType, mQuantity, newPrice);
+                }
+            }
+            
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-        // if ()
-        // {
-        //     if (mBuyOrders.size() > 0)
-        //         queryOrder(mSymbol, mBuyOrders.begin()->first);
-
-        //     if (mSellOrders.size() > 0)
-        //         for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
-        //             queryOrder(mSymbol, it->first);
-
-        //     if (mBoughtOrders.size() > 0)
-        //         // createNewOrder(mSymbol, "SELL", "LIMIT", "0.20", "91.95");
-
-        //     if (mEnough == false)
-        //         if (mBuyOrders.size() < 1)
-        //             // createNewOrder(mSymbol, "BUY", "LIMIT", "0.20", "90.4");
-        
-        //     mEnough = true;
-        //     // currentOpenOrders(mSymbol);
-
-        //     // cancelOrder(mSymbol, mBuyOrders.begin()->first);
-
-        //     // cancelAllOpenOrders(mSymbol);
-        // }
-
-        // ELOG(INFO, "mBuyOrders: %d, mBoughtOrders: %d, mSellOrders: %d, mSoldOrders: %d.", mBuyOrders.size(), mBoughtOrders.size(), mSellOrders.size(), mSoldOrders.size());
-
-        // std::cout << "Buy Orders" << std::endl;
-        // for (AllOrdersMap::iterator it = mBuyOrders.begin(); it != mBuyOrders.end(); it++)
-        // {
-        //     std::cout << it->first << ": " << it->second["Price"] << std::endl;
-        // }
-
-        // std::cout << "Bought Orders" << std::endl;
-        // for (AllOrdersMap::iterator it = mBoughtOrders.begin(); it != mBoughtOrders.end(); it++)
-        // {
-        //     std::cout << it->first << ": " << it->second["BoughtPrice"] << std::endl;
-        // }
-
-        // std::cout << "Sell Orders" << std::endl;
-        // for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
-        // {
-        //     std::cout << it->first << ": " << it->second["Price"] << std::endl;
-        // }
-
-        // std::cout << "Sold Orders" << std::endl;
-        // for (AllOrdersMap::iterator it = mSoldOrders.begin(); it != mSoldOrders.end(); it++)
-        // {
-        //     std::cout << it->first << ": " << it->second["SoldPrice"] << " - " << it->second["BoughtPrice"] << std::endl;
-        // }
-
-        // std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
 }
 
@@ -1212,11 +1211,11 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
     std::string mQuantity       = mAPIJson["origQty"].asString();
     std::string mTime           = mAPIJson["updateTime"].asString();
 
-    ELOG(INFO, "Query Order. Status: %s, Order ID: %d", mStatus.c_str(), mOrderId);
+    ELOG(INFO, "Query Order. Status: %s, Order ID: %d, Order Price: %s", mStatus.c_str(), mOrderId, mPrice.c_str());
 
     if (mStatus == "FILLED")
     {
-        if (mSide == "BUY")
+        if (mSide == mBuySide)
         {
             OrderMap mOrder;
 
@@ -1230,7 +1229,7 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
 
             ELOG(INFO, "Filled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTime.c_str());
         }
-        else if (mSide == "SELL")
+        else if (mSide == mSellSide)
         {
             OrderMap mOrder;
 
@@ -1244,6 +1243,24 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
             mSellOrders.erase(orderId);
 
             ELOG(INFO, "Filled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str(), mTime.c_str());
+        }
+    }
+
+    if (mStatus == "CANCELED")
+    {
+        if (mSide == mBuySide)
+        {
+            mBuyOrders.erase(orderId);
+
+            ELOG(INFO, "Canceled a Buy Order. OrderId: %d, Symbol: %s, Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str());
+        }
+        else if (mSide == mSellSide)
+        {
+            mBoughtOrders.emplace(orderId, mSellOrders[orderId]);
+
+            mSellOrders.erase(orderId);
+
+            ELOG(INFO, "Canceled a Sell Order. OrderId: %d, Symbol: %s, Price: %s, Bought Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str());
         }
     }
  

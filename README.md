@@ -73,8 +73,9 @@ When use the crypto bot, you have to make some configurations.
 {
     "trade": {
         "exchange": "binance",
+        "symbol"  : "SOLBUSD",
         "interval": "4h",
-        "symbol": "SOLBUSD",
+        "quantity": "2.00",
         "balance": {
             "symbol": "BUSD",
             "amount": "400"
@@ -110,6 +111,7 @@ When use the crypto bot, you have to make some configurations.
     | `exchange`        | Exchange name (Binance)           |
     | `interval`        | Klines interval type (15m)        |
     | `symbol`          | Trade coin symbol (ETH/USDT)      |
+    | `quantity`        | Trade coin quantity               |
     | `balance symbol`  | Wallet balance symbol (USDT)      |
     | `balance amount`  | Wallet balance amount (400$)      |
     | `follow symbol`   | Follow coin symbol (BTC/USDT)     |
