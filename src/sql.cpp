@@ -58,7 +58,10 @@ Sql::Sql()
  * @brief Destroy the Sql::Sql object
  * 
  */
-Sql::~Sql() {}
+Sql::~Sql() 
+{
+    ELOG(INFO, "Sql destructor.");
+}
 
 
 /**
@@ -67,9 +70,11 @@ Sql::~Sql() {}
  */
 void Sql::init()
 {
-    while (true)
+    Opel *iOpel = Opel::instance();
+
+    while (iOpel->getExitSignal())
     {
-        // getBOTTable();
+        getBOTTable();
 
         // struct candle_data *pTradeCandleData = Opel::getTradeCandleStruct();
 
@@ -109,11 +114,12 @@ void Sql::init()
         // }
         // pFollowCandleData->unlock();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
         // ELOG(INFO, "getIsActive: %d", pOpel->getIsActive());
-
     }
+
+    ELOG(INFO, "Thread SQL detached.");
 }
 
 

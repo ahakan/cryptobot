@@ -36,10 +36,11 @@ struct candle_data : public std::mutex
 class Opel
 {
     private:
+        bool                        mExitSignal = 1;
         bool                        mIsActive;
         std::string                 mTradeSymbol;
         std::string                 mFollowSymbol;
-
+        
 
     protected:
 
@@ -53,6 +54,9 @@ class Opel
         static Opel                 *instance();
         static struct candle_data   *getTradeCandleStruct();
         static struct candle_data   *getFollowCandleStruct();
+
+        void                        setExitSignal(bool signal);
+        bool                        getExitSignal();
 
         void                        setIsActive(bool isActive);
         bool                        getIsActive();

@@ -24,48 +24,75 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <memory>
 #include <chrono>
+#include <signal.h>
 
-void inp(BinanceUtilities *util, BinanceWebsocket *ws, BinanceRequests *req)
+
+void signalHandler(int signal)
 {
-    char a[2];
+    (void) signal;
+
+    Opel *iOpel = Opel::instance();
+
+    iOpel->setExitSignal(0);
+}
+
+
+void checkExit(BinanceUtilities *util, BinanceWebsocket *ws, BinanceRequests *req)
+{
+    Opel *iOpel = Opel::instance();
 
     while (true)
     {
-        std::cin >> a;
-
-        if (*a == 'x' || *a == 'X')
+        if (iOpel->getExitSignal() == 0)
         {
-            ELOG(INFO, "Pressed X. Exiting...");
-
-            delete util;
-            delete ws;
-            delete req;
-
-            exit(0);
+            break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+
+    
+    ELOG(INFO, "Handled an exit signal. Exiting...");
+
+    ELOG(INFO, "Thread checkExit detacted.");
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(7500));
+
+    delete ws;
+    delete req;
+    delete util;
 }
 
 
 int main()
 {
-    Sql *pSql                   = new Sql;
+    struct sigaction            sigIntHandler;
+
+    sigIntHandler.sa_handler    = signalHandler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags      = 0;
+
+    sigaction(SIGINT, &sigIntHandler, NULL);
+
+    std::shared_ptr<Sql>        pSql(new Sql);
 
     BinanceUtilities *bUtil     = new BinanceUtilities();
     BinanceRequests  *bReq      = new BinanceRequests(bUtil);
     BinanceWebsocket *bWs       = new BinanceWebsocket(bUtil);
 
     std::thread sqlTh           = std::thread(&Sql::init, pSql);
-    std::thread reqTh           = std::thread(&BinanceRequests::init, bReq);
     std::thread wsTh            = std::thread(&BinanceWebsocket::init, bWs);
-    std::thread th4             = std::thread(inp, bUtil, bWs, bReq);
+    std::thread reqTh           = std::thread(&BinanceRequests::init, bReq);
+    std::thread cExit           = std::thread(checkExit, bUtil, bWs, bReq);
 
     sqlTh.join();
-    reqTh.join();
     wsTh.join();
-    th4.join();
-    
+    reqTh.join();
+    cExit.join();
+
+    std::cout << "--Cryptobot has been closed." << std::endl;
+
     return 0;
 }

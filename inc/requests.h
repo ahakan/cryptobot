@@ -82,8 +82,6 @@ class Requests
         AllOrdersMap            mSellOrders;
         AllOrdersMap            mSoldOrders;
 
-        int                     mCandlesSize;
-
         std::string             mTradeCandlesOpenPricesAverage;
         std::string             mTradeCandlesHighPricesAverage;
         std::string             mTradeCandlesLowPricesAverage;

@@ -1,5 +1,4 @@
 #include "../inc/requests.h"
-#include <string>
 
 
 /**
@@ -27,14 +26,7 @@ Requests::Requests(BinanceUtilities *pBu)
     mRSIOversold            = pBu->getRSIOversold();
     mRSIOverbought          = pBu->getRSIOverbought();
 
-    if (mAPI_KEY.length() == 0 || mSECRET_KEY.length() == 0)
-    {
-        ELOG(ERROR, "Failed to initialize Requests constructor.");
-        exit(0);
-    }
-
     ELOG(INFO, "Requests constructor initialized. mSymbol: %s, mFollowSymbol: %s, mInterval: %s, mBalanceSymbol: %s, mBalanceAmount: %s.", mSymbol.c_str(), mFollowSymbol.c_str(), mInterval.c_str(), mBalanceSymbol.c_str(), mBalanceAmount.c_str());
-
 }
 
 
@@ -422,9 +414,11 @@ BinanceRequests::~BinanceRequests()
  */
 void BinanceRequests::init()
 {
-    while (1)
+    Opel *pOpel = Opel::instance();
+
+    while (pOpel->getExitSignal())
     {
-        while (!mAccountStatus)
+        while (!mAccountStatus && pOpel->getExitSignal())
         {
             mAccountStatus         = getAccountStatus();
 
@@ -449,40 +443,51 @@ void BinanceRequests::init()
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(3000));
         }
-        bool  mGetSymbolTickSize = getTickSize(mSymbol);
-        bool  mGetFollowTickSize = getTickSize(mFollowSymbol);
 
-        if (mGetSymbolTickSize && mGetFollowTickSize)
+        if (pOpel->getExitSignal())
         {
-            bool mGetTradeSymbolCandles     = getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp());
-            bool mGetFollowSymbolCandles    = getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp());
+            bool  mGetSymbolTickSize = getTickSize(mSymbol);
+            bool  mGetFollowTickSize = getTickSize(mFollowSymbol);
 
-            if (mGetTradeSymbolCandles && mGetFollowSymbolCandles)
+            if (mGetSymbolTickSize && mGetFollowTickSize)
             {
-                bool mCalculateSymbolAverages   = calcSymbolAverages();
-                bool mCalculateSymbolRSI        = calcSymbolRSI();
+                bool mGetTradeSymbolCandles     = getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp());
+                bool mGetFollowSymbolCandles    = getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp());
 
-                bool mCalculateFollowAverages   = calcFollowAverages();
-                bool mCalculateFollowRSI        = calcFollowRSI();
-
-                if (mCalculateSymbolAverages && mCalculateFollowAverages && mCalculateSymbolRSI && mCalculateFollowRSI)
+                if (mGetTradeSymbolCandles && mGetFollowSymbolCandles)
                 {
-                    bool mGetWalletBalance  = getCoinBalance(mBalanceSymbol);
+                    bool mCalculateSymbolAverages   = calcSymbolAverages();
+                    bool mCalculateSymbolRSI        = calcSymbolRSI();
 
-                    if (mGetWalletBalance)
+                    bool mCalculateFollowAverages   = calcFollowAverages();
+                    bool mCalculateFollowRSI        = calcFollowRSI();
+
+                    if (mCalculateSymbolAverages && mCalculateFollowAverages && mCalculateSymbolRSI && mCalculateFollowRSI)
                     {
-                        ELOG(INFO, "Checked User Account and Wallet. Calculated Averages and RSI. Starting Trade...");
+                        bool mGetWalletBalance  = getCoinBalance(mBalanceSymbol);
 
-                        break;
+                        if (mGetWalletBalance)
+                        {
+                            break;
+                        }
                     }
                 }
             }
         }
         
-        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    binance();
+    // std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    if (pOpel->getExitSignal())
+    {
+        ELOG(INFO, "Checked User Account and Wallet. Calculated Averages and RSI. Starting Trade...");
+
+        binance();
+    }
+
+    ELOG(INFO, "Thread Requests detached.");
 }
 
 
@@ -492,10 +497,10 @@ void BinanceRequests::init()
  */
 void BinanceRequests::binance()
 {
-    while (1)
-    {
-        Opel *pOpel = Opel::instance();
+    Opel *pOpel = Opel::instance();
 
+    while (pOpel->getExitSignal())
+    {
         while(pOpel->getIsActive())
         {
             readCandleData();
@@ -507,6 +512,9 @@ void BinanceRequests::binance()
                 newBuyOrder();
                 newSellOrder();
             }
+
+            if (pOpel->getExitSignal())
+                break;
             
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
@@ -614,8 +622,8 @@ std::string BinanceRequests::getRequest(std::string endpoint, std::string parame
     httplib::Client cli(mBase);
 
     cli.set_connection_timeout(1, 500000);  // 1 second 500 milliseconds
-    cli.set_read_timeout(2, 0);             // 2 seconds
-    cli.set_write_timeout(2, 0);            // 2 seconds
+    cli.set_read_timeout(2, 0);        // 2 seconds
+    cli.set_write_timeout(2, 0);       // 2 seconds
 
     std::string endpointWithParameters = endpoint + "?" + parameters;
 
@@ -649,8 +657,8 @@ std::string BinanceRequests::postRequest(std::string endpoint, std::string param
     httplib::Client cli(mBase);
 
     cli.set_connection_timeout(1, 500000);  // 1 second 500 milliseconds
-    cli.set_read_timeout(2, 0);             // 2 seconds
-    cli.set_write_timeout(2, 0);            // 2 seconds
+    cli.set_read_timeout(1, 500000);        // 1 second 500 milliseconds
+    cli.set_write_timeout(1, 500000);       // 1 second 500 milliseconds
 
     std::string endpointWithParameters = endpoint + "?" + parameters;
 
@@ -684,8 +692,8 @@ std::string BinanceRequests::deleteRequest(std::string endpoint, std::string par
     httplib::Client cli(mBase);
 
     cli.set_connection_timeout(1, 500000);  // 1 second 500 milliseconds
-    cli.set_read_timeout(2, 0);             // 2 seconds
-    cli.set_write_timeout(2, 0);            // 2 seconds
+    cli.set_read_timeout(1, 500000);        // 1 second 500 milliseconds
+    cli.set_write_timeout(1, 500000);       // 1 second 500 milliseconds
 
     std::string endpointWithParameters = endpoint + "?" + parameters;
 
@@ -914,13 +922,11 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
         return false;
     }
 
-    // std::cout << mAPIJson.size() << std::endl;
-
-    mCandlesSize = static_cast<int>(mAPIJson.size());
+    int mCandlesSize = static_cast<int>(mAPIJson.size());
 
     if (symbol == mSymbol)
     {
-        for (int i = 0; i<static_cast<int>(mAPIJson.size()); i++)
+        for (int i = 0; i < mCandlesSize; i++)
         {
             // std::cout << mAPIJson[i][4] << std::endl;
 

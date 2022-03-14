@@ -13,6 +13,7 @@
 #define UTILITIES_H
 
 // Includes
+#include "opel.h"
 
 // Libraries
 #include "elog.h"
@@ -24,6 +25,7 @@
 #include <fstream>
 #include <openssl/hmac.h>
 #include <vector>
+#include <thread>
 
 
 /**
@@ -43,6 +45,8 @@ class Utilities
     public:
                                 Utilities();
         virtual                 ~Utilities();
+
+        void                    setExitSignal(bool signal);
 
         std::string             getTimestamp();
         std::string             getOldTimestamp();

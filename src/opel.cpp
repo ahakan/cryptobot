@@ -75,6 +75,28 @@ struct candle_data* Opel::getFollowCandleStruct()
 }
 
 
+/**
+ * @brief Set exit signal
+ * 
+ * @param signal 
+ */
+void Opel::setExitSignal(bool signal)
+{
+    mExitSignal = signal;
+}
+
+
+/**
+ * @brief Get exit signal
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Opel::getExitSignal()
+{
+    return mExitSignal;
+}
+
 
 /**
  * @brief Set is active

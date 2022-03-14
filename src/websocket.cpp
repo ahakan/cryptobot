@@ -110,12 +110,25 @@ void Websocket::connect(beast::error_code ec, tcp::resolver::results_type::endpo
         // return fail(ec, "connect");
     }
 
-    // Perform the SSL handshake
-    mWs.next_layer().async_handshake(
-        ssl::stream_base::client,
-        beast::bind_front_handler(
-            &Websocket::sslHandshake,
-            shared_from_this()));
+    Opel *iOpel = Opel::instance();
+
+    if (!iOpel->getExitSignal())
+    {
+        // Close the WebSocket connection
+        mWs.async_close(websocket::close_code::normal,
+            beast::bind_front_handler(
+                &Websocket::close,
+                shared_from_this()));
+    }
+    else
+    {
+        // Perform the SSL handshake
+        mWs.next_layer().async_handshake(
+            ssl::stream_base::client,
+            beast::bind_front_handler(
+                &Websocket::sslHandshake,
+                shared_from_this()));
+    }
 }
 
 
@@ -150,11 +163,24 @@ void Websocket::sslHandshake(beast::error_code ec)
                     " cryptobot");
         }));
 
-    // Perform the websocket handshake
-    mWs.async_handshake(mHost, mEndpoint,
-        beast::bind_front_handler(
-            &Websocket::handshake,
-            shared_from_this()));
+    Opel *iOpel = Opel::instance();
+
+    if (!iOpel->getExitSignal())
+    {
+        // Close the WebSocket connection
+        mWs.async_close(websocket::close_code::normal,
+            beast::bind_front_handler(
+                &Websocket::close,
+                shared_from_this()));
+    }
+    else
+    {
+        // Perform the websocket handshake
+        mWs.async_handshake(mHost, mEndpoint,
+            beast::bind_front_handler(
+                &Websocket::handshake,
+                shared_from_this()));
+    }
 }
 
 
@@ -172,12 +198,25 @@ void Websocket::handshake(beast::error_code ec)
 
     ELOG(INFO, "Websocket handshake did successfully.");
 
-    // Read a message into our buffer
-    mWs.async_read(
-        mBuffer,
-        beast::bind_front_handler(
-            &Websocket::read,
-            shared_from_this()));
+    Opel *iOpel = Opel::instance();
+
+    if (!iOpel->getExitSignal())
+    {
+        // Close the WebSocket connection
+        mWs.async_close(websocket::close_code::normal,
+            beast::bind_front_handler(
+                &Websocket::close,
+                shared_from_this()));
+    }
+    else
+    {
+        // Read a message into our buffer
+        mWs.async_read(
+            mBuffer,
+            beast::bind_front_handler(
+                &Websocket::read,
+                shared_from_this()));
+    }
 }
 
 
@@ -197,77 +236,90 @@ void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
 
-    if (mBuffer.size() > 0)
+    Opel *iOpel = Opel::instance();
+
+    if (!iOpel->getExitSignal())
     {
-        std::string bufferJson = beast::buffers_to_string(mBuffer.data());
-
-        Json::Value mCandlestickJson;
-        Json::Reader reader;
-        bool parsingSuccessful = reader.parse( bufferJson.c_str(), mCandlestickJson );
-
-        if ( !parsingSuccessful )
-        {
-            ELOG(ERROR, "Failed to JSON parse.");
-        }
-        
-        Json::Value mKData              = mCandlestickJson["k"];
-
-        bool mIsClosed                  = mCandlestickJson["k"].get("x", true).asBool();
-
-        std::string mSymbol             = mCandlestickJson["s"].asString();
-        std::string mTimestamp          = mKData["t"].asString();
-        std::string mOpenPrice          = mKData["o"].asString();
-        std::string mClosePrice         = mKData["c"].asString();
-        std::string mHighPrice          = mKData["h"].asString();
-        std::string mLowPrice           = mKData["l"].asString();
-
-        ELOG(INFO, "Websocket on read. Symbol: %s, Price: %s, Buffer size: %dKB.", mSymbol.c_str(), mClosePrice.c_str(), mBuffer.size());
-
-        Opel *iOpel = Opel::instance();
-        
-        if (mSymbol == iOpel->getTradeSymbol())
-        {
-            struct candle_data *pTradeCandleData    = Opel::getTradeCandleStruct();
-
-            pTradeCandleData->lock();
-            pTradeCandleData->isUpdated             = true;
-            pTradeCandleData->symbol                = mSymbol;
-            pTradeCandleData->timestamp             = mTimestamp;
-            pTradeCandleData->openPrice             = mOpenPrice;
-            pTradeCandleData->closePrice            = mClosePrice;
-            pTradeCandleData->highPrice             = mHighPrice;
-            pTradeCandleData->lowPrice              = mLowPrice;
-            pTradeCandleData->isClosed              = mIsClosed;
-            pTradeCandleData->unlock();
-        }
-        else
-        {
-            struct candle_data *pFollowCandleData = Opel::getFollowCandleStruct();
-
-            pFollowCandleData->lock();
-            pFollowCandleData->isUpdated            = true;
-            pFollowCandleData->symbol               = mSymbol;
-            pFollowCandleData->timestamp            = mTimestamp;
-            pFollowCandleData->openPrice            = mOpenPrice;
-            pFollowCandleData->closePrice           = mClosePrice;
-            pFollowCandleData->highPrice            = mHighPrice;
-            pFollowCandleData->lowPrice             = mLowPrice;
-            pFollowCandleData->isClosed             = mIsClosed;
-            pFollowCandleData->unlock();
-        }
-        
-        // Clear the buffer
-        mBuffer.consume(mBuffer.size());
+        // Close the WebSocket connection
+        mWs.async_close(websocket::close_code::normal,
+            beast::bind_front_handler(
+                &Websocket::close,
+                shared_from_this()));
     }
+    else
+    {
+        if (mBuffer.size() > 0)
+        {
+            std::string bufferJson = beast::buffers_to_string(mBuffer.data());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    
-    // Read a message into our buffer
-    mWs.async_read(
-        mBuffer,
-        beast::bind_front_handler(
-            &Websocket::read,
-            shared_from_this()));
+            Json::Value mCandlestickJson;
+            Json::Reader reader;
+            bool parsingSuccessful = reader.parse( bufferJson.c_str(), mCandlestickJson );
+
+            if ( !parsingSuccessful )
+            {
+                ELOG(ERROR, "Failed to JSON parse.");
+            }
+            
+            Json::Value mKData              = mCandlestickJson["k"];
+
+            bool mIsClosed                  = mCandlestickJson["k"].get("x", true).asBool();
+
+            std::string mSymbol             = mCandlestickJson["s"].asString();
+            std::string mTimestamp          = mKData["t"].asString();
+            std::string mOpenPrice          = mKData["o"].asString();
+            std::string mClosePrice         = mKData["c"].asString();
+            std::string mHighPrice          = mKData["h"].asString();
+            std::string mLowPrice           = mKData["l"].asString();
+
+            ELOG(INFO, "Websocket on read. Symbol: %s, Price: %s, Buffer size: %dKB.", mSymbol.c_str(), mClosePrice.c_str(), mBuffer.size());
+
+            Opel *iOpel = Opel::instance();
+            
+            if (mSymbol == iOpel->getTradeSymbol())
+            {
+                struct candle_data *pTradeCandleData    = Opel::getTradeCandleStruct();
+
+                pTradeCandleData->lock();
+                pTradeCandleData->isUpdated             = true;
+                pTradeCandleData->symbol                = mSymbol;
+                pTradeCandleData->timestamp             = mTimestamp;
+                pTradeCandleData->openPrice             = mOpenPrice;
+                pTradeCandleData->closePrice            = mClosePrice;
+                pTradeCandleData->highPrice             = mHighPrice;
+                pTradeCandleData->lowPrice              = mLowPrice;
+                pTradeCandleData->isClosed              = mIsClosed;
+                pTradeCandleData->unlock();
+            }
+            else
+            {
+                struct candle_data *pFollowCandleData = Opel::getFollowCandleStruct();
+
+                pFollowCandleData->lock();
+                pFollowCandleData->isUpdated            = true;
+                pFollowCandleData->symbol               = mSymbol;
+                pFollowCandleData->timestamp            = mTimestamp;
+                pFollowCandleData->openPrice            = mOpenPrice;
+                pFollowCandleData->closePrice           = mClosePrice;
+                pFollowCandleData->highPrice            = mHighPrice;
+                pFollowCandleData->lowPrice             = mLowPrice;
+                pFollowCandleData->isClosed             = mIsClosed;
+                pFollowCandleData->unlock();
+            }
+            
+            // Clear the buffer
+            mBuffer.consume(mBuffer.size());
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        
+        // Read a message into our buffer
+        mWs.async_read(
+            mBuffer,
+            beast::bind_front_handler(
+                &Websocket::read,
+                shared_from_this()));
+    }
 }
 
 
@@ -280,12 +332,16 @@ void Websocket::close(beast::error_code ec)
 {
     if (ec)
     {
-        ELOG(ERROR, "Read error: %s", ec.message().c_str());
+        ELOG(INFO, "Websocket closed. Code: %s", ec.message().c_str());
     }
 
-    ELOG(INFO, "Websocket closed.");
-
     mBuffer.consume(mBuffer.size());
+
+    mWs.next_layer().next_layer().release_socket();
+
+    mWs.next_layer().next_layer().close();
+
+    mWs.close(boost::beast::websocket::close_code::normal, ec);
 }
 
 
@@ -305,6 +361,7 @@ BinanceWebsocket::BinanceWebsocket(BinanceUtilities *pBu)
 
 
     Opel *iOpel     = Opel::instance(); 
+
     iOpel->setTradeSymbol(mTradeSymbol);
     iOpel->setFollowSymbol(mFollowSymbol);
 
@@ -322,6 +379,7 @@ BinanceWebsocket::~BinanceWebsocket()
 {
     ELOG(INFO, "BinanceWebsocket destructor.");
 
+    mIoc.stop();
     mIoc.reset();
 }
 
