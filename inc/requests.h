@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <string>
 #include <thread>
+#include <memory>
 #include <chrono>
 #include <map>
 #include <vector>
@@ -41,7 +42,7 @@ class Requests
     private:
 
     protected:
-        BinanceUtilities        *pBu = NULL; 
+        std::shared_ptr<BinanceUtilities> pBu = NULL; 
 
         std::string             mBase;
         std::string             mAPI_KEY;
@@ -119,7 +120,7 @@ class Requests
         bool                    addClosedCandlePrices(std::string symbol, std::string open, std::string close, std::string high, std::string low);
 
     public:
-                                Requests(BinanceUtilities *pBu);
+                                Requests(std::shared_ptr<BinanceUtilities> pBu);
         virtual                 ~Requests();
 };
 
@@ -154,7 +155,7 @@ class BinanceRequests : public Requests
         bool                    currentOpenOrders(std::string symbol);
 
     public:
-                                BinanceRequests(BinanceUtilities *pBu);
+                                BinanceRequests(std::shared_ptr<BinanceUtilities> pBu);
                                 ~BinanceRequests();
 
         void                    init();

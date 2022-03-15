@@ -1,4 +1,5 @@
 #include "../inc/requests.h"
+#include <memory>
 
 
 /**
@@ -6,25 +7,25 @@
  * 
  * @param pBu 
  */
-Requests::Requests(BinanceUtilities *pBu)
+Requests::Requests(std::shared_ptr<BinanceUtilities> pBu)
 {
     this->pBu               = pBu;
-    mBase                   = pBu->getAPIBase();
-    mAPI_KEY                = pBu->getAPIKEY();
-    mSECRET_KEY             = pBu->getAPISECRETKEY();
+    mBase                   = pBu.get()->getAPIBase();
+    mAPI_KEY                = pBu.get()->getAPIKEY();
+    mSECRET_KEY             = pBu.get()->getAPISECRETKEY();
 
-    mSymbol                 = pBu->getSymbol();
-    mInterval               = pBu->getInterval();
-    mQuantity               = pBu->getQuantity();
-    mFollowSymbol           = pBu->getFollowSymbol();
-    mBalanceSymbol          = pBu->getBalanceSymbol();
-    mBalanceAmount          = pBu->getBalanceAmount();
-    mAverageAmount          = pBu->getAverageAmount();
-    mAverageAutoCalculate   = pBu->getAverageAutoCalculate();
+    mSymbol                 = pBu.get()->getSymbol();
+    mInterval               = pBu.get()->getInterval();
+    mQuantity               = pBu.get()->getQuantity();
+    mFollowSymbol           = pBu.get()->getFollowSymbol();
+    mBalanceSymbol          = pBu.get()->getBalanceSymbol();
+    mBalanceAmount          = pBu.get()->getBalanceAmount();
+    mAverageAmount          = pBu.get()->getAverageAmount();
+    mAverageAutoCalculate   = pBu.get()->getAverageAutoCalculate();
 
-    mRSIPeriod              = pBu->getRSIPeriod();
-    mRSIOversold            = pBu->getRSIOversold();
-    mRSIOverbought          = pBu->getRSIOverbought();
+    mRSIPeriod              = pBu.get()->getRSIPeriod();
+    mRSIOversold            = pBu.get()->getRSIOversold();
+    mRSIOverbought          = pBu.get()->getRSIOverbought();
 
     ELOG(INFO, "Requests constructor initialized. mSymbol: %s, mFollowSymbol: %s, mInterval: %s, mBalanceSymbol: %s, mBalanceAmount: %s.", mSymbol.c_str(), mFollowSymbol.c_str(), mInterval.c_str(), mBalanceSymbol.c_str(), mBalanceAmount.c_str());
 }
@@ -57,22 +58,22 @@ std::string Requests::calcNewSellPrice(std::string boughtPrice)
 
     ELOG(INFO, "Calculate New Sell Price. Live Price: %s, Bought Price: %s", mSymbolLivePrice.c_str(), boughtPrice.c_str());
 
-    bool compareLiveAndBoughtPrice  = pBu->comparePrice(mSymbolLivePrice, boughtPrice);     // if return true live price is high, return false bought price is high
+    bool compareLiveAndBoughtPrice  = pBu.get()->comparePrice(mSymbolLivePrice, boughtPrice);     // if return true live price is high, return false bought price is high
     
     if (compareLiveAndBoughtPrice)
     {
-        std::string calculatedPrice = pBu->addTwoStrings(mSymbolLivePrice, mNewOrderCalculatedAverage);
+        std::string calculatedPrice = pBu.get()->addTwoStrings(mSymbolLivePrice, mNewOrderCalculatedAverage);
 
         ELOG(INFO, "Calculated New Sell Price. Live Price: %s, Bought Price: %s, Sell Price: %s.", mSymbolLivePrice.c_str(), boughtPrice.c_str(), calculatedPrice.c_str());
 
-        return pBu->roundPrice(calculatedPrice, mSymbolTickSize);
+        return pBu.get()->roundPrice(calculatedPrice, mSymbolTickSize);
     }
 
-    std::string calculatedPrice     = pBu->addTwoStrings(boughtPrice, mNewOrderCalculatedAverage);
+    std::string calculatedPrice     = pBu.get()->addTwoStrings(boughtPrice, mNewOrderCalculatedAverage);
 
     ELOG(INFO, "Calculated New Sell Price. Bought Price: %s, Sell Price: %s.", boughtPrice.c_str(), calculatedPrice.c_str());
 
-    return pBu->roundPrice(calculatedPrice, mSymbolTickSize);
+    return pBu.get()->roundPrice(calculatedPrice, mSymbolTickSize);
 }
 
 
@@ -92,11 +93,11 @@ std::string Requests::calcNewBuyPrice()
 
     ELOG(INFO, "Calculate New Buy Price. Live Price: %s, Calculated Average: %s", mSymbolLivePrice.c_str(), mNewOrderCalculatedAverage.c_str());
 
-    std::string calculatedPrice = pBu->subTwoStrings(mSymbolLivePrice, mNewOrderCalculatedAverage);
+    std::string calculatedPrice = pBu.get()->subTwoStrings(mSymbolLivePrice, mNewOrderCalculatedAverage);
 
     ELOG(INFO, "Calculated New Sell Price. Live Price: %s, Sell Price: %s.", mSymbolLivePrice.c_str(), calculatedPrice.c_str());
 
-    return pBu->roundPrice(calculatedPrice, mSymbolTickSize);
+    return pBu.get()->roundPrice(calculatedPrice, mSymbolTickSize);
 }
 
 
@@ -115,7 +116,7 @@ bool Requests::calcOrderPriceAverage()
 
         float calculatedAverage     = (highestPrice-lowestPrice)/(mRSIPeriod/2.0);
 
-        mNewOrderCalculatedAverage  = pBu->roundPrice(std::to_string(calculatedAverage), mSymbolTickSize); 
+        mNewOrderCalculatedAverage  = pBu.get()->roundPrice(std::to_string(calculatedAverage), mSymbolTickSize); 
 
         ELOG(INFO, "Calculated New Trade Average. New Average: %s.", mNewOrderCalculatedAverage.c_str());
         
@@ -147,7 +148,7 @@ bool Requests::calcSymbolRSI()
 {
     if (mTradeCandlesClosePrices.size() != 0)
     {
-        mTradeCandlesCloseRSI               = pBu->calculateRSI(mTradeCandlesClosePrices);
+        mTradeCandlesCloseRSI               = pBu.get()->calculateRSI(mTradeCandlesClosePrices);
 
         ELOG(INFO, "Calculated Symbol RSI. Trade Candles Close RSI: %s.", mTradeCandlesCloseRSI.c_str());
 
@@ -170,7 +171,7 @@ bool Requests::calcFollowRSI()
 {
     if (mFollowCandlesClosePrices.size() != 0)
     {
-        mFollowCandlesCloseRSI               = pBu->calculateRSI(mFollowCandlesClosePrices);
+        mFollowCandlesCloseRSI               = pBu.get()->calculateRSI(mFollowCandlesClosePrices);
 
         ELOG(INFO, "Calculated Follow Symbol RSI. Follow Candles Close RSI: %s.", mFollowCandlesCloseRSI.c_str());
 
@@ -193,17 +194,17 @@ bool Requests::calcSymbolAverages()
 {
     if (mTradeCandlesClosePrices.size() != 0)
     {
-        mTradeCandlesOpenPricesAverage      = pBu->calculateAverage(mTradeCandlesOpenPrices);
-        mTradeCandlesHighPricesAverage      = pBu->calculateAverage(mTradeCandlesHighPrices);
-        mTradeCandlesLowPricesAverage       = pBu->calculateAverage(mTradeCandlesLowPrices);
-        mTradeCandlesClosePricesAverage     = pBu->calculateAverage(mTradeCandlesClosePrices);
+        mTradeCandlesOpenPricesAverage      = pBu.get()->calculateAverage(mTradeCandlesOpenPrices);
+        mTradeCandlesHighPricesAverage      = pBu.get()->calculateAverage(mTradeCandlesHighPrices);
+        mTradeCandlesLowPricesAverage       = pBu.get()->calculateAverage(mTradeCandlesLowPrices);
+        mTradeCandlesClosePricesAverage     = pBu.get()->calculateAverage(mTradeCandlesClosePrices);
 
         ELOG(INFO, "Calculated Symbol Averages. Trade Close Average: %s.", mTradeCandlesClosePricesAverage.c_str());
 
-        mTradeCandlesOpenPricesAverage      = pBu->roundPrice(mTradeCandlesOpenPricesAverage, mSymbolTickSize);
-        mTradeCandlesHighPricesAverage      = pBu->roundPrice(mTradeCandlesHighPricesAverage, mSymbolTickSize);
-        mTradeCandlesLowPricesAverage       = pBu->roundPrice(mTradeCandlesLowPricesAverage, mSymbolTickSize);
-        mTradeCandlesClosePricesAverage     = pBu->roundPrice(mTradeCandlesClosePricesAverage, mSymbolTickSize);
+        mTradeCandlesOpenPricesAverage      = pBu.get()->roundPrice(mTradeCandlesOpenPricesAverage, mSymbolTickSize);
+        mTradeCandlesHighPricesAverage      = pBu.get()->roundPrice(mTradeCandlesHighPricesAverage, mSymbolTickSize);
+        mTradeCandlesLowPricesAverage       = pBu.get()->roundPrice(mTradeCandlesLowPricesAverage, mSymbolTickSize);
+        mTradeCandlesClosePricesAverage     = pBu.get()->roundPrice(mTradeCandlesClosePricesAverage, mSymbolTickSize);
 
         ELOG(INFO, "Rounded Trade Averages. TOA: %s, THA: %s, TLA: %s, TCA: %s", mTradeCandlesOpenPricesAverage.c_str(), mTradeCandlesHighPricesAverage.c_str(), mTradeCandlesLowPricesAverage.c_str(), mTradeCandlesClosePricesAverage.c_str());
 
@@ -226,17 +227,17 @@ bool Requests::calcFollowAverages()
 {
     if (mFollowCandlesClosePrices.size() != 0)
     {
-        mFollowCandlesOpenPricesAverage     = pBu->calculateAverage(mFollowCandlesOpenPrices);
-        mFollowCandlesHighPricesAverage     = pBu->calculateAverage(mFollowCandlesHighPrices);
-        mFollowCandlesLowPricesAverage      = pBu->calculateAverage(mFollowCandlesLowPrices);
-        mFollowCandlesClosePricesAverage    = pBu->calculateAverage(mFollowCandlesClosePrices);
+        mFollowCandlesOpenPricesAverage     = pBu.get()->calculateAverage(mFollowCandlesOpenPrices);
+        mFollowCandlesHighPricesAverage     = pBu.get()->calculateAverage(mFollowCandlesHighPrices);
+        mFollowCandlesLowPricesAverage      = pBu.get()->calculateAverage(mFollowCandlesLowPrices);
+        mFollowCandlesClosePricesAverage    = pBu.get()->calculateAverage(mFollowCandlesClosePrices);
 
         ELOG(INFO, "Calculated Follow Symbol Averages. Follow Close Average: %s.", mFollowCandlesClosePricesAverage.c_str());
 
-        mFollowCandlesOpenPricesAverage     = pBu->roundPrice(mFollowCandlesOpenPricesAverage, mFollowSymbolTickSize);
-        mFollowCandlesHighPricesAverage     = pBu->roundPrice(mFollowCandlesHighPricesAverage, mFollowSymbolTickSize);
-        mFollowCandlesLowPricesAverage      = pBu->roundPrice(mFollowCandlesLowPricesAverage, mFollowSymbolTickSize);
-        mFollowCandlesClosePricesAverage    = pBu->roundPrice(mFollowCandlesClosePricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesOpenPricesAverage     = pBu.get()->roundPrice(mFollowCandlesOpenPricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesHighPricesAverage     = pBu.get()->roundPrice(mFollowCandlesHighPricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesLowPricesAverage      = pBu.get()->roundPrice(mFollowCandlesLowPricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesClosePricesAverage    = pBu.get()->roundPrice(mFollowCandlesClosePricesAverage, mFollowSymbolTickSize);
 
         ELOG(INFO, "Rounded Follow Averages. FOA: %s, FHA: %s, FLA: %s, FCA: %s", mFollowCandlesOpenPricesAverage.c_str(), mFollowCandlesHighPricesAverage.c_str(), mFollowCandlesLowPricesAverage.c_str(), mFollowCandlesClosePricesAverage.c_str());
 
@@ -390,7 +391,7 @@ bool Requests::addClosedCandlePrices(std::string symbol, std::string open, std::
  * 
  * @param pBu 
  */
-BinanceRequests::BinanceRequests(BinanceUtilities *pBu)
+BinanceRequests::BinanceRequests(std::shared_ptr<BinanceUtilities> pBu)
     : Requests(pBu)
 {
     ELOG(INFO, "BinanceRequests constructor initialized.");
@@ -451,8 +452,8 @@ void BinanceRequests::init()
 
             if (mGetSymbolTickSize && mGetFollowTickSize)
             {
-                bool mGetTradeSymbolCandles     = getCandlesticksData(mSymbol, mInterval, pBu->getOldTimestamp());
-                bool mGetFollowSymbolCandles    = getCandlesticksData(mFollowSymbol, mInterval, pBu->getOldTimestamp());
+                bool mGetTradeSymbolCandles     = getCandlesticksData(mSymbol, mInterval, pBu.get()->getOldTimestamp());
+                bool mGetFollowSymbolCandles    = getCandlesticksData(mFollowSymbol, mInterval, pBu.get()->getOldTimestamp());
 
                 if (mGetTradeSymbolCandles && mGetFollowSymbolCandles)
                 {
@@ -503,6 +504,9 @@ void BinanceRequests::binance()
     {
         while(pOpel->getIsActive())
         {
+            if (!pOpel->getExitSignal())
+                break;
+
             readCandleData();
 
             if (mSymbolLivePrice.length() > 0)
@@ -512,9 +516,6 @@ void BinanceRequests::binance()
                 newBuyOrder();
                 newSellOrder();
             }
-
-            if (pOpel->getExitSignal())
-                break;
             
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
@@ -533,7 +534,7 @@ void BinanceRequests::binance()
 bool BinanceRequests::newBuyOrder()
 {
     // if RSI is smaller than 40.00, we create a new buy order
-    if (!pBu->comparePrice(mTradeCandlesCloseRSI, mRSIOversold))
+    if (!pBu.get()->comparePrice(mTradeCandlesCloseRSI, mRSIOversold))
     {
         // if we have not a buy order or bought order we create a new buy order
         if (mBuyOrders.size() < 1 && mBoughtOrders.size() < 1)
@@ -559,7 +560,7 @@ bool BinanceRequests::newBuyOrder()
 bool BinanceRequests::newSellOrder()
 {
     // if RSI is higher than 55.00, we create a new sell order
-    if (!pBu->comparePrice(mTradeCandlesCloseRSI, mRSIOverbought))
+    if (!pBu.get()->comparePrice(mTradeCandlesCloseRSI, mRSIOverbought))
     {
         // if we bought a coin we'll create a sell order
         if (mBoughtOrders.size() > 0)
@@ -722,14 +723,14 @@ std::string BinanceRequests::deleteRequest(std::string endpoint, std::string par
  */
 bool BinanceRequests::getAccountStatus()
 {
-    std::string mTimestamp              = pBu->getTimestamp();
+    std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/sapi/v1/account/status";
 
 
     std::string mParams                 = "timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
-    std::string mSignature              = pBu->getSignature(mParams);
+    std::string mSignature              = pBu.get()->getSignature(mParams);
 
     std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
 
@@ -775,14 +776,14 @@ bool BinanceRequests::getAccountStatus()
  */
 bool BinanceRequests::getAPIKeyPermission()
 {
-    std::string mTimestamp              = pBu->getTimestamp();
+    std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/sapi/v1/account/apiRestrictions";
 
 
     std::string mParams                 = "timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
-    std::string mSignature              = pBu->getSignature(mParams);
+    std::string mSignature              = pBu.get()->getSignature(mParams);
 
     std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
 
@@ -829,14 +830,14 @@ bool BinanceRequests::getAPIKeyPermission()
  */
 bool BinanceRequests::getCoinBalance (std::string symbol)
 {
-    std::string mTimestamp              = pBu->getTimestamp();
+    std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/sapi/v1/capital/config/getall";
 
 
     std::string mParams                 = "timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
-    std::string mSignature              = pBu->getSignature(mParams);
+    std::string mSignature              = pBu.get()->getSignature(mParams);
 
     std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
 
@@ -868,7 +869,7 @@ bool BinanceRequests::getCoinBalance (std::string symbol)
 
             ELOG(INFO, "Get Coin Balance Symbol: %s, Balance: %s.", mAPIJson[i]["coin"].asCString(), mAPIJson[i]["free"].asCString());
 
-            bool isAmountEnough = pBu->comparePrice(mWalletBalanceAmount, mBalanceAmount);
+            bool isAmountEnough = pBu.get()->comparePrice(mWalletBalanceAmount, mBalanceAmount);
 
             if (!isAmountEnough)
             {
@@ -895,7 +896,7 @@ bool BinanceRequests::getCoinBalance (std::string symbol)
  */
 bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interval, std::string startTime)
 {
-    std::string mTimestamp              = pBu->getTimestamp();
+    std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/api/v3/klines";
 
@@ -961,7 +962,7 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
  */
 bool BinanceRequests::getTickSize (std::string symbol)
 {
-    std::string mTimestamp              = pBu->getTimestamp();
+    std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/api/v3/exchangeInfo";
 
@@ -996,13 +997,13 @@ bool BinanceRequests::getTickSize (std::string symbol)
         {
             if (symbol == mSymbol)
             {
-                mSymbolTickSize = pBu->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
+                mSymbolTickSize = pBu.get()->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
                 return true;
             }
 
             if (symbol == mFollowSymbol)
             {
-                mFollowSymbolTickSize = pBu->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
+                mFollowSymbolTickSize = pBu.get()->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
                 return true;
             }
         }
@@ -1025,7 +1026,7 @@ bool BinanceRequests::getTickSize (std::string symbol)
  */
 bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price)
 {
-    std::string mTimestamp              = pBu->getTimestamp();
+    std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/api/v3/order";
 
@@ -1035,7 +1036,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
                 mParams                 += "&quantity="+quantity+"&price="+price;
                 mParams                 += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
-    std::string mSignature              = pBu->getSignature(mParams);
+    std::string mSignature              = pBu.get()->getSignature(mParams);
 
     httplib::Params mSignatureParams    = {{ "signature", mSignature }};
 
@@ -1116,7 +1117,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
  */
 bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
 {
-    std::string mTimestamp              = pBu->getTimestamp();
+    std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/api/v3/order";
 
@@ -1124,7 +1125,7 @@ bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
     std::string mParams                 = "symbol="+symbol+"&orderId="+std::to_string(orderId);
                 mParams                 += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
-    std::string mSignature              = pBu->getSignature(mParams);
+    std::string mSignature              = pBu.get()->getSignature(mParams);
 
     std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
 
@@ -1192,14 +1193,14 @@ bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
  */
 bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
 {
-    std::string mTimestamp              = pBu->getTimestamp();
+    std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/api/v3/openOrders";
 
 
     std::string mParams                 = "symbol="+symbol+"&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
-    std::string mSignature              = pBu->getSignature(mParams);
+    std::string mSignature              = pBu.get()->getSignature(mParams);
 
     std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
 
@@ -1247,7 +1248,7 @@ bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
  */
 bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
 {
-    std::string mTimestamp              = pBu->getTimestamp();
+    std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/api/v3/order";
 
@@ -1255,7 +1256,7 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
     std::string mParams                 = "symbol="+symbol+"&orderId="+std::to_string(orderId);
                 mParams                 += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
-    std::string mSignature              = pBu->getSignature(mParams);
+    std::string mSignature              = pBu.get()->getSignature(mParams);
 
     std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
 
@@ -1354,14 +1355,14 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
  */
 bool BinanceRequests::currentOpenOrders(std::string symbol)
 {
-    std::string mTimestamp              = pBu->getTimestamp();
+    std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/api/v3/openOrders";
 
 
     std::string mParams                 = "symbol="+symbol+"&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
 
-    std::string mSignature              = pBu->getSignature(mParams);
+    std::string mSignature              = pBu.get()->getSignature(mParams);
 
     std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
 

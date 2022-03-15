@@ -350,14 +350,14 @@ void Websocket::close(beast::error_code ec)
  * 
  * @param pBu 
  */
-BinanceWebsocket::BinanceWebsocket(BinanceUtilities *pBu)
+BinanceWebsocket::BinanceWebsocket(std::shared_ptr<BinanceUtilities> pBu)
 {
-    mHost           = pBu->getWebsocketBase();
-    mPort           = pBu->getWebsocketPort();
-    mEndpointT      = pBu->getWebsocketEndpointT();
-    mEndpointF      = pBu->getWebsocketEndpointF();
-    mTradeSymbol    = pBu->getSymbol();
-    mFollowSymbol   = pBu->getFollowSymbol();
+    mHost           = pBu.get()->getWebsocketBase();
+    mPort           = pBu.get()->getWebsocketPort();
+    mEndpointT      = pBu.get()->getWebsocketEndpointT();
+    mEndpointF      = pBu.get()->getWebsocketEndpointF();
+    mTradeSymbol    = pBu.get()->getSymbol();
+    mFollowSymbol   = pBu.get()->getFollowSymbol();
 
 
     Opel *iOpel     = Opel::instance(); 

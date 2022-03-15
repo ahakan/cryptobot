@@ -40,6 +40,24 @@ Opel* Opel::instance()
 
 
 /**
+ * @brief Return app data struct
+ * 
+ * @return struct app_data* 
+ */
+struct app_data* Opel::getAppDataStruct()
+{
+    static struct app_data *pAppData;
+
+    if (pAppData == NULL)
+    {
+        pAppData = new app_data;
+    }
+
+    return pAppData; 
+}
+
+
+/**
  * @brief Trade Candle data struct
  * 
  * @return struct candle_data* 

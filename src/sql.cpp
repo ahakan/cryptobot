@@ -19,7 +19,7 @@ Sql::Sql()
 
     // Add user data
     sql = "INSERT OR IGNORE INTO BOT(id, status, isActive, symbol, balanceSymbol)" \
-          "VALUES(1, 1, 0, '', '');";
+          "VALUES(1, 1, 1, '', '');";
 
     allQuery(sql);
 

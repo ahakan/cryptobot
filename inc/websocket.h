@@ -85,7 +85,7 @@ class BinanceWebsocket
 
 
     public:
-                                    BinanceWebsocket(BinanceUtilities *pBu);
+                                    BinanceWebsocket(std::shared_ptr<BinanceUtilities> pBu);
                                     ~BinanceWebsocket();
 
         void                        init();

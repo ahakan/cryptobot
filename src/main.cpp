@@ -29,6 +29,11 @@
 #include <signal.h>
 
 
+/**
+ * @brief Signal handler
+ * 
+ * @param signal 
+ */
 void signalHandler(int signal)
 {
     (void) signal;
@@ -39,58 +44,38 @@ void signalHandler(int signal)
 }
 
 
-void checkExit(BinanceUtilities *util, BinanceWebsocket *ws, BinanceRequests *req)
-{
-    Opel *iOpel = Opel::instance();
-
-    while (true)
-    {
-        if (iOpel->getExitSignal() == 0)
-        {
-            break;
-        }
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-
-    
-    ELOG(INFO, "Handled an exit signal. Exiting...");
-
-    ELOG(INFO, "Thread checkExit detacted.");
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(7500));
-
-    delete ws;
-    delete req;
-    delete util;
-}
-
-
+/**
+ * @brief Main function
+ * 
+ * @return int 
+ */
 int main()
 {
     struct sigaction            sigIntHandler;
 
-    sigIntHandler.sa_handler    = signalHandler;
     sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_handler    = signalHandler;
     sigIntHandler.sa_flags      = 0;
 
     sigaction(SIGINT, &sigIntHandler, NULL);
 
-    std::shared_ptr<Sql>        pSql(new Sql);
 
-    BinanceUtilities *bUtil     = new BinanceUtilities();
-    BinanceRequests  *bReq      = new BinanceRequests(bUtil);
-    BinanceWebsocket *bWs       = new BinanceWebsocket(bUtil);
+    std::shared_ptr<Sql>                pSql(new Sql);
+
+    std::shared_ptr<BinanceUtilities>   bUtil(new BinanceUtilities);
+    std::shared_ptr<BinanceWebsocket>   bWs(new BinanceWebsocket(bUtil));
+    std::shared_ptr<BinanceRequests>    bReq(new BinanceRequests(bUtil));
+
 
     std::thread sqlTh           = std::thread(&Sql::init, pSql);
-    std::thread wsTh            = std::thread(&BinanceWebsocket::init, bWs);
     std::thread reqTh           = std::thread(&BinanceRequests::init, bReq);
-    std::thread cExit           = std::thread(checkExit, bUtil, bWs, bReq);
+    std::thread wsTh            = std::thread(&BinanceWebsocket::init, bWs);
+
 
     sqlTh.join();
-    wsTh.join();
     reqTh.join();
-    cExit.join();
+    wsTh.join();
+    
 
     std::cout << "--Cryptobot has been closed." << std::endl;
 
