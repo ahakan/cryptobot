@@ -1,5 +1,4 @@
 #include "../inc/requests.h"
-#include <memory>
 
 
 /**
@@ -148,9 +147,12 @@ bool Requests::calcSymbolRSI()
 {
     if (mTradeCandlesClosePrices.size() != 0)
     {
+        mOldTradeCandlesCloseRSI            = mTradeCandlesCloseRSI;
         mTradeCandlesCloseRSI               = pBu.get()->calculateRSI(mTradeCandlesClosePrices);
 
-        ELOG(INFO, "Calculated Symbol RSI. Trade Candles Close RSI: %s.", mTradeCandlesCloseRSI.c_str());
+        mTradeRSICalculated                 = true;
+
+        ELOG(INFO, "Calculated Symbol RSI. Trade Candles New Close RSI: %s, Old Close RSI: %s, Is Calculated: %d.", mTradeCandlesCloseRSI.c_str(), mOldTradeCandlesCloseRSI.c_str(), mTradeRSICalculated);
 
         return true;
     }
@@ -171,9 +173,12 @@ bool Requests::calcFollowRSI()
 {
     if (mFollowCandlesClosePrices.size() != 0)
     {
-        mFollowCandlesCloseRSI               = pBu.get()->calculateRSI(mFollowCandlesClosePrices);
+        mOldFollowCandlesCloseRSI           = mFollowCandlesCloseRSI;
+        mFollowCandlesCloseRSI              = pBu.get()->calculateRSI(mFollowCandlesClosePrices);
 
-        ELOG(INFO, "Calculated Follow Symbol RSI. Follow Candles Close RSI: %s.", mFollowCandlesCloseRSI.c_str());
+        mFollowRSICalculated                = true;
+
+        ELOG(INFO, "Calculated Follow Symbol RSI. Follow Candles New Close RSI: %s, Old Close RSI: %s, Is Calculated: %d.", mFollowCandlesCloseRSI.c_str(), mOldFollowCandlesCloseRSI.c_str(), mTradeRSICalculated);
 
         return true;
     }
@@ -276,7 +281,7 @@ bool Requests::readCandleData()
 
                 if (mCalculateSymbolAverages && mCalculateSymbolRSI && mCalculateOrderPriceAverage)
                 {
-                    ELOG(INFO, "Added new symbol closed price data and calculated symbol averages, RSI and order price average.");
+                    ELOG(INFO, "Added new symbol closed price data and calculated symbol averages, RSI and order price average. Calculated Average: %s.", mNewOrderCalculatedAverage.c_str());
                 }
             }
         }
@@ -587,7 +592,21 @@ bool BinanceRequests::checkBuyOrders()
 {
     // Check buy orders
     if (mBuyOrders.size() > 0)
+    {
+        // Check new RSI
+        if (mTradeRSICalculated && mFollowRSICalculated)
+        {
+            bool mIsBuyOrderCanceled = cancelOrder(mSymbol, mBuyOrders.begin()->first);
+
+            if (mIsBuyOrderCanceled)
+            {
+                mTradeRSICalculated     = false;
+                mFollowRSICalculated    = false;
+            }
+        }
+
         return queryOrder(mSymbol, mBuyOrders.begin()->first);
+    }
 
     return false;
 }
@@ -1149,9 +1168,9 @@ bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
         return false;
     }
 
-    std::string mStatus = mAPIJson["status"].asString();
     uint32_t mOrderId   = mAPIJson["orderId"].asInt();
     std::string mSide   = mAPIJson["side"].asString();
+    std::string mStatus = mAPIJson["status"].asString();
 
     if (mStatus!="CANCELED")
     {
@@ -1159,15 +1178,15 @@ bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
         return false;
     }
 
-    if (mSide == "BUY")
-    {
-        if (mBuyOrders.count(orderId) == 1)
-        {
-            ELOG(INFO, "Canceled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSellOrders.find(orderId)->second["Symbol"].c_str(), mSellOrders.find(orderId)->second["Price"].c_str(), mSellOrders.find(orderId)->second["Quantity"].c_str(), mSellOrders.find(orderId)->second["TransactTime"].c_str());
+    // if (mSide == "BUY")
+    // {
+    //     if (mBuyOrders.count(orderId) == 1)
+    //     {
+    //         ELOG(INFO, "Canceled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSellOrders.find(orderId)->second["Symbol"].c_str(), mSellOrders.find(orderId)->second["Price"].c_str(), mSellOrders.find(orderId)->second["Quantity"].c_str(), mSellOrders.find(orderId)->second["TransactTime"].c_str());
             
-            mBuyOrders.erase(orderId);
-        }
-    }
+    //         mBuyOrders.erase(orderId);
+    //     }
+    // }
     // else if (mSide == "SELL")
     // {
     //     if (mSellOrders.count(orderId) == 1)

@@ -48,9 +48,6 @@ class Requests
         std::string             mAPI_KEY;
         std::string             mSECRET_KEY;
         
-        int                     mSymbolTickSize;
-        int                     mFollowSymbolTickSize;
-
         std::string             mSymbol;
         std::string             mInterval;
         std::string             mQuantity;
@@ -61,6 +58,9 @@ class Requests
 
         bool                    mAverageAutoCalculate;
         
+        int                     mSymbolTickSize;
+        int                     mFollowSymbolTickSize;
+
         int                     mRSIPeriod;
         std::string             mRSIOversold;
         std::string             mRSIOverbought;
@@ -88,7 +88,9 @@ class Requests
         std::string             mTradeCandlesLowPricesAverage;
         std::string             mTradeCandlesClosePricesAverage;
 
+        bool                    mTradeRSICalculated;
         std::string             mTradeCandlesCloseRSI;
+        std::string             mOldTradeCandlesCloseRSI;
 
         AverageVector           mTradeCandlesOpenPrices;
         AverageVector           mTradeCandlesHighPrices;
@@ -100,7 +102,9 @@ class Requests
         std::string             mFollowCandlesLowPricesAverage;
         std::string             mFollowCandlesClosePricesAverage;
 
+        bool                    mFollowRSICalculated;
         std::string             mFollowCandlesCloseRSI;
+        std::string             mOldFollowCandlesCloseRSI;
 
         AverageVector           mFollowCandlesOpenPrices;
         AverageVector           mFollowCandlesHighPrices;
