@@ -70,6 +70,7 @@ class Utilities
         std::string             calculateRSI(std::vector<std::string> vector);
         std::string             addTwoStrings(std::string number1, std::string number2);
         std::string             subTwoStrings(std::string number1, std::string number2);
+        std::string             multiplyTwoStrings(std::string number1, std::string number2);
         
         bool                    comparePrice(std::string firstPrice, std::string secondPrice);
 

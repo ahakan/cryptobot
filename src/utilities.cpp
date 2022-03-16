@@ -484,7 +484,7 @@ std::string Utilities::addTwoStrings(std::string number1, std::string number2)
         return std::to_string(num1+num2);
     }
 
-    ELOG(ERROR, "Some parameters is empty. Number 1: %S, Number 2: %s.", number1.c_str(), number2.c_str());
+    ELOG(ERROR, "Add two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", number1.c_str(), number2.c_str());
     
     return "ERROR";
 }
@@ -507,7 +507,35 @@ std::string Utilities::subTwoStrings(std::string number1, std::string number2)
         return (num1 >= num2) ? std::to_string(num1-num2) : std::to_string(num2-num1);
     }
     
-    ELOG(ERROR, "Some parameters is empty. Number 1: %S, Number 2: %s.", number1.c_str(), number2.c_str());
+    ELOG(ERROR, "Subs two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", number1.c_str(), number2.c_str());
+    
+    return "ERROR";
+}
+
+
+/**
+ * @brief Multiply two strings
+ * 
+ * @param number1 
+ * @param number2 
+ * @return std::string 
+ */
+std::string Utilities::multiplyTwoStrings(std::string number1, std::string number2)
+{
+    if (number1.length() > 0 && number2.length() > 0)
+    {
+        float num1          = std::stof(number1);
+        float total         = 0;
+
+        for (int i=0; i<std::stoi(number2); i++)
+        {
+            total = total + num1;
+        }
+
+        return  std::to_string(total);
+    }
+    
+    ELOG(ERROR, "Multiply two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", number1.c_str(), number2.c_str());
     
     return "ERROR";
 }

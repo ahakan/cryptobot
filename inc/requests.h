@@ -115,6 +115,7 @@ class Requests
         std::string             calcNewSellPrice(std::string boughtPrice);
         std::string             calcNewBuyPrice();
 
+        bool                    calcNewBalanceAmount(std::string side, std::string price, std::string quantity);
         bool                    calcOrderPriceAverage();
         bool                    calcSymbolRSI();
         bool                    calcFollowRSI();

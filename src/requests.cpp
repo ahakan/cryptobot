@@ -101,6 +101,47 @@ std::string Requests::calcNewBuyPrice()
 
 
 /**
+ * @brief Calculate new balance amount
+ * 
+ * @param side 
+ * @param price 
+ * @param quantity 
+ * @return true 
+ * @return false 
+ */
+bool Requests::calcNewBalanceAmount(std::string side, std::string price, std::string quantity)
+{
+    std::string totalOrderPrice     = pBu.get()->multiplyTwoStrings(price, quantity);
+    std::string roundedTotalPrice   = pBu.get()->roundPrice(totalOrderPrice, mSymbolTickSize);
+
+    if (side == "BUY")
+    {
+        mBalanceAmount = pBu.get()->subTwoStrings(mBalanceAmount, roundedTotalPrice);
+
+        mBalanceAmount = pBu.get()->roundPrice(mBalanceAmount, mSymbolTickSize);
+
+        ELOG(INFO, "Calculated New Balance Amount. New Amount: %s, Order Price: %s.", mBalanceAmount.c_str(), roundedTotalPrice.c_str());
+
+        return true;
+    }
+    else if (side == "SELL")
+    {
+        mBalanceAmount = pBu.get()->addTwoStrings(mBalanceAmount, roundedTotalPrice);
+
+        mBalanceAmount = pBu.get()->roundPrice(mBalanceAmount, mSymbolTickSize);
+
+        ELOG(INFO, "Calculated New Balance Amount. New Amount: %s, Order Price: %s.", mBalanceAmount.c_str(), roundedTotalPrice.c_str());
+
+        return true;
+    }
+
+    ELOG(INFO, "Failed to Calculate New Balance Amount.");
+
+    return false;
+}
+
+
+/**
  * @brief Calculate new order price average
  * 
  * @return true 
@@ -147,10 +188,10 @@ bool Requests::calcSymbolRSI()
 {
     if (mTradeCandlesClosePrices.size() != 0)
     {
-        mOldTradeCandlesCloseRSI            = mTradeCandlesCloseRSI;
+        mOldTradeCandlesCloseRSI            = mTradeCandlesCloseRSI.length() > 0 ? mTradeCandlesCloseRSI : "Empty";
         mTradeCandlesCloseRSI               = pBu.get()->calculateRSI(mTradeCandlesClosePrices);
 
-        mTradeRSICalculated                 = true;
+        mTradeRSICalculated                 = mOldTradeCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
 
         ELOG(INFO, "Calculated Symbol RSI. Trade Candles New Close RSI: %s, Old Close RSI: %s, Is Calculated: %d.", mTradeCandlesCloseRSI.c_str(), mOldTradeCandlesCloseRSI.c_str(), mTradeRSICalculated);
 
@@ -173,10 +214,10 @@ bool Requests::calcFollowRSI()
 {
     if (mFollowCandlesClosePrices.size() != 0)
     {
-        mOldFollowCandlesCloseRSI           = mFollowCandlesCloseRSI;
+        mOldFollowCandlesCloseRSI           = mFollowCandlesCloseRSI.length() > 0 ? mFollowCandlesCloseRSI : "Empty";
         mFollowCandlesCloseRSI              = pBu.get()->calculateRSI(mFollowCandlesClosePrices);
 
-        mFollowRSICalculated                = true;
+        mFollowRSICalculated                = mOldFollowCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
 
         ELOG(INFO, "Calculated Follow Symbol RSI. Follow Candles New Close RSI: %s, Old Close RSI: %s, Is Calculated: %d.", mFollowCandlesCloseRSI.c_str(), mOldFollowCandlesCloseRSI.c_str(), mTradeRSICalculated);
 
@@ -544,11 +585,18 @@ bool BinanceRequests::newBuyOrder()
         // if we have not a buy order or bought order we create a new buy order
         if (mBuyOrders.size() < 1 && mBoughtOrders.size() < 1)
         {
+            // calculate new buy price
             std::string newPrice = calcNewBuyPrice();
 
-            ELOG(INFO, "Created a New BUY Order. RSI: %s, Price: %s.", mTradeCandlesCloseRSI.c_str(), newPrice.c_str());
+            // check balance amount
+            std::string orderPrice = pBu.get()->roundPrice(pBu.get()->multiplyTwoStrings(newPrice, mQuantity), mSymbolTickSize);
 
-            return createNewOrder(mSymbol, mBuySide, mOrderType, mQuantity, newPrice);
+            if (pBu.get()->comparePrice(mBalanceAmount, orderPrice))
+            {
+                ELOG(INFO, "Created a New BUY Order. User balance amount is sufficient. Price: %s. ", newPrice.c_str());
+
+                return createNewOrder(mSymbol, mBuySide, mOrderType, mQuantity, newPrice);
+            }
         }
     }
     
@@ -1340,6 +1388,9 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
 
             ELOG(INFO, "Filled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str(), mTime.c_str());
         }
+
+        // calculate new balance amount
+        calcNewBalanceAmount(mSide, mPrice, mQuantity);
     }
 
     if (mStatus == "CANCELED")
@@ -1358,6 +1409,8 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
 
             ELOG(INFO, "Canceled a Sell Order. OrderId: %d, Symbol: %s, Price: %s, Bought Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str());
         }
+
+        calcNewBalanceAmount(mSide, mPrice, mQuantity);
     }
  
     return true;
