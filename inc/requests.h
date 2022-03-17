@@ -65,17 +65,23 @@ class Requests
         std::string             mRSIOversold;
         std::string             mRSIOverbought;
 
+
         bool                    mAccountStatus = false;
         bool                    mAPIKeyPermission = false;
+
 
         std::string             mBuySide    = "BUY";
         std::string             mSellSide   = "SELL";
         std::string             mOrderType  = "LIMIT";
         std::string             mRecvWindow = "10000";
 
+
+        bool                    mSymbolLivePriceRead;
+        
         std::string             mSymbolLivePrice;
         std::string             mFollowLivePrice;
         std::string             mNewOrderCalculatedAverage;
+
 
         AllOrdersMap            mBuyOrders;
         AllOrdersMap            mBoughtOrders;
@@ -83,10 +89,12 @@ class Requests
         AllOrdersMap            mSellOrders;
         AllOrdersMap            mSoldOrders;
 
+
         std::string             mTradeCandlesOpenPricesAverage;
         std::string             mTradeCandlesHighPricesAverage;
         std::string             mTradeCandlesLowPricesAverage;
         std::string             mTradeCandlesClosePricesAverage;
+
 
         bool                    mTradeRSICalculated;
         std::string             mTradeCandlesCloseRSI;
@@ -97,10 +105,12 @@ class Requests
         AverageVector           mTradeCandlesLowPrices;
         AverageVector           mTradeCandlesClosePrices;
 
+
         std::string             mFollowCandlesOpenPricesAverage;
         std::string             mFollowCandlesHighPricesAverage;
         std::string             mFollowCandlesLowPricesAverage;
         std::string             mFollowCandlesClosePricesAverage;
+
 
         bool                    mFollowRSICalculated;
         std::string             mFollowCandlesCloseRSI;
@@ -154,9 +164,9 @@ class BinanceRequests : public Requests
 
         // Spot Account/Trade
         bool                    createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price);
-        bool                    cancelOrder(std::string symbol, uint32_t orderId);
+        bool                    cancelOrder(std::string symbol, int orderId);
         bool                    cancelAllOpenOrders(std::string symbol);
-        bool                    queryOrder(std::string symbol, uint32_t orderId);
+        bool                    queryOrder(std::string symbol, int orderId);
         bool                    currentOpenOrders(std::string symbol);
 
     public:

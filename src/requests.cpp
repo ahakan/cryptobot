@@ -328,12 +328,16 @@ bool Requests::readCandleData()
         }
         else
         {
-            mSymbolLivePrice = pTradeCandleData->closePrice;
+            mSymbolLivePrice        = pTradeCandleData->closePrice;
+
+            mSymbolLivePriceRead    = true;
 
             ELOG(INFO, "Current Trade Symbol: %s, Live Price: %s.", pTradeCandleData->symbol.c_str(), mSymbolLivePrice.c_str());
         }
 
         pTradeCandleData->isUpdated = false;
+
+        ELOG(INFO, "mBuyOrderSize: %d, mBoughtOrderSize: %d, mSellOrderSize: %d, mSoldOrderSize: %d.", mBuyOrders.size(), mBoughtOrders.size(), mSellOrders.size(), mSoldOrders.size());
     }
 
     pTradeCandleData->unlock();
@@ -534,6 +538,13 @@ void BinanceRequests::init()
         binance();
     }
 
+    if (mBuyOrders.size() > 0)
+    {
+        ELOG(INFO, "Closed last buy order. Order id: %d.", mBuyOrders.begin()->first);
+
+        cancelOrder(mSymbol, mBuyOrders.begin()->first);
+    }
+
     ELOG(INFO, "Thread Requests detached.");
 }
 
@@ -557,8 +568,15 @@ void BinanceRequests::binance()
 
             if (mSymbolLivePrice.length() > 0)
             {
-                checkBuyOrders();
-                checkSellOrders();
+
+                if (mSymbolLivePriceRead)
+                {
+                    checkBuyOrders();
+                    checkSellOrders();
+
+                    mSymbolLivePriceRead = false;
+                }
+                
                 newBuyOrder();
                 newSellOrder();
             }
@@ -579,23 +597,41 @@ void BinanceRequests::binance()
  */
 bool BinanceRequests::newBuyOrder()
 {
-    // if RSI is smaller than 40.00, we create a new buy order
+    // if RSI is smaller than 4mRSIOversold, we create a new buy order
     if (!pBu.get()->comparePrice(mTradeCandlesCloseRSI, mRSIOversold))
     {
         // if we have not a buy order or bought order we create a new buy order
         if (mBuyOrders.size() < 1 && mBoughtOrders.size() < 1)
         {
-            // calculate new buy price
-            std::string newPrice = calcNewBuyPrice();
+            // check user wallet balance
+            bool walletBalanceAmount    = getCoinBalance(mBalanceSymbol);
 
-            // check balance amount
-            std::string orderPrice = pBu.get()->roundPrice(pBu.get()->multiplyTwoStrings(newPrice, mQuantity), mSymbolTickSize);
-
-            if (pBu.get()->comparePrice(mBalanceAmount, orderPrice))
+            if (walletBalanceAmount)
             {
-                ELOG(INFO, "Created a New BUY Order. User balance amount is sufficient. Price: %s. ", newPrice.c_str());
+                // calculate new buy price
+                std::string newPrice        = calcNewBuyPrice();
 
-                return createNewOrder(mSymbol, mBuySide, mOrderType, mQuantity, newPrice);
+                // calculate total order price
+                std::string totalOrderPrice = pBu.get()->multiplyTwoStrings(newPrice, mQuantity);
+
+                // check balance amount
+                std::string orderPrice      = pBu.get()->roundPrice(totalOrderPrice, mSymbolTickSize);
+
+                if (pBu.get()->comparePrice(mBalanceAmount, orderPrice))
+                {
+                    bool isCreated          = createNewOrder(mSymbol, mBuySide, mOrderType, mQuantity, newPrice);
+
+                    if (isCreated)
+                    {
+                        ELOG(INFO, "Created a New BUY Order. User balance amount is sufficient. Price: %s. ", newPrice.c_str());
+
+                        return true;
+                    }
+                }
+                else
+                {
+                    ELOG(WARNING, "Insufficient user balance. Balance: %s. ", mBalanceAmount.c_str());
+                }
             }
         }
     }
@@ -612,17 +648,22 @@ bool BinanceRequests::newBuyOrder()
  */
 bool BinanceRequests::newSellOrder()
 {
-    // if RSI is higher than 55.00, we create a new sell order
-    if (!pBu.get()->comparePrice(mTradeCandlesCloseRSI, mRSIOverbought))
+    // if RSI is higher than mRSIOverbought, we create a new sell order
+    if (pBu.get()->comparePrice(mTradeCandlesCloseRSI, mRSIOverbought))
     {
         // if we bought a coin we'll create a sell order
         if (mBoughtOrders.size() > 0)
         {
-            std::string newPrice = calcNewSellPrice(mBoughtOrders.begin()->second["BoughtPrice"]);
+            std::string newPrice    = calcNewSellPrice(mBoughtOrders.begin()->second["BoughtPrice"]);
 
-            ELOG(INFO, "Created a New SELL Order. RSI: %s, Price: %s.", mTradeCandlesCloseRSI.c_str(), newPrice.c_str());
+            bool isCreated          = createNewOrder(mSymbol, mSellSide, mOrderType, mBoughtOrders.begin()->second["Quantity"], newPrice);
 
-            return createNewOrder(mSymbol, mSellSide, mOrderType, mQuantity, newPrice);
+            if (isCreated)
+            {
+                ELOG(INFO, "Created a New SELL Order. RSI: %s, Price: %s.", mTradeCandlesCloseRSI.c_str(), newPrice.c_str());
+
+                return true;
+            }
         }
     }
 
@@ -653,7 +694,14 @@ bool BinanceRequests::checkBuyOrders()
             }
         }
 
-        return queryOrder(mSymbol, mBuyOrders.begin()->first);
+        bool checkOrder = queryOrder(mSymbol, mBuyOrders.begin()->first);
+
+        if (checkOrder)
+        {
+            ELOG(INFO, "Checked Buy Order. Order id: %d.", mBuyOrders.begin()->first);
+
+            return true;
+        }
     }
 
     return false;
@@ -670,8 +718,17 @@ bool BinanceRequests::checkSellOrders()
 {
     // Check sell orders
     if (mSellOrders.size() > 0)
-        for (AllOrdersMap::iterator it = mSellOrders.begin(); it != mSellOrders.end(); it++)
-            queryOrder(mSymbol, it->first);
+    {
+        for (auto const& order : mSellOrders)
+        {
+            int mOrderId = order.first;
+
+            queryOrder(mSymbol, mOrderId);
+
+            ELOG(INFO, "Checked Sell Orders. Order id: %d, ", mOrderId);
+        }
+    }
+        
 
     return true;
 }
@@ -1135,7 +1192,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
         return false;
     }
 
-    uint32_t mOrderId           = mAPIJson["orderId"].asInt();
+    int mOrderId                = mAPIJson["orderId"].asInt();
     std::string mSide           = mAPIJson["side"].asString();
     std::string mSymbol         = mAPIJson["symbol"].asString();
     std::string mPrice          = mAPIJson["price"].asString();
@@ -1182,7 +1239,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
  * @return true 
  * @return false 
  */
-bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
+bool BinanceRequests::cancelOrder(std::string symbol, int orderId)
 {
     std::string mTimestamp              = pBu.get()->getTimestamp();
 
@@ -1216,7 +1273,7 @@ bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
         return false;
     }
 
-    uint32_t mOrderId   = mAPIJson["orderId"].asInt();
+    int mOrderId        = mAPIJson["orderId"].asInt();
     std::string mSide   = mAPIJson["side"].asString();
     std::string mStatus = mAPIJson["status"].asString();
 
@@ -1225,26 +1282,6 @@ bool BinanceRequests::cancelOrder(std::string symbol, uint32_t orderId)
         ELOG(ERROR, "Failed to Cancel the Order. Order id: %d.", mOrderId);
         return false;
     }
-
-    // if (mSide == "BUY")
-    // {
-    //     if (mBuyOrders.count(orderId) == 1)
-    //     {
-    //         ELOG(INFO, "Canceled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSellOrders.find(orderId)->second["Symbol"].c_str(), mSellOrders.find(orderId)->second["Price"].c_str(), mSellOrders.find(orderId)->second["Quantity"].c_str(), mSellOrders.find(orderId)->second["TransactTime"].c_str());
-            
-    //         mBuyOrders.erase(orderId);
-    //     }
-    // }
-    // else if (mSide == "SELL")
-    // {
-    //     if (mSellOrders.count(orderId) == 1)
-    //     {
-    //         mBuyOrders.erase(orderId);
-
-    //         ELOG(INFO, "Canceled a Order. Order ID: %d", mOrderId);
-    //     }
-    // }
-    
     
     return true;
 }
@@ -1313,7 +1350,7 @@ bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
  * @return true 
  * @return false 
  */
-bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
+bool BinanceRequests::queryOrder(std::string symbol, int orderId)
 {
     std::string mTimestamp              = pBu.get()->getTimestamp();
 
@@ -1331,7 +1368,7 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
     httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
 
-    ELOG(INFO, "Query Order Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    // ELOG(INFO, "Query Order Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
 
     std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
@@ -1347,73 +1384,162 @@ bool BinanceRequests::queryOrder(std::string symbol, uint32_t orderId)
         return false;
     }
 
-    uint32_t mOrderId           = mAPIJson["orderId"].asInt();
+    int mOrderId                = mAPIJson["orderId"].asInt();
     std::string mSide           = mAPIJson["side"].asString();
     std::string mStatus         = mAPIJson["status"].asString();
     std::string mSymbol         = mAPIJson["symbol"].asString();
     std::string mPrice          = mAPIJson["price"].asString();
     std::string mQuantity       = mAPIJson["origQty"].asString();
+    std::string mExecutedQty    = mAPIJson["executedQty"].asString();
     std::string mTime           = mAPIJson["updateTime"].asString();
 
-    ELOG(INFO, "Query Order. Status: %s, Order ID: %d, Order Price: %s", mStatus.c_str(), mOrderId, mPrice.c_str());
+    std::string mError          = mAPIJson["Error"].asString();
 
-    if (mStatus == "FILLED")
+    if (mError.size() == 0)
     {
-        if (mSide == mBuySide)
+        ELOG(INFO, "Side: %s, Status: %s, Order ID: %d, Order Price: %s", mSide.c_str(), mStatus.c_str(), mOrderId, mPrice.c_str());
+
+        if (mStatus == "FILLED")
         {
-            OrderMap mOrder;
+            if (mSide == mBuySide)
+            {
+                OrderMap mOrder;
 
-            mOrder.emplace("Symbol", mSymbol);
-            mOrder.emplace("BoughtPrice", mPrice);
-            mOrder.emplace("Quantity", mQuantity);
-            mOrder.emplace("BoughtTime", mTime);
+                mOrder.emplace("Symbol", mSymbol);
+                mOrder.emplace("BoughtPrice", mPrice);
+                mOrder.emplace("Quantity", mExecutedQty);
+                mOrder.emplace("BoughtTime", mTime);
 
-            mBoughtOrders.emplace(mOrderId, mOrder);
-            mBuyOrders.erase(orderId);
+                if (mBoughtOrders.find(orderId) == mBoughtOrders.end())
+                    mBoughtOrders.emplace(mOrderId, mOrder);
 
-            ELOG(INFO, "Filled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTime.c_str());
+                if (mBuyOrders.find(orderId) != mBuyOrders.end())
+                    mBuyOrders.erase(orderId);
+
+                ELOG(INFO, "Filled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTime.c_str());
+            
+                // calculate new balance amount
+                calcNewBalanceAmount(mSide, mPrice, mQuantity);
+
+                return true;
+            }
+            else if (mSide == mSellSide)
+            {
+                OrderMap mOrder;
+
+                mOrder.emplace("Symbol", mSymbol);
+                mOrder.emplace("SoldPrice", mPrice);
+                mOrder.emplace("Quantity", mQuantity);
+                mOrder.emplace("SoldTime", mTime);
+
+                if (mSoldOrders.find(mOrderId) == mSoldOrders.end())
+                {
+                    mSoldOrders.emplace(mOrderId, mOrder);
+
+                    ELOG(INFO, "Added Sold Order Item. Order id: %d, Map size: %d.", mOrderId, mSoldOrders.size());
+                }
+
+                for (auto const& order : mSellOrders)
+                {
+                    int mSellOrderId = order.first;
+
+                    if (mSellOrderId == mOrderId)
+                    {
+                        mSellOrders.erase(order.first);
+
+                        ELOG(INFO, "Deleted Sell Order Item. Order id: %d, Map size: %d.", mOrderId, mSellOrders.size());
+                    }
+                }
+
+                ELOG(INFO, "Filled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str(), mTime.c_str());
+
+                // calculate new balance amount
+                calcNewBalanceAmount(mSide, mPrice, mQuantity);
+
+                return true;
+            }
+
+            
         }
-        else if (mSide == mSellSide)
+        else if (mStatus == "CANCELED")
         {
-            OrderMap mOrder;
+            bool isHigherThanZero       = pBu.get()->comparePrice("00.00", mExecutedQty);   // if return false
+            bool isLowerThanQuantity    = pBu.get()->comparePrice(mExecutedQty, mQuantity); // if return false
+                                                                                            // that means partially filled
+            if (!isHigherThanZero && !isLowerThanQuantity)
+            {
+                if (mSide == mBuySide)
+                {
+                    OrderMap mOrder;
 
-            mOrder.emplace("Symbol", mSymbol);
-            mOrder.emplace("SoldPrice", mPrice);
-            mOrder.emplace("BoughtPrice", mSellOrders.find(orderId)->second["BoughtPrice"]);
-            mOrder.emplace("Quantity", mQuantity);
-            mOrder.emplace("SoldTime", mTime);
+                    mOrder.emplace("Symbol", mSymbol);
+                    mOrder.emplace("BoughtPrice", mPrice);
+                    mOrder.emplace("Quantity", mExecutedQty);
+                    mOrder.emplace("BoughtTime", mTime);
 
-            mSoldOrders.emplace(mOrderId, mOrder);
-            mSellOrders.erase(orderId);
+                    if (mBoughtOrders.find(orderId) == mBoughtOrders.end())
+                        mBoughtOrders.emplace(mOrderId, mOrder);
 
-            ELOG(INFO, "Filled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str(), mTime.c_str());
+                    if (mBuyOrders.find(orderId) != mBuyOrders.end())
+                        mBuyOrders.erase(orderId);
+
+                    ELOG(INFO, "Partially Filled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mExecutedQty.c_str(), mTime.c_str());
+
+                    // calculate new balance amount
+                    calcNewBalanceAmount(mSide, mPrice, mQuantity);
+
+                    return true;
+                }
+                else if (mSide == mSellSide)
+                {
+                    OrderMap mOrder;
+
+                    mOrder.emplace("Symbol", mSymbol);
+                    mOrder.emplace("SoldPrice", mPrice);
+                    mOrder.emplace("Quantity", mQuantity);
+                    mOrder.emplace("SoldTime", mTime);
+
+                    if (mSoldOrders.find(mOrderId) == mSoldOrders.end())
+                        mSoldOrders.emplace(mOrderId, mOrder);
+
+                    if (mSellOrders.find(mOrderId) != mSellOrders.end())
+                        mSellOrders.erase(mOrderId);
+
+                    ELOG(INFO, "Partially Filled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mExecutedQty.c_str(), mTime.c_str());
+
+                    // calculate new balance amount
+                    calcNewBalanceAmount(mSide, mPrice, mQuantity);
+
+                    return true;
+                }
+            }
+            
+            if (mSide == mBuySide)
+            {
+                if (mBuyOrders.find(orderId) != mBuyOrders.end())
+                    mBuyOrders.erase(orderId);
+
+                ELOG(INFO, "Canceled a Buy Order. OrderId: %d, Symbol: %s, Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str());
+
+                return true;
+            }
+            else if (mSide == mSellSide)
+            {
+                if (mBoughtOrders.find(orderId) == mBoughtOrders.end())
+                    if (mSellOrders.find(orderId) != mSellOrders.end())
+                        mBoughtOrders.emplace(orderId, mSellOrders[orderId]);
+
+                if (mSellOrders.find(orderId) != mSellOrders.end())
+                    mSellOrders.erase(orderId);
+
+                ELOG(INFO, "Canceled a Sell Order. OrderId: %d, Symbol: %s, Price: %s, Bought Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str());
+            
+                return true;
+            }
         }
-
-        // calculate new balance amount
-        calcNewBalanceAmount(mSide, mPrice, mQuantity);
-    }
-
-    if (mStatus == "CANCELED")
-    {
-        if (mSide == mBuySide)
-        {
-            mBuyOrders.erase(orderId);
-
-            ELOG(INFO, "Canceled a Buy Order. OrderId: %d, Symbol: %s, Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str());
-        }
-        else if (mSide == mSellSide)
-        {
-            mBoughtOrders.emplace(orderId, mSellOrders[orderId]);
-
-            mSellOrders.erase(orderId);
-
-            ELOG(INFO, "Canceled a Sell Order. OrderId: %d, Symbol: %s, Price: %s, Bought Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str());
-        }
-
-        calcNewBalanceAmount(mSide, mPrice, mQuantity);
     }
  
-    return true;
+    return false;
 }
 
 

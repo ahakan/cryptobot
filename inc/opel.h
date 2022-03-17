@@ -21,15 +21,6 @@
 #include <mutex>
 
 // Structs
-struct app_data : public std::mutex
-{
-    bool    threadSqlSignal;
-    bool    threadExitSignal;
-    bool    threadRequestSignal;
-    bool    threadWebsocketSignal;
-};
-
-
 struct candle_data : public std::mutex
 {
     bool                    isUpdated = false;
@@ -62,8 +53,6 @@ class Opel
                                     Opel& operator=(const Opel&)    = delete;       // Singletons should not be assignable.
                                     
         static Opel                 *instance();
-
-        static struct app_data      *getAppDataStruct();
 
         static struct candle_data   *getTradeCandleStruct();
         static struct candle_data   *getFollowCandleStruct();

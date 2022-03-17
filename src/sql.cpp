@@ -72,9 +72,12 @@ void Sql::init()
 {
     Opel *iOpel = Opel::instance();
 
+    getBOTTable();
+
+
     while (iOpel->getExitSignal())
     {
-        getBOTTable();
+        // getBOTTable();
 
         // struct candle_data *pTradeCandleData = Opel::getTradeCandleStruct();
 

@@ -51,14 +51,7 @@ void signalHandler(int signal)
  */
 int main()
 {
-    struct sigaction            sigIntHandler;
-
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_handler    = signalHandler;
-    sigIntHandler.sa_flags      = 0;
-
-    sigaction(SIGINT, &sigIntHandler, NULL);
-
+    struct sigaction                    sigIntHandler;
 
     std::shared_ptr<Sql>                pSql(new Sql);
 
@@ -67,15 +60,22 @@ int main()
     std::shared_ptr<BinanceRequests>    bReq(new BinanceRequests(bUtil));
 
 
+    sigemptyset(&sigIntHandler.sa_mask);
+
+    sigIntHandler.sa_handler    = signalHandler;
+    sigIntHandler.sa_flags      = 0;
+
+    
     std::thread sqlTh           = std::thread(&Sql::init, pSql);
     std::thread reqTh           = std::thread(&BinanceRequests::init, bReq);
     std::thread wsTh            = std::thread(&BinanceWebsocket::init, bWs);
 
+    sigaction(SIGINT, &sigIntHandler, NULL);
 
     sqlTh.join();
     reqTh.join();
     wsTh.join();
-    
+
 
     std::cout << "--Cryptobot has been closed." << std::endl;
 
