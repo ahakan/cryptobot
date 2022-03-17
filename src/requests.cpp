@@ -719,14 +719,23 @@ bool BinanceRequests::checkSellOrders()
     // Check sell orders
     if (mSellOrders.size() > 0)
     {
-        for (auto const& order : mSellOrders)
+        for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
         {
-            int mOrderId = order.first;
+            int mOrderId = i->first;
 
             queryOrder(mSymbol, mOrderId);
 
-            ELOG(INFO, "Checked Sell Orders. Order id: %d, ", mOrderId);
+            ELOG(INFO, "Checked Sell Orders. Order id: %d. ", mOrderId);
         }
+
+        if (mSellOrderFilledSize == static_cast<int>(mSellOrders.size()))
+        {
+            mSellOrders.clear();
+
+            ELOG(INFO, "Cleared Sell Orders Map. Map Size: %d. ", mSellOrders.size());
+        }
+
+        mSellOrderFilledSize = 0;
     }
         
 
@@ -1184,49 +1193,90 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
         return false;
     }
 
-    std::string mStatus = mAPIJson["status"].asString();
-
-    if (mStatus!="NEW") //!!!!!!!!!!!
-    {
-        ELOG(ERROR, "Order could not be created.");
-        return false;
-    }
-
     int mOrderId                = mAPIJson["orderId"].asInt();
     std::string mSide           = mAPIJson["side"].asString();
+    std::string mStatus         = mAPIJson["status"].asString();
     std::string mSymbol         = mAPIJson["symbol"].asString();
     std::string mPrice          = mAPIJson["price"].asString();
     std::string mQuantity       = mAPIJson["origQty"].asString();
+    std::string mExecutedQty    = mAPIJson["executedQty"].asString();
     std::string mTransactTime   = mAPIJson["transactTime"].asString();
 
-    OrderMap mOrder;
+    std::string mError          = mAPIJson["Error"].asString();
 
-    if (mSide == "BUY")
+    if (mError.size() == 0)
     {
-        mOrder.emplace("Symbol", mSymbol);
-        mOrder.emplace("Price", mPrice);
-        mOrder.emplace("Quantity", mQuantity);
-        mOrder.emplace("TransactTime", mTransactTime);
+        OrderMap mOrder;
 
-        mBuyOrders.emplace(mOrderId, mOrder);
+        if (mStatus == "NEW")
+        {
+            if (mSide == "BUY")
+            {
+                mOrder.emplace("Symbol", mSymbol);
+                mOrder.emplace("Price", mPrice);
+                mOrder.emplace("Quantity", mQuantity);
+                mOrder.emplace("TransactTime", mTransactTime);
 
-        ELOG(INFO, "Created a New Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
-    }
-    else if (mSide == "SELL")
-    {
-        mOrder.emplace("Symbol", mSymbol);
-        mOrder.emplace("Price", mPrice);
-        mOrder.emplace("BoughtPrice", mBoughtOrders.begin()->second["BoughtPrice"]);
-        mOrder.emplace("Quantity", mQuantity);
-        mOrder.emplace("TransactTime", mTransactTime);
+                mBuyOrders.emplace(mOrderId, mOrder);
 
-        mSellOrders.emplace(mOrderId, mOrder);
-        mBoughtOrders.clear();
+                ELOG(INFO, "Created a New Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
 
-        ELOG(INFO, "Created a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
+                return true;
+            }
+            else if (mSide == "SELL")
+            {
+                mOrder.emplace("Symbol", mSymbol);
+                mOrder.emplace("Price", mPrice);
+                mOrder.emplace("BoughtPrice", mBoughtOrders.begin()->second["BoughtPrice"]);
+                mOrder.emplace("Quantity", mQuantity);
+                mOrder.emplace("TransactTime", mTransactTime);
+
+                mSellOrders.emplace(mOrderId, mOrder);
+
+                mBoughtOrders.clear(); ///////!!!!!!!!
+
+                ELOG(INFO, "Created a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
+
+                return true;
+            }
+        }
+        else if (mStatus == "FILLED")
+        {
+            if (mSide == "BUY")
+            {
+                mOrder.emplace("Symbol", mSymbol);
+                mOrder.emplace("Price", mPrice);
+                mOrder.emplace("Quantity", mQuantity);
+                mOrder.emplace("TransactTime", mTransactTime);
+
+                mBoughtOrders.emplace(mOrderId, mOrder);
+
+                ELOG(INFO, "Created and Filled a New Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
+
+                return true;
+            }
+            else if (mSide == "SELL")
+            {
+                mOrder.emplace("Symbol", mSymbol);
+                mOrder.emplace("Price", mPrice);
+                mOrder.emplace("BoughtPrice", mBoughtOrders.begin()->second["BoughtPrice"]);
+                mOrder.emplace("Quantity", mQuantity);
+                mOrder.emplace("TransactTime", mTransactTime);
+
+                mSoldOrders.emplace(mOrderId, mOrder);
+
+                mBoughtOrders.clear();  ////!!!!!!!11
+
+                ELOG(INFO, "Created and Filled  a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
+
+                return true;
+            }
+        }
     }
     
-    return true;
+    ELOG(ERROR, "Failed to Create a New Order.");
+
+    return false;
 }
 
 
@@ -1439,17 +1489,19 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
                     ELOG(INFO, "Added Sold Order Item. Order id: %d, Map size: %d.", mOrderId, mSoldOrders.size());
                 }
 
-                for (auto const& order : mSellOrders)
-                {
-                    int mSellOrderId = order.first;
+                mSellOrderFilledSize++; // counter for clear to sell orders map.
 
-                    if (mSellOrderId == mOrderId)
-                    {
-                        mSellOrders.erase(order.first);
+                // for (auto const& order : mSellOrders)
+                // {
+                //     int mSellOrderId = order.first;
 
-                        ELOG(INFO, "Deleted Sell Order Item. Order id: %d, Map size: %d.", mOrderId, mSellOrders.size());
-                    }
-                }
+                //     if (mSellOrderId == mOrderId)
+                //     {
+                //         mSellOrders.erase(order.first);
+
+                //         ELOG(INFO, "Deleted Sell Order Item. Order id: %d, Map size: %d.", mOrderId, mSellOrders.size());
+                //     }
+                // }
 
                 ELOG(INFO, "Filled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str(), mTime.c_str());
 

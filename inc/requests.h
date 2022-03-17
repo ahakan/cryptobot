@@ -86,6 +86,8 @@ class Requests
         AllOrdersMap            mBuyOrders;
         AllOrdersMap            mBoughtOrders;
 
+        int                     mSellOrderFilledSize = 0;
+
         AllOrdersMap            mSellOrders;
         AllOrdersMap            mSoldOrders;
 
