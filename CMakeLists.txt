@@ -28,7 +28,7 @@ if(BUILD_CURL STREQUAL TRUE)
     include(module/libcurl.cmake)
 endif()
 
-find_package(SQLite3 REQUIRED) 
+find_package(SQLite3) 
 if(SQLite3_FOUND)
     message(STATUS "Found SQLite3 version: ${SQLite3_VERSION}")
     message(STATUS "Using SQLite3 include dir(s): ${SQLite3_INCLUDE_DIR}")
@@ -36,7 +36,7 @@ if(SQLite3_FOUND)
     include_directories(${SQLite3_INCLUDE_DIR})
 endif()
 
-find_package(CURL REQUIRED) 
+find_package(CURL) 
 if(CURL_FOUND)
     message(STATUS "Found CURL version: ${CURL_VERSION_STRING}")
     message(STATUS "Using CURL include dir(s): ${CURL_INCLUDE_DIRS}")
@@ -44,7 +44,7 @@ if(CURL_FOUND)
     include_directories(${CURL_INCLUDE_DIRS})
 endif()
 
-find_package(OpenSSL REQUIRED) 
+find_package(OpenSSL) 
 if(OPENSSL_FOUND)
     message(STATUS "Found OpenSSL version: ${OPENSSL_VERSION}")
     message(STATUS "Using OpenSSL include dir(s): ${OPENSSL_INCLUDE_DIR}")
@@ -60,7 +60,7 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
 
-find_package(Boost REQUIRED COMPONENTS) # header only libraries must not be added here
+find_package(Boost REQUIRED COMPONENTS) 
 
 include_directories(${Boost_INCLUDE_DIRS}) 
 

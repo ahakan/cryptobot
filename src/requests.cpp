@@ -1183,7 +1183,7 @@ bool BinanceRequests::getTickSize (std::string symbol)
             {
                 mFollowSymbolTickSize = pBu.get()->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
 
-                ELOG(INFO, "%s Tick Size: %d.", mSymbol.c_str(), mSymbolTickSize);
+                ELOG(INFO, "%s Tick Size: %d.", mFollowSymbol.c_str(), mSymbolTickSize);
 
                 return true;
             }

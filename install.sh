@@ -1,24 +1,27 @@
 #!/bin/bash
 
+while getopts b:c: flag
+do
+    case "${flag}" in
+        b) BOOST=${OPTARG};;
+        c) CMAKE=${OPTARG};;
+    esac
+done
+
 [ -d "build/" ] && sudo rm -rf build
 
 NOTFOUND=0
 
-CHECKCMAKE=$(ldconfig -p | cmake --system-information | grep CMAKE_VERSION | cut -c 16-21)
-
-CMAKEREQUIREDVER="3.50.0"
+CMAKE_COMMAND="cmake .. "
 
 CMAKEURL="https://github.com/Kitware/CMake.git"
 
-if [ "$(printf '%s\n' "$CMAKEREQUIREDVER" "$CHECKCMAKE" | sort -V | head -n1)" = "$CMAKEREQUIREDVER" ]; then 
+# Install cmake
+if [[ "$CMAKE" == 1 ]]; then
     git clone $CMAKEURL
     cd CMake
     ./bootstrap && make && sudo make install
-else
-    echo "-- Found CMAKE: TRUE"
 fi
-
-CMAKE_COMMAND="cmake .. "
 
 # Check libcap
 CHECKLIBCAP=$(ldconfig -p | grep /lib/libcap)
