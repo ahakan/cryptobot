@@ -48,31 +48,34 @@ Requests::~Requests()
  */
 std::string Requests::calcNewSellPrice(std::string boughtPrice)
 {
-    bool isSellAverageCalculated    = calcOrderPriceAverage();
-
-    if (!isSellAverageCalculated)
+    if (boughtPrice.length() > 0)
     {
-        ELOG(ERROR, "Failed to Calculated New Sell Price Average.");
-    }
+        bool isSellAverageCalculated    = calcOrderPriceAverage();
 
-    ELOG(INFO, "Calculate New Sell Price. Live Price: %s, Bought Price: %s", mSymbolLivePrice.c_str(), boughtPrice.c_str());
+        if (!isSellAverageCalculated)
+        {
+            ELOG(ERROR, "Failed to Calculated New Sell Price Average.");
+        }
 
-    bool compareLiveAndBoughtPrice  = pBu.get()->comparePrice(mSymbolLivePrice, boughtPrice);     // if return true live price is high, return false bought price is high
-    
-    if (compareLiveAndBoughtPrice)
-    {
-        std::string calculatedPrice = pBu.get()->addTwoStrings(mSymbolLivePrice, mNewOrderCalculatedAverage);
+        bool compareLiveAndBoughtPrice  = pBu.get()->comparePrice(mSymbolLivePrice, boughtPrice);     // if return true live price is high, return false bought price is high
+        
+        if (compareLiveAndBoughtPrice)
+        {
+            std::string calculatedPrice = pBu.get()->addTwoStrings(mSymbolLivePrice, mNewOrderCalculatedAverage);
 
-        ELOG(INFO, "Calculated New Sell Price. Live Price: %s, Bought Price: %s, Sell Price: %s.", mSymbolLivePrice.c_str(), boughtPrice.c_str(), calculatedPrice.c_str());
+            ELOG(INFO, "Calculated New Sell Price. Live Price: %s, Bought Price: %s, Sell Price: %s.", mSymbolLivePrice.c_str(), boughtPrice.c_str(), calculatedPrice.c_str());
+
+            return pBu.get()->roundPrice(calculatedPrice, mSymbolTickSize);
+        }
+
+        std::string calculatedPrice     = pBu.get()->addTwoStrings(boughtPrice, mNewOrderCalculatedAverage);
+
+        ELOG(INFO, "Calculated New Sell Price. Bought Price: %s, Sell Price: %s, Bought Price: %s.", boughtPrice.c_str(), calculatedPrice.c_str(), boughtPrice.c_str());
 
         return pBu.get()->roundPrice(calculatedPrice, mSymbolTickSize);
     }
 
-    std::string calculatedPrice     = pBu.get()->addTwoStrings(boughtPrice, mNewOrderCalculatedAverage);
-
-    ELOG(INFO, "Calculated New Sell Price. Bought Price: %s, Sell Price: %s.", boughtPrice.c_str(), calculatedPrice.c_str());
-
-    return pBu.get()->roundPrice(calculatedPrice, mSymbolTickSize);
+    return "ERROR";
 }
 
 
@@ -728,14 +731,23 @@ bool BinanceRequests::checkSellOrders()
             ELOG(INFO, "Checked Sell Orders. Order id: %d. ", mOrderId);
         }
 
-        if (mSellOrderFilledSize == static_cast<int>(mSellOrders.size()))
+        for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
         {
-            mSellOrders.clear();
+            int mOrderId = i->first;
 
-            ELOG(INFO, "Cleared Sell Orders Map. Map Size: %d. ", mSellOrders.size());
+            if (i->second["Status"] == "FILLED")
+            {
+                std::cout << mOrderId << "\t " << i->second["Status"] << "\t " << i->second["Symbol"] << "\t " << i->second["BoughtPrice"] << "\t " << i->second["SoldPrice"] << std::endl;
+                
+                mSellOrders.erase(i);
+            }
+            else if (i->second["Status"] == "CANCELED")
+            {
+                std::cout << mOrderId << "\t " << i->second["Status"] << "\t " << i->second["Symbol"] << "\t " << i->second["BoughtPrice"] << "\t " << i->second["SoldPrice"] << std::endl;
+                
+                mSellOrders.erase(i);
+            }
         }
-
-        mSellOrderFilledSize = 0;
     }
         
 
@@ -887,6 +899,12 @@ bool BinanceRequests::getAccountStatus()
         return false;
     }
 
+    if (!mAPIJson.isObject())
+    {
+        ELOG(ERROR, "JSON is not object.");
+        return false;
+    }
+
     std::string mAccountStatusData = mAPIJson["data"].asString();
 
     if (mAccountStatusData != "Normal")
@@ -940,6 +958,12 @@ bool BinanceRequests::getAPIKeyPermission()
         return false;
     }
 
+    if (!mAPIJson.isObject())
+    {
+        ELOG(ERROR, "JSON is not object.");
+        return false;
+    }
+
     bool mEnableSpotAndMarginTrading = mAPIJson["enableSpotAndMarginTrading"].asBool();
 
     if (!mEnableSpotAndMarginTrading)
@@ -961,7 +985,7 @@ bool BinanceRequests::getAPIKeyPermission()
  * @return true 
  * @return false 
  */
-bool BinanceRequests::getCoinBalance (std::string symbol)
+bool BinanceRequests::getCoinBalance(std::string symbol)
 {
     std::string mTimestamp              = pBu.get()->getTimestamp();
 
@@ -991,6 +1015,12 @@ bool BinanceRequests::getCoinBalance (std::string symbol)
     if (!mParsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    if (!mAPIJson.isArray())
+    {
+        ELOG(ERROR, "JSON is not array.");
         return false;
     }
 
@@ -1053,6 +1083,12 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
     if (!mParsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    if (!mAPIJson.isArray())
+    {
+        ELOG(ERROR, "JSON is not array.");
         return false;
     }
 
@@ -1122,6 +1158,12 @@ bool BinanceRequests::getTickSize (std::string symbol)
         return false;
     }
 
+    if (!mAPIJson.isObject())
+    {
+        ELOG(ERROR, "JSON is not object.");
+        return false;
+    }
+
     Json::Value mFiltersJson = mAPIJson["symbols"][0]["filters"];
 
     for (int i = 0; i<static_cast<int>(mFiltersJson.size()); i++)
@@ -1131,12 +1173,18 @@ bool BinanceRequests::getTickSize (std::string symbol)
             if (symbol == mSymbol)
             {
                 mSymbolTickSize = pBu.get()->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
+
+                ELOG(INFO, "%s Tick Size: %d.", mSymbol.c_str(), mSymbolTickSize);
+
                 return true;
             }
 
             if (symbol == mFollowSymbol)
             {
                 mFollowSymbolTickSize = pBu.get()->getTickSize(mFiltersJson[i]["tickSize"].toStyledString());
+
+                ELOG(INFO, "%s Tick Size: %d.", mSymbol.c_str(), mSymbolTickSize);
+
                 return true;
             }
         }
@@ -1162,6 +1210,8 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
     std::string mTimestamp              = pBu.get()->getTimestamp();
 
     std::string mEndpoint               = "/api/v3/order";
+
+    std::string mRoundedQuantity        = pBu.get()->roundPrice(quantity, mSymbolTickSize);
 
 
     std::string mParams                 = "symbol="+symbol+"&side="+side;
@@ -1190,6 +1240,12 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
     if (!mParsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    if (!mAPIJson.isObject())
+    {
+        ELOG(ERROR, "JSON is not object.");
         return false;
     }
 
@@ -1242,12 +1298,20 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
         }
         else if (mStatus == "FILLED")
         {
+            // check filled commission
+            Json::Value mAPIFills   = mAPIJson["fills"][0];
+            std::string mCommission = mAPIFills["commission"].asString();
+
+            mQuantity               = pBu.get()->subTwoStrings(mQuantity, mCommission);
+
+            ELOG(INFO, "Paid a commission. Commission: %s, Last quantity: %s.", mCommission.c_str(), mQuantity.c_str());
+
             if (mSide == "BUY")
             {
                 mOrder.emplace("Symbol", mSymbol);
-                mOrder.emplace("Price", mPrice);
+                mOrder.emplace("BoughtPrice", mPrice);
                 mOrder.emplace("Quantity", mQuantity);
-                mOrder.emplace("TransactTime", mTransactTime);
+                mOrder.emplace("BoughtTime", mTransactTime);
 
                 mBoughtOrders.emplace(mOrderId, mOrder);
 
@@ -1261,7 +1325,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
                 mOrder.emplace("Price", mPrice);
                 mOrder.emplace("BoughtPrice", mBoughtOrders.begin()->second["BoughtPrice"]);
                 mOrder.emplace("Quantity", mQuantity);
-                mOrder.emplace("TransactTime", mTransactTime);
+                mOrder.emplace("SoldTime", mTransactTime);
 
                 mSoldOrders.emplace(mOrderId, mOrder);
 
@@ -1323,6 +1387,12 @@ bool BinanceRequests::cancelOrder(std::string symbol, int orderId)
         return false;
     }
 
+    if (!mAPIJson.isObject())
+    {
+        ELOG(ERROR, "JSON is not object.");
+        return false;
+    }
+
     int mOrderId        = mAPIJson["orderId"].asInt();
     std::string mSide   = mAPIJson["side"].asString();
     std::string mStatus = mAPIJson["status"].asString();
@@ -1375,6 +1445,12 @@ bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
     if (!mParsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    if (!mAPIJson.isArray())
+    {
+        ELOG(ERROR, "JSON is not array.");
         return false;
     }
 
@@ -1434,6 +1510,12 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
         return false;
     }
 
+    if (!mAPIJson.isObject())
+    {
+        ELOG(ERROR, "JSON is not object.");
+        return false;
+    }
+
     int mOrderId                = mAPIJson["orderId"].asInt();
     std::string mSide           = mAPIJson["side"].asString();
     std::string mStatus         = mAPIJson["status"].asString();
@@ -1489,19 +1571,16 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
                     ELOG(INFO, "Added Sold Order Item. Order id: %d, Map size: %d.", mOrderId, mSoldOrders.size());
                 }
 
-                mSellOrderFilledSize++; // counter for clear to sell orders map.
+                AllOrdersMap::iterator find = mSellOrders.find(mOrderId);
 
-                // for (auto const& order : mSellOrders)
-                // {
-                //     int mSellOrderId = order.first;
+                if (find != mSellOrders.end())
+                {
+                    mOrder.emplace("Status", "FILLED");
 
-                //     if (mSellOrderId == mOrderId)
-                //     {
-                //         mSellOrders.erase(order.first);
+                    find->second = mOrder;
 
-                //         ELOG(INFO, "Deleted Sell Order Item. Order id: %d, Map size: %d.", mOrderId, mSellOrders.size());
-                //     }
-                // }
+                    ELOG(DEBUG, "Added Status to mOrder. Status: %s, Find Second Status: %s.", mOrder["Status"].c_str(), find->second["Status"].c_str());
+                }
 
                 ELOG(INFO, "Filled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str(), mTime.c_str());
 
@@ -1510,8 +1589,6 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
 
                 return true;
             }
-
-            
         }
         else if (mStatus == "CANCELED")
         {
@@ -1535,7 +1612,7 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
                     if (mBuyOrders.find(orderId) != mBuyOrders.end())
                         mBuyOrders.erase(orderId);
 
-                    ELOG(INFO, "Partially Filled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mExecutedQty.c_str(), mTime.c_str());
+                    ELOG(INFO, "Partially Filled and Canceled a Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mExecutedQty.c_str(), mTime.c_str());
 
                     // calculate new balance amount
                     calcNewBalanceAmount(mSide, mPrice, mQuantity);
@@ -1544,20 +1621,29 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
                 }
                 else if (mSide == mSellSide)
                 {
-                    OrderMap mOrder;
+                    // OrderMap mOrder;
 
-                    mOrder.emplace("Symbol", mSymbol);
-                    mOrder.emplace("SoldPrice", mPrice);
-                    mOrder.emplace("Quantity", mQuantity);
-                    mOrder.emplace("SoldTime", mTime);
+                    // mOrder.emplace("Symbol", mSymbol);
+                    // mOrder.emplace("SoldPrice", mPrice);
+                    // mOrder.emplace("Quantity", mExecutedQty);
+                    // mOrder.emplace("SoldQuantity", mExecutedQty);
+                    // mOrder.emplace("SoldTime", mTime);
 
-                    if (mSoldOrders.find(mOrderId) == mSoldOrders.end())
-                        mSoldOrders.emplace(mOrderId, mOrder);
+                    // if (mSoldOrders.find(mOrderId) == mSoldOrders.end())
+                    //     mSoldOrders.emplace(mOrderId, mOrder);
 
-                    if (mSellOrders.find(mOrderId) != mSellOrders.end())
-                        mSellOrders.erase(mOrderId);
+                    // AllOrdersMap::iterator find = mSellOrders.find(mOrderId);
 
-                    ELOG(INFO, "Partially Filled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mExecutedQty.c_str(), mTime.c_str());
+                    // if (find != mSellOrders.end())
+                    // {
+                    //     mOrder.emplace("Status", "CANCELED");
+
+                    //     find->second = mOrder;
+
+                    //     ELOG(DEBUG, "Partially Filled Added Status to mOrder. Status: %s, Find Second Status: %s.", mOrder["Status"].c_str(), find->second["Status"].c_str());
+                    // }
+
+                    // ELOG(INFO, "Partially Filled and Canceled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mExecutedQty.c_str(), mTime.c_str());
 
                     // calculate new balance amount
                     calcNewBalanceAmount(mSide, mPrice, mQuantity);
@@ -1577,12 +1663,18 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
             }
             else if (mSide == mSellSide)
             {
+                AllOrdersMap::iterator find = mSellOrders.find(mOrderId);
+
                 if (mBoughtOrders.find(orderId) == mBoughtOrders.end())
-                    if (mSellOrders.find(orderId) != mSellOrders.end())
+                    if (find != mSellOrders.end())
                         mBoughtOrders.emplace(orderId, mSellOrders[orderId]);
 
-                if (mSellOrders.find(orderId) != mSellOrders.end())
-                    mSellOrders.erase(orderId);
+                if (find != mSellOrders.end())
+                {
+                    find->second.emplace("Status", "CANCELED");
+
+                    ELOG(DEBUG, "Canceled Added Status to mOrder. Find Second Status: %s.", find->second["Status"].c_str());
+                }
 
                 ELOG(INFO, "Canceled a Sell Order. OrderId: %d, Symbol: %s, Price: %s, Bought Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str());
             
@@ -1633,6 +1725,12 @@ bool BinanceRequests::currentOpenOrders(std::string symbol)
     if (!mParsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    if (!mAPIJson.isArray())
+    {
+        ELOG(ERROR, "JSON is not array.");
         return false;
     }
 
