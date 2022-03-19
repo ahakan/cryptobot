@@ -3,12 +3,14 @@ include_directories(${CMAKE_SOURCE_DIR}/inc)
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
 set(SOURCES
-  ${SOURCE_DIR}/main.cpp
-  ${SOURCE_DIR}/opel.cpp
   ${SOURCE_DIR}/sql.cpp
+  ${SOURCE_DIR}/opel.cpp
   ${SOURCE_DIR}/utilities.cpp
   ${SOURCE_DIR}/websocket.cpp
+  ${SOURCE_DIR}/webserver.cpp
   ${SOURCE_DIR}/requests.cpp
+  ${SOURCE_DIR}/main.cpp
+
 )
 
 add_executable(cryptobot ${SOURCES}) 

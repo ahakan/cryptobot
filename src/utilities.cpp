@@ -49,6 +49,16 @@ Utilities::Utilities()
         setExitSignal(0);
     }
 
+    // Get webserver config
+    mWebserverJson   = mConfigJson["webserver"];
+
+    if (mWebserverJson.size() == 0)
+    {
+        ELOG(ERROR, "Failed to parse Exchange JSON");
+        
+        setExitSignal(0);
+    }
+
     ELOG(INFO, "Utilities constructor initialized.");
 }
 
@@ -355,6 +365,46 @@ std::string Utilities::getRSIOverbought()
     }
 
     return mOverbought;
+}
+
+
+/**
+ * @brief Get webserver base
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getWebserverBase()
+{
+    std::string mWebserverBase = mWebserverJson["base"].asString();
+
+    if (mWebserverBase.length() == 0)
+    {
+        ELOG(ERROR, "Failed to parse webserver base.");
+
+        setExitSignal(0);
+    }
+
+    return mWebserverBase;
+}
+
+
+/**
+ * @brief Get webserver socket
+ * 
+ * @return unsigned short 
+ */
+unsigned short Utilities::getWebserverPort()
+{
+    unsigned short mWebserverPort = mWebserverJson["port"].asUInt();
+
+    if (mWebserverPort <= 0)
+    {
+        ELOG(ERROR, "Failed to parse webserver port.");
+
+        setExitSignal(0);
+    }
+
+    return mWebserverPort;
 }
 
 

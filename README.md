@@ -103,8 +103,13 @@ When use the crypto bot, you have to make some configurations.
             "API_KEY": "1",
             "SECRET_KEY": "1"
         }
+    },
+    "webserver": {
+        "base": "127.0.0.1",
+        "socket": 8080
     }
 }
+
 
 ```
 
@@ -133,6 +138,13 @@ When use the crypto bot, you have to make some configurations.
     | `api base`        | Binance api address               |
     | `api key`         | Binance api key                   |
     | `secret key`      | Binance secret key                |
+
+- `webserver`
+  - .
+    | Configuration     | Description                       |
+    | ------------------| --------------------------------- |
+    | `base`            | Webserver address                 |
+    | `port`            | Webserver port                    |
 
 
 ## Licence

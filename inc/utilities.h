@@ -41,6 +41,7 @@ class Utilities
         Json::Value             mTradeJson;
         Json::Value             mExchangeJson;
         std::string             mExchangeName;
+        Json::Value             mWebserverJson;
 
     public:
                                 Utilities();
@@ -63,6 +64,9 @@ class Utilities
         int                     getRSIPeriod();
         std::string             getRSIOversold();
         std::string             getRSIOverbought();
+
+        std::string             getWebserverBase();
+        unsigned short          getWebserverPort();
 
         std::string             calculateAverage(std::vector<std::string> vector);
         std::string             calculateRSI(std::vector<std::string> vector);

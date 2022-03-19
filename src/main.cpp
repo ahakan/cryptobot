@@ -12,6 +12,7 @@
 // Includes
 #include "../inc/opel.h"
 #include "../inc/websocket.h"
+#include "../inc/webserver.h"
 #include "../inc/requests.h"
 #include "../inc/utilities.h"
 #include "../inc/sql.h"
@@ -56,8 +57,9 @@ int main()
     std::shared_ptr<Sql>                pSql(new Sql);
 
     std::shared_ptr<BinanceUtilities>   bUtil(new BinanceUtilities);
-    std::shared_ptr<BinanceWebsocket>   bWs(new BinanceWebsocket(bUtil));
+    std::shared_ptr<BinanceWebsocket>   bSoc(new BinanceWebsocket(bUtil));
     std::shared_ptr<BinanceRequests>    bReq(new BinanceRequests(bUtil));
+    std::shared_ptr<BinanceWebserver>   bWeb(new BinanceWebserver(bUtil));
 
 
     sigemptyset(&sigIntHandler.sa_mask);
@@ -68,14 +70,16 @@ int main()
     
     std::thread sqlTh           = std::thread(&Sql::init, pSql);
     std::thread reqTh           = std::thread(&BinanceRequests::init, bReq);
-    std::thread wsTh            = std::thread(&BinanceWebsocket::init, bWs);
+    std::thread socTh           = std::thread(&BinanceWebsocket::init, bSoc);
+    std::thread webTh           = std::thread(&BinanceWebserver::init, bWeb);
 
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     sqlTh.join();
     reqTh.join();
-    wsTh.join();
-
+    socTh.join();
+    webTh.join();
+    
 
     std::cout << "--Cryptobot has been closed." << std::endl;
 

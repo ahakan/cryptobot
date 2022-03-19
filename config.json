@@ -31,5 +31,9 @@
             "API_KEY": "1",
             "SECRET_KEY": "1"
         }
+    },
+    "webserver": {
+        "base": "127.0.0.1",
+        "port": 8080
     }
 }
