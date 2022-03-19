@@ -756,8 +756,8 @@ bool BinanceRequests::checkSellOrders()
                 ELOG(INFO, "Calculated New RSI. Canceled Sell Order. Order id: %d. ", mOrderId);
             }
 
-            mBuyOrdersNewTradeRSI     = false;
-            mBuyOrdersNewFollowRSI    = false;
+            mSellOrdersNewTradeRSI     = false;
+            mSellOrdersNewFollowRSI    = false;
         }     
 
         // Check sell orders
