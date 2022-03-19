@@ -57,7 +57,7 @@ std::string Requests::calcNewSellPrice(std::string boughtPrice)
             ELOG(ERROR, "Failed to Calculated New Sell Price Average.");
         }
 
-        bool compareLiveAndBoughtPrice  = pBu.get()->comparePrice(mSymbolLivePrice, boughtPrice);     // if return true live price is high, return false bought price is high
+        bool compareLiveAndBoughtPrice  = pBu.get()->compareTwoStrings(mSymbolLivePrice, boughtPrice);     // if return true live price is high, return false bought price is high
         
         if (compareLiveAndBoughtPrice)
         {
@@ -65,14 +65,14 @@ std::string Requests::calcNewSellPrice(std::string boughtPrice)
 
             ELOG(INFO, "Calculated New Sell Price. Live Price: %s, Bought Price: %s, Sell Price: %s.", mSymbolLivePrice.c_str(), boughtPrice.c_str(), calculatedPrice.c_str());
 
-            return pBu.get()->roundPrice(calculatedPrice, mSymbolTickSize);
+            return pBu.get()->roundString(calculatedPrice, mSymbolTickSize);
         }
 
         std::string calculatedPrice     = pBu.get()->addTwoStrings(boughtPrice, mNewOrderCalculatedAverage);
 
         ELOG(INFO, "Calculated New Sell Price. Bought Price: %s, Sell Price: %s, Bought Price: %s.", boughtPrice.c_str(), calculatedPrice.c_str(), boughtPrice.c_str());
 
-        return pBu.get()->roundPrice(calculatedPrice, mSymbolTickSize);
+        return pBu.get()->roundString(calculatedPrice, mSymbolTickSize);
     }
 
     return "ERROR";
@@ -99,7 +99,7 @@ std::string Requests::calcNewBuyPrice()
 
     ELOG(INFO, "Calculated New Sell Price. Live Price: %s, Sell Price: %s.", mSymbolLivePrice.c_str(), calculatedPrice.c_str());
 
-    return pBu.get()->roundPrice(calculatedPrice, mSymbolTickSize);
+    return pBu.get()->roundString(calculatedPrice, mSymbolTickSize);
 }
 
 
@@ -115,13 +115,13 @@ std::string Requests::calcNewBuyPrice()
 bool Requests::calcNewBalanceAmount(std::string side, std::string price, std::string quantity)
 {
     std::string totalOrderPrice     = pBu.get()->multiplyTwoStrings(price, quantity);
-    std::string roundedTotalPrice   = pBu.get()->roundPrice(totalOrderPrice, mSymbolTickSize);
+    std::string roundedTotalPrice   = pBu.get()->roundString(totalOrderPrice, mSymbolTickSize);
 
     if (side == "BUY")
     {
         mBalanceAmount = pBu.get()->subTwoStrings(mBalanceAmount, roundedTotalPrice);
 
-        mBalanceAmount = pBu.get()->roundPrice(mBalanceAmount, mSymbolTickSize);
+        mBalanceAmount = pBu.get()->roundString(mBalanceAmount, mSymbolTickSize);
 
         ELOG(INFO, "Calculated New Balance Amount. New Amount: %s, Order Price: %s.", mBalanceAmount.c_str(), roundedTotalPrice.c_str());
 
@@ -131,7 +131,7 @@ bool Requests::calcNewBalanceAmount(std::string side, std::string price, std::st
     {
         mBalanceAmount = pBu.get()->addTwoStrings(mBalanceAmount, roundedTotalPrice);
 
-        mBalanceAmount = pBu.get()->roundPrice(mBalanceAmount, mSymbolTickSize);
+        mBalanceAmount = pBu.get()->roundString(mBalanceAmount, mSymbolTickSize);
 
         ELOG(INFO, "Calculated New Balance Amount. New Amount: %s, Order Price: %s.", mBalanceAmount.c_str(), roundedTotalPrice.c_str());
 
@@ -159,7 +159,7 @@ bool Requests::calcOrderPriceAverage()
 
         float calculatedAverage     = (highestPrice-lowestPrice)/(mRSIPeriod/2.0);
 
-        mNewOrderCalculatedAverage  = pBu.get()->roundPrice(std::to_string(calculatedAverage), mSymbolTickSize); 
+        mNewOrderCalculatedAverage  = pBu.get()->roundString(std::to_string(calculatedAverage), mSymbolTickSize); 
 
         ELOG(INFO, "Calculated New Trade Average. New Average: %s.", mNewOrderCalculatedAverage.c_str());
         
@@ -194,9 +194,10 @@ bool Requests::calcSymbolRSI()
         mOldTradeCandlesCloseRSI            = mTradeCandlesCloseRSI.length() > 0 ? mTradeCandlesCloseRSI : "Empty";
         mTradeCandlesCloseRSI               = pBu.get()->calculateRSI(mTradeCandlesClosePrices);
 
-        mTradeRSICalculated                 = mOldTradeCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
+        mBuyOrdersNewTradeRSI               = mOldTradeCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
+        mSellOrdersNewTradeRSI              = mOldTradeCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
 
-        ELOG(INFO, "Calculated Symbol RSI. Trade Candles New Close RSI: %s, Old Close RSI: %s, Is Calculated: %d.", mTradeCandlesCloseRSI.c_str(), mOldTradeCandlesCloseRSI.c_str(), mTradeRSICalculated);
+        ELOG(INFO, "Calculated Symbol RSI. Trade Candles New Close RSI: %s, Old Close RSI: %s, mBuyOrdersNewTradeRSI: %d, mSellOrdersNewTradeRSI: %d.", mTradeCandlesCloseRSI.c_str(), mOldTradeCandlesCloseRSI.c_str(), mBuyOrdersNewTradeRSI, mSellOrdersNewTradeRSI);
 
         return true;
     }
@@ -220,9 +221,11 @@ bool Requests::calcFollowRSI()
         mOldFollowCandlesCloseRSI           = mFollowCandlesCloseRSI.length() > 0 ? mFollowCandlesCloseRSI : "Empty";
         mFollowCandlesCloseRSI              = pBu.get()->calculateRSI(mFollowCandlesClosePrices);
 
-        mFollowRSICalculated                = mOldFollowCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
+        mBuyOrdersNewFollowRSI              = mOldFollowCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
+        mSellOrdersNewFollowRSI             = mOldFollowCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
 
-        ELOG(INFO, "Calculated Follow Symbol RSI. Follow Candles New Close RSI: %s, Old Close RSI: %s, Is Calculated: %d.", mFollowCandlesCloseRSI.c_str(), mOldFollowCandlesCloseRSI.c_str(), mTradeRSICalculated);
+
+        ELOG(INFO, "Calculated Follow Symbol RSI. Follow Candles New Close RSI: %s, Old Close RSI: %s, mBuyOrdersNewFollowRSI: %d, mSellOrdersNewFollowRSI: %d.", mFollowCandlesCloseRSI.c_str(), mOldFollowCandlesCloseRSI.c_str(), mBuyOrdersNewFollowRSI, mSellOrdersNewFollowRSI);
 
         return true;
     }
@@ -250,10 +253,10 @@ bool Requests::calcSymbolAverages()
 
         ELOG(INFO, "Calculated Symbol Averages. Trade Close Average: %s.", mTradeCandlesClosePricesAverage.c_str());
 
-        mTradeCandlesOpenPricesAverage      = pBu.get()->roundPrice(mTradeCandlesOpenPricesAverage, mSymbolTickSize);
-        mTradeCandlesHighPricesAverage      = pBu.get()->roundPrice(mTradeCandlesHighPricesAverage, mSymbolTickSize);
-        mTradeCandlesLowPricesAverage       = pBu.get()->roundPrice(mTradeCandlesLowPricesAverage, mSymbolTickSize);
-        mTradeCandlesClosePricesAverage     = pBu.get()->roundPrice(mTradeCandlesClosePricesAverage, mSymbolTickSize);
+        mTradeCandlesOpenPricesAverage      = pBu.get()->roundString(mTradeCandlesOpenPricesAverage, mSymbolTickSize);
+        mTradeCandlesHighPricesAverage      = pBu.get()->roundString(mTradeCandlesHighPricesAverage, mSymbolTickSize);
+        mTradeCandlesLowPricesAverage       = pBu.get()->roundString(mTradeCandlesLowPricesAverage, mSymbolTickSize);
+        mTradeCandlesClosePricesAverage     = pBu.get()->roundString(mTradeCandlesClosePricesAverage, mSymbolTickSize);
 
         ELOG(INFO, "Rounded Trade Averages. TOA: %s, THA: %s, TLA: %s, TCA: %s", mTradeCandlesOpenPricesAverage.c_str(), mTradeCandlesHighPricesAverage.c_str(), mTradeCandlesLowPricesAverage.c_str(), mTradeCandlesClosePricesAverage.c_str());
 
@@ -283,10 +286,10 @@ bool Requests::calcFollowAverages()
 
         ELOG(INFO, "Calculated Follow Symbol Averages. Follow Close Average: %s.", mFollowCandlesClosePricesAverage.c_str());
 
-        mFollowCandlesOpenPricesAverage     = pBu.get()->roundPrice(mFollowCandlesOpenPricesAverage, mFollowSymbolTickSize);
-        mFollowCandlesHighPricesAverage     = pBu.get()->roundPrice(mFollowCandlesHighPricesAverage, mFollowSymbolTickSize);
-        mFollowCandlesLowPricesAverage      = pBu.get()->roundPrice(mFollowCandlesLowPricesAverage, mFollowSymbolTickSize);
-        mFollowCandlesClosePricesAverage    = pBu.get()->roundPrice(mFollowCandlesClosePricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesOpenPricesAverage     = pBu.get()->roundString(mFollowCandlesOpenPricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesHighPricesAverage     = pBu.get()->roundString(mFollowCandlesHighPricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesLowPricesAverage      = pBu.get()->roundString(mFollowCandlesLowPricesAverage, mFollowSymbolTickSize);
+        mFollowCandlesClosePricesAverage    = pBu.get()->roundString(mFollowCandlesClosePricesAverage, mFollowSymbolTickSize);
 
         ELOG(INFO, "Rounded Follow Averages. FOA: %s, FHA: %s, FLA: %s, FCA: %s", mFollowCandlesOpenPricesAverage.c_str(), mFollowCandlesHighPricesAverage.c_str(), mFollowCandlesLowPricesAverage.c_str(), mFollowCandlesClosePricesAverage.c_str());
 
@@ -600,8 +603,8 @@ void BinanceRequests::binance()
  */
 bool BinanceRequests::newBuyOrder()
 {
-    // if RSI is smaller than 4mRSIOversold, we create a new buy order
-    if (!pBu.get()->comparePrice(mTradeCandlesCloseRSI, mRSIOversold))
+    // if RSI is smaller than mRSIOversold, we create a new buy order
+    if (!pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold))
     {
         // if we have not a buy order or bought order we create a new buy order
         if (mBuyOrders.size() < 1 && mBoughtOrders.size() < 1)
@@ -618,9 +621,9 @@ bool BinanceRequests::newBuyOrder()
                 std::string totalOrderPrice = pBu.get()->multiplyTwoStrings(newPrice, mQuantity);
 
                 // check balance amount
-                std::string orderPrice      = pBu.get()->roundPrice(totalOrderPrice, mSymbolTickSize);
+                std::string orderPrice      = pBu.get()->roundString(totalOrderPrice, mSymbolTickSize);
 
-                if (pBu.get()->comparePrice(mBalanceAmount, orderPrice))
+                if (pBu.get()->compareTwoStrings(mBalanceAmount, orderPrice))
                 {
                     bool isCreated          = createNewOrder(mSymbol, mBuySide, mOrderType, mQuantity, newPrice);
 
@@ -652,7 +655,7 @@ bool BinanceRequests::newBuyOrder()
 bool BinanceRequests::newSellOrder()
 {
     // if RSI is higher than mRSIOverbought, we create a new sell order
-    if (pBu.get()->comparePrice(mTradeCandlesCloseRSI, mRSIOverbought))
+    if (pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought))
     {
         // if we bought a coin we'll create a sell order
         if (mBoughtOrders.size() > 0)
@@ -686,14 +689,14 @@ bool BinanceRequests::checkBuyOrders()
     if (mBuyOrders.size() > 0)
     {
         // Check new RSI
-        if (mTradeRSICalculated && mFollowRSICalculated)
+        if (mBuyOrdersNewTradeRSI && mBuyOrdersNewFollowRSI)
         {
             bool mIsBuyOrderCanceled = cancelOrder(mSymbol, mBuyOrders.begin()->first);
 
             if (mIsBuyOrderCanceled)
             {
-                mTradeRSICalculated     = false;
-                mFollowRSICalculated    = false;
+                mBuyOrdersNewTradeRSI     = false;
+                mBuyOrdersNewFollowRSI    = false;
             }
         }
 
@@ -722,6 +725,42 @@ bool BinanceRequests::checkSellOrders()
     // Check sell orders
     if (mSellOrders.size() > 0)
     {
+        // Cancel to filled or canceled status orders
+        for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+        {
+            int mOrderId = i->first;
+
+            if (i->second["Status"] == "FILLED")
+            {
+                ELOG(DEBUG, "Removed Filled Sell Order. Order id: %d, Status: %s, BoughtPrice: %s, SoldPrice: %s.", mOrderId, i->second["Status"].c_str(), i->second["BoughtPrice"].c_str(), i->second["SoldPrice"].c_str());
+                
+                mSellOrders.erase(i);
+            }
+            else if (i->second["Status"] == "CANCELED")
+            {
+                ELOG(DEBUG, "Removed Canceled Sell Order. Order id: %d, Status: %s, BoughtPrice: %s.", mOrderId, i->second["Status"].c_str(), i->second["BoughtPrice"].c_str());
+
+                mSellOrders.erase(i);
+            }
+        }
+
+        // Check new RSI and cancel all order
+        if (mSellOrdersNewTradeRSI && mSellOrdersNewFollowRSI)
+        {
+            for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+            {
+                int mOrderId = i->first;
+
+                cancelOrder(mSymbol, mOrderId);
+
+                ELOG(INFO, "Calculated New RSI. Canceled Sell Order. Order id: %d. ", mOrderId);
+            }
+
+            mBuyOrdersNewTradeRSI     = false;
+            mBuyOrdersNewFollowRSI    = false;
+        }     
+
+        // Check sell orders
         for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
         {
             int mOrderId = i->first;
@@ -729,24 +768,6 @@ bool BinanceRequests::checkSellOrders()
             queryOrder(mSymbol, mOrderId);
 
             ELOG(INFO, "Checked Sell Orders. Order id: %d. ", mOrderId);
-        }
-
-        for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
-        {
-            int mOrderId = i->first;
-
-            if (i->second["Status"] == "FILLED")
-            {
-                std::cout << mOrderId << "\t " << i->second["Status"] << "\t " << i->second["Symbol"] << "\t " << i->second["BoughtPrice"] << "\t " << i->second["SoldPrice"] << std::endl;
-                
-                mSellOrders.erase(i);
-            }
-            else if (i->second["Status"] == "CANCELED")
-            {
-                std::cout << mOrderId << "\t " << i->second["Status"] << "\t " << i->second["Symbol"] << "\t " << i->second["BoughtPrice"] << "\t " << i->second["SoldPrice"] << std::endl;
-                
-                mSellOrders.erase(i);
-            }
         }
     }
         
@@ -1032,7 +1053,7 @@ bool BinanceRequests::getCoinBalance(std::string symbol)
 
             ELOG(INFO, "Get Coin Balance Symbol: %s, Balance: %s.", mAPIJson[i]["coin"].asCString(), mAPIJson[i]["free"].asCString());
 
-            bool isAmountEnough = pBu.get()->comparePrice(mWalletBalanceAmount, mBalanceAmount);
+            bool isAmountEnough = pBu.get()->compareTwoStrings(mWalletBalanceAmount, mBalanceAmount);
 
             if (!isAmountEnough)
             {
@@ -1211,7 +1232,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
 
     std::string mEndpoint               = "/api/v3/order";
 
-    std::string mRoundedQuantity        = pBu.get()->roundPrice(quantity, mSymbolTickSize);
+    std::string mRoundedQuantity        = pBu.get()->roundString(quantity, mSymbolTickSize);
 
 
     std::string mParams                 = "symbol="+symbol+"&side="+side;
@@ -1564,13 +1585,10 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
                 mOrder.emplace("Quantity", mQuantity);
                 mOrder.emplace("SoldTime", mTime);
 
-                if (mSoldOrders.find(mOrderId) == mSoldOrders.end())
-                {
-                    mSoldOrders.emplace(mOrderId, mOrder);
+                mSoldOrders.emplace(mOrderId, mOrder);
 
-                    ELOG(INFO, "Added Sold Order Item. Order id: %d, Map size: %d.", mOrderId, mSoldOrders.size());
-                }
-
+                ELOG(INFO, "Added Sold Order Item. Order id: %d, Map size: %d.", mOrderId, mSoldOrders.size());
+            
                 AllOrdersMap::iterator find = mSellOrders.find(mOrderId);
 
                 if (find != mSellOrders.end())
@@ -1579,7 +1597,7 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
 
                     find->second = mOrder;
 
-                    ELOG(DEBUG, "Added Status to mOrder. Status: %s, Find Second Status: %s.", mOrder["Status"].c_str(), find->second["Status"].c_str());
+                    ELOG(DEBUG, "Added Status to Filled Order. Status: %s, Second Status: %s.", mOrder["Status"].c_str(), find->second["Status"].c_str());
                 }
 
                 ELOG(INFO, "Filled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str(), mTime.c_str());
@@ -1592,8 +1610,8 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
         }
         else if (mStatus == "CANCELED")
         {
-            bool isHigherThanZero       = pBu.get()->comparePrice("00.00", mExecutedQty);   // if return false
-            bool isLowerThanQuantity    = pBu.get()->comparePrice(mExecutedQty, mQuantity); // if return false
+            bool isHigherThanZero       = pBu.get()->compareTwoStrings("00.00", mExecutedQty);   // if return false
+            bool isLowerThanQuantity    = pBu.get()->compareTwoStrings(mExecutedQty, mQuantity); // if return false
                                                                                             // that means partially filled
             if (!isHigherThanZero && !isLowerThanQuantity)
             {
@@ -1621,29 +1639,37 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
                 }
                 else if (mSide == mSellSide)
                 {
-                    // OrderMap mOrder;
+                    OrderMap mOrder;
 
-                    // mOrder.emplace("Symbol", mSymbol);
-                    // mOrder.emplace("SoldPrice", mPrice);
-                    // mOrder.emplace("Quantity", mExecutedQty);
-                    // mOrder.emplace("SoldQuantity", mExecutedQty);
-                    // mOrder.emplace("SoldTime", mTime);
+                    mOrder.emplace("Symbol", mSymbol);
+                    mOrder.emplace("SoldPrice", mPrice);
+                    mOrder.emplace("Quantity", mQuantity);
+                    mOrder.emplace("SoldQuantity", mExecutedQty);
+                    mOrder.emplace("SoldTime", mTime);
 
-                    // if (mSoldOrders.find(mOrderId) == mSoldOrders.end())
-                    //     mSoldOrders.emplace(mOrderId, mOrder);
+                    mSoldOrders.emplace(mOrderId, mOrder);
 
-                    // AllOrdersMap::iterator find = mSellOrders.find(mOrderId);
+                    ELOG(INFO, "Added Sold Order Item. Order id: %d, Map size: %d.", mOrderId, mSoldOrders.size());
 
-                    // if (find != mSellOrders.end())
-                    // {
-                    //     mOrder.emplace("Status", "CANCELED");
+                    AllOrdersMap::iterator find = mSellOrders.find(mOrderId);
 
-                    //     find->second = mOrder;
+                    if (find != mSellOrders.end())
+                    {
+                        // update sell coin value
+                        mOrder.emplace("Status", "CANCELED");
+                        mOrder.emplace("BoughtPrice", find->second["BoughtPrice"]);
+                        mOrder["Quantity"] = pBu.get()->subTwoStrings(mQuantity, mExecutedQty);
 
-                    //     ELOG(DEBUG, "Partially Filled Added Status to mOrder. Status: %s, Find Second Status: %s.", mOrder["Status"].c_str(), find->second["Status"].c_str());
-                    // }
+                        find->second = mOrder;
 
-                    // ELOG(INFO, "Partially Filled and Canceled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mExecutedQty.c_str(), mTime.c_str());
+                        // check if not exists add sell order to bought order list
+                        if (mBoughtOrders.find(mOrderId) == mBoughtOrders.end())
+                            mBoughtOrders.emplace(orderId, find->second);
+
+                        ELOG(DEBUG, "Added Status to Partially Filled Order. Status: %s, Second Status: %s, Quantity: %s.", mOrder["Status"].c_str(), find->second["Status"].c_str(), find->second["Quantity"].c_str());
+                    }
+
+                    ELOG(INFO, "Partially Filled and Canceled a Sell Order. OrderId: %d, Symbol: %s, SoldPrice: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mExecutedQty.c_str(), mTime.c_str());
 
                     // calculate new balance amount
                     calcNewBalanceAmount(mSide, mPrice, mQuantity);
@@ -1663,17 +1689,18 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
             }
             else if (mSide == mSellSide)
             {
-                AllOrdersMap::iterator find = mSellOrders.find(mOrderId);
+                AllOrdersMap::iterator findSell     = mSellOrders.find(mOrderId);
+                AllOrdersMap::iterator findBought   = mBoughtOrders.find(mOrderId);
 
-                if (mBoughtOrders.find(orderId) == mBoughtOrders.end())
-                    if (find != mSellOrders.end())
-                        mBoughtOrders.emplace(orderId, mSellOrders[orderId]);
+                if (findBought == mBoughtOrders.end())
+                    if (findSell != mSellOrders.end())
+                        mBoughtOrders.emplace(orderId, findSell->second);
 
-                if (find != mSellOrders.end())
+                if (findSell != mSellOrders.end())
                 {
-                    find->second.emplace("Status", "CANCELED");
+                    findSell->second.emplace("Status", "CANCELED");
 
-                    ELOG(DEBUG, "Canceled Added Status to mOrder. Find Second Status: %s.", find->second["Status"].c_str());
+                    ELOG(DEBUG, "Added Status to Canceled Order. Second Status: %s.", findSell->second["Status"].c_str());
                 }
 
                 ELOG(INFO, "Canceled a Sell Order. OrderId: %d, Symbol: %s, Price: %s, Bought Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str());

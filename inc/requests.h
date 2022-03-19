@@ -32,10 +32,11 @@
 #include <vector>
 #include <iterator>
 
-using OrderMap      = std::map<std::string, std::string>;
-using AllOrdersMap  = std::map<int, OrderMap>;
+using OrderMap          = std::map<std::string, std::string>;
+using AllOrdersMap      = std::map<int, OrderMap>;
+using SoldOrdersMap     = std::multimap<int, OrderMap>;
 
-using AverageVector = std::vector<std::string>;
+using AverageVector     = std::vector<std::string>;
 
 class Requests
 {
@@ -89,7 +90,7 @@ class Requests
         int                     mSellOrderFilledSize = 0;
 
         AllOrdersMap            mSellOrders;
-        AllOrdersMap            mSoldOrders;
+        SoldOrdersMap           mSoldOrders;
 
 
         std::string             mTradeCandlesOpenPricesAverage;
@@ -98,7 +99,12 @@ class Requests
         std::string             mTradeCandlesClosePricesAverage;
 
 
-        bool                    mTradeRSICalculated;
+        bool                    mBuyOrdersNewTradeRSI;
+        bool                    mBuyOrdersNewFollowRSI;
+        bool                    mSellOrdersNewTradeRSI;
+        bool                    mSellOrdersNewFollowRSI;
+
+
         std::string             mTradeCandlesCloseRSI;
         std::string             mOldTradeCandlesCloseRSI;
 
@@ -114,7 +120,6 @@ class Requests
         std::string             mFollowCandlesClosePricesAverage;
 
 
-        bool                    mFollowRSICalculated;
         std::string             mFollowCandlesCloseRSI;
         std::string             mOldFollowCandlesCloseRSI;
 

@@ -359,42 +359,6 @@ std::string Utilities::getRSIOverbought()
 
 
 /**
- * @brief Upper to lower
- * 
- * @param data 
- * @return std::string 
- */
-std::string Utilities::upperToLower(std::string data)
-{
-    for (int i = 0; i < static_cast<int>(data.length()); i++)
-        data[i] = tolower(data[i]);
-
-    return data;
-}
-
-
-/**
- * @brief Round price
- * 
- * @param price 
- * @param tickSize 
- * @return std::string 
- */
-std::string Utilities::roundPrice(std::string price, int tickSize)
-{
-    for (int i=static_cast<int>(price.size())-1; i>=0; i--)
-    {
-        if (price[i-tickSize] == 46)                        // 46=>. ASCII
-            break;
-
-        price[i] = 48;                                      // 48=>0 ASCII
-    }
-
-    return price;
-}
-
-
-/**
  * @brief Calculate average
  * 
  * @param vector 
@@ -464,6 +428,42 @@ std::string Utilities::calculateRSI(std::vector<std::string> vector)
     std::string RSI = std::to_string(100.0 - (100.0 / (1 + relativeStrength)));
 
     return RSI;
+}
+
+
+/**
+ * @brief Upper to lower
+ * 
+ * @param data 
+ * @return std::string 
+ */
+std::string Utilities::upperToLower(std::string data)
+{
+    for (int i = 0; i < static_cast<int>(data.length()); i++)
+        data[i] = tolower(data[i]);
+
+    return data;
+}
+
+
+/**
+ * @brief Round price
+ * 
+ * @param price 
+ * @param tickSize 
+ * @return std::string 
+ */
+std::string Utilities::roundString(std::string price, int tickSize)
+{
+    for (int i=static_cast<int>(price.size())-1; i>=0; i--)
+    {
+        if (price[i-tickSize] == 46)                        // 46=>. ASCII
+            break;
+
+        price[i] = 48;                                      // 48=>0 ASCII
+    }
+
+    return price;
 }
 
 
@@ -549,7 +549,7 @@ std::string Utilities::multiplyTwoStrings(std::string number1, std::string numbe
  * @return true 
  * @return false 
  */
-bool Utilities::comparePrice(std::string firstPrice, std::string secondPrice)
+bool Utilities::compareTwoStrings(std::string firstPrice, std::string secondPrice)
 {
     if (firstPrice.length() > 0 && secondPrice.length() > 0)
     {

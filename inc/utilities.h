@@ -64,15 +64,16 @@ class Utilities
         std::string             getRSIOversold();
         std::string             getRSIOverbought();
 
-        std::string             upperToLower(std::string data);
-        std::string             roundPrice(std::string price, int tickSize);
         std::string             calculateAverage(std::vector<std::string> vector);
         std::string             calculateRSI(std::vector<std::string> vector);
+
+        std::string             upperToLower(std::string data);
+        std::string             roundString(std::string price, int tickSize);
         std::string             addTwoStrings(std::string number1, std::string number2);
         std::string             subTwoStrings(std::string number1, std::string number2);
         std::string             multiplyTwoStrings(std::string number1, std::string number2);
         
-        bool                    comparePrice(std::string firstPrice, std::string secondPrice);
+        bool                    compareTwoStrings(std::string firstPrice, std::string secondPrice);
 
         int                     getTickSize(std::string data);
 };
