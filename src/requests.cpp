@@ -1655,16 +1655,17 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
 
                     if (find != mSellOrders.end())
                     {
-                        // update sell coin value
-                        mOrder.emplace("Status", "CANCELED");
+                        // added bought price and new quantity
                         mOrder.emplace("BoughtPrice", find->second["BoughtPrice"]);
                         mOrder["Quantity"] = pBu.get()->subTwoStrings(mQuantity, mExecutedQty);
 
-                        find->second = mOrder;
-
                         // check if not exists add sell order to bought order list
                         if (mBoughtOrders.find(mOrderId) == mBoughtOrders.end())
-                            mBoughtOrders.emplace(orderId, find->second);
+                            mBoughtOrders.emplace(orderId, mOrder);
+
+                        // update sell coin value
+                        mOrder.emplace("Status", "CANCELED");
+                        find->second = mOrder;
 
                         ELOG(DEBUG, "Added Status to Partially Filled Order. Status: %s, Second Status: %s, Quantity: %s.", mOrder["Status"].c_str(), find->second["Status"].c_str(), find->second["Quantity"].c_str());
                     }
@@ -1698,9 +1699,13 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
 
                 if (findSell != mSellOrders.end())
                 {
-                    findSell->second.emplace("Status", "CANCELED");
+                    OrderMap mOrder;
 
-                    ELOG(DEBUG, "Added Status to Canceled Order. Second Status: %s.", findSell->second["Status"].c_str());
+                    mOrder.emplace("Status", "CANCELED");
+
+                    findSell->second = mOrder;
+
+                    ELOG(DEBUG, "Added Status to Canceled Order. mOrder Status: %s, Second Status: %s.", mOrder["Status"].c_str(), findSell->second["Status"].c_str());
                 }
 
                 ELOG(INFO, "Canceled a Sell Order. OrderId: %d, Symbol: %s, Price: %s, Bought Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str());
