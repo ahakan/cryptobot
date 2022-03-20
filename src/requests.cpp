@@ -26,6 +26,10 @@ Requests::Requests(std::shared_ptr<BinanceUtilities> pBu)
     mRSIOversold            = pBu.get()->getRSIOversold();
     mRSIOverbought          = pBu.get()->getRSIOverbought();
 
+    Opel *iOpel             = Opel::instance();
+
+    iOpel->setSoldOrdersMap(&mSoldOrders);
+
     ELOG(INFO, "Requests constructor initialized. mSymbol: %s, mFollowSymbol: %s, mInterval: %s, mBalanceSymbol: %s, mBalanceAmount: %s.", mSymbol.c_str(), mFollowSymbol.c_str(), mInterval.c_str(), mBalanceSymbol.c_str(), mBalanceAmount.c_str());
 }
 

@@ -39,7 +39,6 @@
 
 // Namespaces
 namespace beast         = boost::beast;                 // from <boost/beast.hpp>
-namespace http          = beast::http;                  // from <boost/beast/http.hpp>
 namespace websocket     = beast::websocket;             // from <boost/beast/websocket.hpp>
 namespace net           = boost::asio;                  // from <boost/asio.hpp>
 namespace ssl           = boost::asio::ssl;             // from <boost/asio/ssl.hpp>

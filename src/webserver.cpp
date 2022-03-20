@@ -75,7 +75,7 @@ void Webserver::processRequest()
     {
     case http::verb::get:
         mResponse.result(http::status::ok);
-        mResponse.set(http::field::server, "Beast");
+        mResponse.set(http::field::server, "Cryptobot");
         createResponse();
         break;
 
@@ -108,20 +108,24 @@ void Webserver::createResponse()
         mResponse.set(http::field::content_type, "text/html");
         beast::ostream(mResponse.body())
             << "<html>\n"
-            <<  "<head><title>cryptobot</title></head>\n"
+            <<  "<head>\n"
+            <<   "<style>th, td {border:1px solid black;} th {font-size: 18px; padding-left: 5px; padding-right: 5px;} td {font-size: 16px;}</style>\n"
+            <<   "<title>Cryptobot</title>\n"
+            <<  "</head>\n"
             <<  "<body>\n"
-            <<  "<h1>cryptobot</h1>\n"
+            <<   "<h1>Cryptobot</h1>\n"
+            <<   html_page::soldOrderTable()
             <<  "</body>\n"
-            <<  "</html>\n";
+            << "</html>\n";
     }
     else if(mRequest.target() == "/exit")
     {
         mResponse.set(http::field::content_type, "text/html");
         beast::ostream(mResponse.body())
             << "<html>\n"
-            <<  "<head><title>cryptobot</title></head>\n"
+            <<  "<head><title>Cryptobot</title></head>\n"
             <<  "<body>\n"
-            <<  "<h1>Cryptobot has been closed.</h1>\n"
+            <<  "<h4>Cryptobot has been closed.</h4>\n"
             <<  "</body>\n"
             <<  "</html>\n";
 

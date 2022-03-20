@@ -11,7 +11,7 @@
 
 # cryptobot
 
-fast, secure and open source crypto trading bot
+fast, secure, lightweight and open source crypto trading bot
 
 [Installation](#installation) •
 [Usage](#usage) •
@@ -19,6 +19,13 @@ fast, secure and open source crypto trading bot
 [Licence](#licence) 
 </div>
 
+This bot run on unix-like systems. You can use easily on your linux system. Just clone and build. That's all.
+Also if you want to use localhost you can use easily. When you run the crypto bot, localhost will open. 
+Attention! Don't forget to edit the config file.
+
+<p float="left">
+    <img src="https://github.com/AHakan/cryptobot/blob/master/local.png"/>
+</p>
 
 ## Installation
 
@@ -39,8 +46,8 @@ git clone https://github.com/ahakan/cryptobot.git
 ### *Step 3.1: Build cryptobot with bash script*
 ```sh
 cd cryptobot
-chmod +x install.sh
-./install.sh
+chmod +x build.sh
+./build.sh
 ```
 
 ### *Step 3.2: Build cryptobot with CMake*

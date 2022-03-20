@@ -158,7 +158,7 @@ void Websocket::sslHandshake(beast::error_code ec)
     mWs.set_option(websocket::stream_base::decorator(
         [](websocket::request_type& req)
         {
-            req.set(http::field::user_agent,
+            req.set(beast::http::field::user_agent,
                 std::string(BOOST_BEAST_VERSION_STRING) +
                     " cryptobot");
         }));

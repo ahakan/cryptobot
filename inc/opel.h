@@ -19,6 +19,10 @@
 
 // Standard libraries
 #include <mutex>
+#include <map>
+
+// Namespaces
+using       SoldOrdersMap   = std::multimap<int, std::map<std::string, std::string>>;
 
 // Structs
 struct candle_data : public std::mutex
@@ -41,6 +45,8 @@ class Opel
         bool                        mIsActive;
         std::string                 mTradeSymbol;
         std::string                 mFollowSymbol;
+
+        SoldOrdersMap               *mSoldOrders;
         
 
     protected:
@@ -68,6 +74,10 @@ class Opel
 
         void                        setFollowSymbol(std::string symbol);
         std::string                 getFollowSymbol();
+
+        void                        setSoldOrdersMap(SoldOrdersMap *orders);
+        SoldOrdersMap               *getSoldOrdersMap();
+
 };
 
 #endif

@@ -33,13 +33,48 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <map>
+#include <iterator>
 
 // Namespaces
-namespace beast = boost::beast;         // from <boost/beast.hpp>
-namespace http = beast::http;           // from <boost/beast/http.hpp>
-namespace net = boost::asio;            // from <boost/asio.hpp>
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+namespace   beast           = boost::beast;         // from <boost/beast.hpp>
+namespace   http            = beast::http;           // from <boost/beast/http.hpp>
+namespace   net             = boost::asio;            // from <boost/asio.hpp>
+using       tcp             = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
+using       SoldOrdersMap   = std::multimap<int, std::map<std::string, std::string>>;
+
+namespace html_page
+{
+    inline std::string soldOrderTable()
+    {
+        Opel *iOpel = Opel::instance();
+
+        SoldOrdersMap *mSoldOrders = iOpel->getSoldOrdersMap();
+
+        std::string table = "";
+
+        if (mSoldOrders->size() > 0)
+        {
+            table = "<h2>Sold Orders</h2><table><tr><th>Order ID</th><th>Symbol</th><th>Quantity</th><th>Bought Price</th><th>Sold Price</th><th> Sold Time </th></tr><tr>";
+        
+            for (SoldOrdersMap::iterator i = (*mSoldOrders).begin(); i != (*mSoldOrders).end(); ++i)
+            {
+                table = table + "<td>" + std::to_string(i->first) + "</td>";
+                table = table + "<td>" + i->second["Symbol"] + "</td>";
+                table = table + "<td>" + i->second["Quantity"] + "</td>";
+                table = table + "<td>" + i->second["BoughtPrice"] + "</td>";
+                table = table + "<td>" + i->second["SoldPrice"] + "</td>";
+                table = table + "<td>" + i->second["Timestamp"] + "</td>";
+
+                table = table + "</tr><tr>";
+            }
+            table = table + "</table>\n";
+        }
+
+        return table;
+    }
+}
 
 class Webserver : public std::enable_shared_from_this<Webserver>
 {
