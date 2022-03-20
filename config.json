@@ -24,7 +24,7 @@
     "binance": {
         "websocket": {
             "base": "stream.binance.com",
-            "port": "9443"
+            "port": 9443
         },
         "api": {
             "base": "api.binance.com",

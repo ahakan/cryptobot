@@ -103,21 +103,19 @@ When use the crypto bot, you have to make some configurations.
     "binance": {
         "websocket": {
             "base": "stream.binance.com",
-            "port": "9443"
+            "port": 9443
         },
         "api": {
             "base": "api.binance.com",
-            "API_KEY": "1",
-            "SECRET_KEY": "1"
+            "API_KEY": "YOUR_API_KEY",
+            "SECRET_KEY": "YOUR_SECRET_KEY"
         }
     },
     "webserver": {
         "base": "127.0.0.1",
-        "socket": 8080
+        "port": 8080
     }
 }
-
-
 ```
 
 - `user`

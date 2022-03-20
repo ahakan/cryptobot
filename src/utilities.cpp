@@ -674,7 +674,16 @@ BinanceUtilities::~BinanceUtilities()
  */
 std::string BinanceUtilities::getWebsocketBase()
 {
-    return mWebsocketJson["base"].asString();
+    std::string mWebsocketBase = mWebsocketJson["base"].asString();
+
+    if (mWebsocketBase.length() == 0)
+    {
+        ELOG(ERROR, "Failed to parse websocket base.");
+
+        setExitSignal(0);
+    }
+
+    return mWebsocketBase;
 }
 
 
@@ -685,7 +694,16 @@ std::string BinanceUtilities::getWebsocketBase()
  */
 std::string BinanceUtilities::getWebsocketPort()
 {
-    return mWebsocketJson["port"].asString();
+    std::string mWebsocketPort = std::to_string(mWebsocketJson["port"].asInt());
+
+    if (mWebsocketPort.length() == 0)
+    {
+        ELOG(ERROR, "Failed to parse websocket base.");
+
+        setExitSignal(0);
+    }
+
+    return mWebsocketPort;
 }
 
 
@@ -696,8 +714,9 @@ std::string BinanceUtilities::getWebsocketPort()
  */
 std::string BinanceUtilities::getWebsocketEndpointT()
 {
-    std::string symbol = upperToLower(getSymbol());
-    std::string endpoint = "/ws/" + symbol + "@kline_" + getInterval();
+    std::string symbol      = upperToLower(getSymbol());
+
+    std::string endpoint    = "/ws/" + symbol + "@kline_" + getInterval();
         
     return endpoint;
 }
@@ -710,8 +729,9 @@ std::string BinanceUtilities::getWebsocketEndpointT()
  */
 std::string BinanceUtilities::getWebsocketEndpointF()
 {
-    std::string symbol = upperToLower(getFollowSymbol());
-    std::string endpoint = "/ws/" + symbol + "@kline_" + getInterval();
+    std::string symbol      = upperToLower(getFollowSymbol());
+
+    std::string endpoint    = "/ws/" + symbol + "@kline_" + getInterval();
         
     return endpoint;
 }
@@ -724,9 +744,18 @@ std::string BinanceUtilities::getWebsocketEndpointF()
  */
 std::string BinanceUtilities::getAPIBase()
 {
-    std::string mAPIBase = "https://" + mAPIJson["base"].asString();
+    std::string mAPIBase = mAPIJson["base"].asString();
 
-    return mAPIBase;
+    if (mAPIBase.length() == 0)
+    {
+        ELOG(ERROR, "Failed to parse API base.");
+
+        setExitSignal(0);
+    }
+
+    std::string mAPIBaseWithHttps = "https://" + mAPIBase;
+
+    return mAPIBaseWithHttps;
 }
 
 
@@ -737,7 +766,16 @@ std::string BinanceUtilities::getAPIBase()
  */
 std::string BinanceUtilities::getAPIKEY()
 {
-    return mAPIJson["API_KEY"].asString();
+    std::string mAPIKey = mAPIJson["API_KEY"].asString();
+
+    if (mAPIKey.length() == 0)
+    {
+        ELOG(ERROR, "Failed to parse API_KEY.");
+
+        setExitSignal(0);
+    }
+
+    return mAPIKey;
 }
 
 
@@ -748,7 +786,15 @@ std::string BinanceUtilities::getAPIKEY()
  */
 std::string BinanceUtilities::getAPISECRETKEY()
 {
-    return mAPIJson["SECRET_KEY"].asString();
+    std::string mAPISecretKey = mAPIJson["SECRET_KEY"].asString();
+
+    if (mAPISecretKey.length() == 0)
+    {
+        ELOG(ERROR, "Failed to parse SECRET_KEY.");
+
+        setExitSignal(0);
+    }
+    return mAPISecretKey;
 }
 
 

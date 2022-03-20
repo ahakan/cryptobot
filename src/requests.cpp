@@ -195,11 +195,11 @@ bool Requests::calcSymbolRSI()
 {
     if (mTradeCandlesClosePrices.size() != 0)
     {
-        mOldTradeCandlesCloseRSI            = mTradeCandlesCloseRSI.length() > 0 ? mTradeCandlesCloseRSI : "Empty";
+        mOldTradeCandlesCloseRSI            = mTradeCandlesCloseRSI.length() > 0 ? mTradeCandlesCloseRSI : "00.00";
         mTradeCandlesCloseRSI               = pBu.get()->calculateRSI(mTradeCandlesClosePrices);
 
-        mBuyOrdersNewTradeRSI               = mOldTradeCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
-        mSellOrdersNewTradeRSI              = mOldTradeCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
+        mBuyOrdersNewTradeRSI               = mOldTradeCandlesCloseRSI == "00.00" ? false : true;   // ignore to first calculation for cancel order
+        mSellOrdersNewTradeRSI              = mOldTradeCandlesCloseRSI == "00.00" ? false : true;   // ignore to first calculation for cancel order
 
         ELOG(INFO, "Calculated Symbol RSI. Trade Candles New Close RSI: %s, Old Close RSI: %s, mBuyOrdersNewTradeRSI: %d, mSellOrdersNewTradeRSI: %d.", mTradeCandlesCloseRSI.c_str(), mOldTradeCandlesCloseRSI.c_str(), mBuyOrdersNewTradeRSI, mSellOrdersNewTradeRSI);
 
@@ -222,11 +222,11 @@ bool Requests::calcFollowRSI()
 {
     if (mFollowCandlesClosePrices.size() != 0)
     {
-        mOldFollowCandlesCloseRSI           = mFollowCandlesCloseRSI.length() > 0 ? mFollowCandlesCloseRSI : "Empty";
+        mOldFollowCandlesCloseRSI           = mFollowCandlesCloseRSI.length() > 0 ? mFollowCandlesCloseRSI : "00.00";
         mFollowCandlesCloseRSI              = pBu.get()->calculateRSI(mFollowCandlesClosePrices);
 
-        mBuyOrdersNewFollowRSI              = mOldFollowCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
-        mSellOrdersNewFollowRSI             = mOldFollowCandlesCloseRSI == "Empty" ? false : true;   // ignore to first calculation for cancel order
+        mBuyOrdersNewFollowRSI              = mOldFollowCandlesCloseRSI == "00.00" ? false : true;   // ignore to first calculation for cancel order
+        mSellOrdersNewFollowRSI             = mOldFollowCandlesCloseRSI == "00.00" ? false : true;   // ignore to first calculation for cancel order
 
 
         ELOG(INFO, "Calculated Follow Symbol RSI. Follow Candles New Close RSI: %s, Old Close RSI: %s, mBuyOrdersNewFollowRSI: %d, mSellOrdersNewFollowRSI: %d.", mFollowCandlesCloseRSI.c_str(), mOldFollowCandlesCloseRSI.c_str(), mBuyOrdersNewFollowRSI, mSellOrdersNewFollowRSI);
@@ -695,13 +695,16 @@ bool BinanceRequests::checkBuyOrders()
         // Check new RSI
         if (mBuyOrdersNewTradeRSI && mBuyOrdersNewFollowRSI)
         {
-            bool mIsBuyOrderCanceled = cancelOrder(mSymbol, mBuyOrders.begin()->first);
+            // if new rsi higher than old rsi it returns true.
+            bool isNewRSIHigh = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mOldTradeCandlesCloseRSI);
 
-            if (mIsBuyOrderCanceled)
+            if (!isNewRSIHigh)
             {
-                mBuyOrdersNewTradeRSI     = false;
-                mBuyOrdersNewFollowRSI    = false;
+                cancelOrder(mSymbol, mBuyOrders.begin()->first);
             }
+
+            mBuyOrdersNewTradeRSI     = false;
+            mBuyOrdersNewFollowRSI    = false;
         }
 
         bool checkOrder = queryOrder(mSymbol, mBuyOrders.begin()->first);
@@ -751,13 +754,19 @@ bool BinanceRequests::checkSellOrders()
         // Check new RSI and cancel all order
         if (mSellOrdersNewTradeRSI && mSellOrdersNewFollowRSI)
         {
-            for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+            // if new rsi higher than old rsi it returns true.
+            bool isNewRSIHigh = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mOldTradeCandlesCloseRSI);
+
+            if (isNewRSIHigh)
             {
-                int mOrderId = i->first;
+                for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+                {
+                    int mOrderId = i->first;
 
-                cancelOrder(mSymbol, mOrderId);
+                    cancelOrder(mSymbol, mOrderId);
 
-                ELOG(INFO, "Calculated New RSI. Canceled Sell Order. Order id: %d. ", mOrderId);
+                    ELOG(INFO, "Calculated New RSI. Canceled Sell Order. Order id: %d. ", mOrderId);
+                }
             }
 
             mSellOrdersNewTradeRSI     = false;
@@ -1314,7 +1323,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
 
                 mSellOrders.emplace(mOrderId, mOrder);
 
-                mBoughtOrders.clear(); ///////!!!!!!!!
+                mBoughtOrders.clear();
 
                 ELOG(INFO, "Created a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
 
@@ -1354,7 +1363,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
 
                 mSoldOrders.emplace(mOrderId, mOrder);
 
-                mBoughtOrders.clear();  ////!!!!!!!11
+                mBoughtOrders.clear();
 
                 ELOG(INFO, "Created and Filled  a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
 
