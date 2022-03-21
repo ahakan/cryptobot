@@ -1323,7 +1323,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
 
                 mSellOrders.emplace(mOrderId, mOrder);
 
-                mBoughtOrders.clear();
+                mBoughtOrders.erase(mBoughtOrders.begin());
 
                 ELOG(INFO, "Created a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
 
@@ -1363,7 +1363,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
 
                 mSoldOrders.emplace(mOrderId, mOrder);
 
-                mBoughtOrders.clear();
+                mBoughtOrders.erase(mBoughtOrders.begin());
 
                 ELOG(INFO, "Created and Filled  a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
 
