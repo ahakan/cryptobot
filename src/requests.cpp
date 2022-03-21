@@ -607,8 +607,10 @@ void BinanceRequests::binance()
  */
 bool BinanceRequests::newBuyOrder()
 {
-    // if RSI is smaller than mRSIOversold, we create a new buy order
-    if (!pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold))
+    // if RSI is Less than mRSIOversold, we create a new buy order
+    bool isNewRSILessThanOversold = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold);
+
+    if (!isNewRSILessThanOversold)
     {
         // if we have not a buy order or bought order we create a new buy order
         if (mBuyOrders.size() < 1 && mBoughtOrders.size() < 1)
@@ -659,7 +661,9 @@ bool BinanceRequests::newBuyOrder()
 bool BinanceRequests::newSellOrder()
 {
     // if RSI is higher than mRSIOverbought, we create a new sell order
-    if (pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought))
+    bool isNewRSIHighOverbought = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought);
+
+    if (isNewRSIHighOverbought)
     {
         // if we bought a coin we'll create a sell order
         if (mBoughtOrders.size() > 0)
@@ -695,12 +699,22 @@ bool BinanceRequests::checkBuyOrders()
         // Check new RSI
         if (mBuyOrdersNewTradeRSI && mBuyOrdersNewFollowRSI)
         {
-            // if new rsi higher than old rsi it returns true.
-            bool isNewRSIHigh = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mOldTradeCandlesCloseRSI);
+            // if new rsi is less than oversold rsi it returns true.
+            bool isNewRSILessThanOversold = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold);
 
-            if (!isNewRSIHigh)
+            if (!isNewRSILessThanOversold)
             {
-                cancelOrder(mSymbol, mBuyOrders.begin()->first);
+                // if new rsi higher than old rsi it returns true.
+                bool isNewRSIHigh = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mOldTradeCandlesCloseRSI);
+
+                if (!isNewRSIHigh)
+                {
+                    int orderId = mBuyOrders.begin()->first;
+
+                    cancelOrder(mSymbol, orderId);
+
+                    ELOG(INFO, "New RSI is higher than old RSI. Canceled Buy Order. Order id: %d. ", orderId);
+                }
             }
 
             mBuyOrdersNewTradeRSI     = false;
@@ -735,17 +749,17 @@ bool BinanceRequests::checkSellOrders()
         // Cancel to filled or canceled status orders
         for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
         {
-            int mOrderId = i->first;
+            int orderId = i->first;
 
             if (i->second["Status"] == "FILLED")
             {
-                ELOG(DEBUG, "Removed Filled Sell Order. Order id: %d, Status: %s, BoughtPrice: %s, SoldPrice: %s.", mOrderId, i->second["Status"].c_str(), i->second["BoughtPrice"].c_str(), i->second["SoldPrice"].c_str());
+                ELOG(DEBUG, "Removed Filled Sell Order. Order id: %d, Status: %s, BoughtPrice: %s, SoldPrice: %s.", orderId, i->second["Status"].c_str(), i->second["BoughtPrice"].c_str(), i->second["SoldPrice"].c_str());
                 
                 mSellOrders.erase(i);
             }
             else if (i->second["Status"] == "CANCELED")
             {
-                ELOG(DEBUG, "Removed Canceled Sell Order. Order id: %d, Status: %s, BoughtPrice: %s.", mOrderId, i->second["Status"].c_str(), i->second["BoughtPrice"].c_str());
+                ELOG(DEBUG, "Removed Canceled Sell Order. Order id: %d, Status: %s, BoughtPrice: %s.", orderId, i->second["Status"].c_str(), i->second["BoughtPrice"].c_str());
 
                 mSellOrders.erase(i);
             }
@@ -754,21 +768,27 @@ bool BinanceRequests::checkSellOrders()
         // Check new RSI and cancel all order
         if (mSellOrdersNewTradeRSI && mSellOrdersNewFollowRSI)
         {
-            // if new rsi higher than old rsi it returns true.
-            bool isNewRSIHigh = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mOldTradeCandlesCloseRSI);
+            // if new rsi is higher than overbought rsi it returns true.
+            bool isNewRSIHighOverbought = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought);
 
-            if (isNewRSIHigh)
+            if (isNewRSIHighOverbought)
             {
-                for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+                // if new rsi is higher than old rsi it returns true.
+                bool isNewRSIHigh = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mOldTradeCandlesCloseRSI);
+
+                if (isNewRSIHigh)
                 {
-                    int mOrderId = i->first;
+                    for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+                    {
+                        int orderId = i->first;
 
-                    cancelOrder(mSymbol, mOrderId);
+                        cancelOrder(mSymbol, orderId);
 
-                    ELOG(INFO, "Calculated New RSI. Canceled Sell Order. Order id: %d. ", mOrderId);
+                        ELOG(INFO, "New RSI is higher than old RSI. Canceled Sell Order. Order id: %d. ", orderId);
+                    }
                 }
             }
-
+            
             mSellOrdersNewTradeRSI     = false;
             mSellOrdersNewFollowRSI    = false;
         }     
@@ -776,11 +796,11 @@ bool BinanceRequests::checkSellOrders()
         // Check sell orders
         for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
         {
-            int mOrderId = i->first;
+            int orderId = i->first;
 
-            queryOrder(mSymbol, mOrderId);
+            queryOrder(mSymbol, orderId);
 
-            ELOG(INFO, "Checked Sell Orders. Order id: %d. ", mOrderId);
+            ELOG(INFO, "Checked Sell Orders. Order id: %d. ", orderId);
         }
     }
         
@@ -902,44 +922,44 @@ std::string BinanceRequests::deleteRequest(std::string endpoint, std::string par
  */
 bool BinanceRequests::getAccountStatus()
 {
-    std::string mTimestamp              = pBu.get()->getTimestamp();
+    std::string reqTimestamp        = pBu.get()->getTimestamp();
 
-    std::string mEndpoint               = "/sapi/v1/account/status";
-
-
-    std::string mParams                 = "timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
-
-    std::string mSignature              = pBu.get()->getSignature(mParams);
-
-    std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
+    std::string reqEndpoint         = "/sapi/v1/account/status";
 
 
-    httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
+    std::string reqParams           = "timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string reqSignature        = pBu.get()->getSignature(reqParams);
+
+    std::string reqParamsWithSign   = reqParams+"&signature="+reqSignature;
+
+
+    httplib::Headers reqHeaders     = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
     
-    ELOG(INFO, "Get Account Status Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    ELOG(INFO, "Get Account Status Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
+    std::string responseBody        = getRequest(reqEndpoint, reqParamsWithSign, reqHeaders);
 
-    ELOG(INFO, "Get Account Status Response Body: %s.", mResponseBody.c_str());
+    ELOG(INFO, "Get Account Status Response Body: %s.", responseBody.c_str());
 
-    Json::Value  mAPIJson;
-    Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse(mResponseBody.c_str(), mAPIJson);
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful  = parserReader.parse(responseBody.c_str(), parsedResponse);
 
-    if (!mParsingSuccessful)
+    if (!parsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
         return false;
     }
 
-    if (!mAPIJson.isObject())
+    if (!parsedResponse.isObject())
     {
         ELOG(ERROR, "JSON is not object.");
         return false;
     }
 
-    std::string mAccountStatusData = mAPIJson["data"].asString();
+    std::string mAccountStatusData = parsedResponse["data"].asString();
 
     if (mAccountStatusData != "Normal")
     {
@@ -961,44 +981,44 @@ bool BinanceRequests::getAccountStatus()
  */
 bool BinanceRequests::getAPIKeyPermission()
 {
-    std::string mTimestamp              = pBu.get()->getTimestamp();
+    std::string reqTimestamp        = pBu.get()->getTimestamp();
 
-    std::string mEndpoint               = "/sapi/v1/account/apiRestrictions";
-
-
-    std::string mParams                 = "timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
-
-    std::string mSignature              = pBu.get()->getSignature(mParams);
-
-    std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
+    std::string reqEndpoint         = "/sapi/v1/account/apiRestrictions";
 
 
-    httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
+    std::string reqParams           = "timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string reqSignature        = pBu.get()->getSignature(reqParams);
+
+    std::string reqParamsWithSign   = reqParams+"&signature="+reqSignature;
+
+
+    httplib::Headers reqHeaders     = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
     
 
-    ELOG(INFO, "Get API KEY Permission Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    ELOG(INFO, "Get API KEY Permission Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
+    std::string responseBody        = getRequest(reqEndpoint, reqParamsWithSign, reqHeaders);
 
-    ELOG(INFO, "Get API KEY Permission Response Body: %s.", mResponseBody.c_str());
+    ELOG(INFO, "Get API KEY Permission Response Body: %s.", responseBody.c_str());
 
-    Json::Value  mAPIJson;
-    Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse(mResponseBody.c_str(), mAPIJson);
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful  = parserReader.parse(responseBody.c_str(), parsedResponse);
 
-    if (!mParsingSuccessful)
+    if (!parsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
         return false;
     }
 
-    if (!mAPIJson.isObject())
+    if (!parsedResponse.isObject())
     {
         ELOG(ERROR, "JSON is not object.");
         return false;
     }
 
-    bool mEnableSpotAndMarginTrading = mAPIJson["enableSpotAndMarginTrading"].asBool();
+    bool mEnableSpotAndMarginTrading = parsedResponse["enableSpotAndMarginTrading"].asBool();
 
     if (!mEnableSpotAndMarginTrading)
     {
@@ -1021,50 +1041,50 @@ bool BinanceRequests::getAPIKeyPermission()
  */
 bool BinanceRequests::getCoinBalance(std::string symbol)
 {
-    std::string mTimestamp              = pBu.get()->getTimestamp();
+    std::string reqTimestamp        = pBu.get()->getTimestamp();
 
-    std::string mEndpoint               = "/sapi/v1/capital/config/getall";
-
-
-    std::string mParams                 = "timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
-
-    std::string mSignature              = pBu.get()->getSignature(mParams);
-
-    std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
+    std::string reqEndpoint         = "/sapi/v1/capital/config/getall";
 
 
-    httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
+    std::string reqParams           = "timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string reqSignature        = pBu.get()->getSignature(reqParams);
+
+    std::string reqParamsWithSign   = reqParams+"&signature="+reqSignature;
 
 
-    ELOG(INFO, "Get Coin Balance Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    httplib::Headers reqHeaders     = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
-    ELOG(INFO, "Get Coin Balance Response Body: %s.", mResponseBody.c_str());
+    ELOG(INFO, "Get Coin Balance Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
 
-    Json::Value  mAPIJson;
-    Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse(mResponseBody.c_str(), mAPIJson);
+    std::string responseBody        = getRequest(reqEndpoint, reqParamsWithSign, reqHeaders);
 
-    if (!mParsingSuccessful)
+    ELOG(INFO, "Get Coin Balance Response Body: %s.", responseBody.c_str());
+
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful  = parserReader.parse(responseBody.c_str(), parsedResponse);
+
+    if (!parsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
         return false;
     }
 
-    if (!mAPIJson.isArray())
+    if (!parsedResponse.isArray())
     {
         ELOG(ERROR, "JSON is not array.");
         return false;
     }
 
-    for (int i=0; i< static_cast<int>(mAPIJson.size()); i++)
+    for (int i=0; i< static_cast<int>(parsedResponse.size()); i++)
     {
-        if (mAPIJson[i]["coin"] == symbol)
+        if (parsedResponse[i]["coin"] == symbol)
         {
-            std::string mWalletBalanceAmount = mAPIJson[i]["free"].asString();
+            std::string mWalletBalanceAmount = parsedResponse[i]["free"].asString();
 
-            ELOG(INFO, "Get Coin Balance Symbol: %s, Balance: %s.", mAPIJson[i]["coin"].asCString(), mAPIJson[i]["free"].asCString());
+            ELOG(INFO, "Get Coin Balance Symbol: %s, Balance: %s.", parsedResponse[i]["coin"].asCString(), parsedResponse[i]["free"].asCString());
 
             bool isAmountEnough = pBu.get()->compareTwoStrings(mWalletBalanceAmount, mBalanceAmount);
 
@@ -1093,62 +1113,62 @@ bool BinanceRequests::getCoinBalance(std::string symbol)
  */
 bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interval, std::string startTime)
 {
-    std::string mTimestamp              = pBu.get()->getTimestamp();
+    std::string reqTimestamp        = pBu.get()->getTimestamp();
 
-    std::string mEndpoint               = "/api/v3/klines";
-
-
-    std::string mParams                 = "symbol="+symbol+"&interval="+interval+"&startTime="+startTime+"&limit=1000";
+    std::string reqEndpoint         = "/api/v3/klines";
 
 
-    httplib::Headers mHeaders           = {{"content-type", "application/json"}};
+    std::string reqParams           = "symbol="+symbol+"&interval="+interval+"&startTime="+startTime+"&limit=1000";
 
 
-    ELOG(INFO, "Get Klines/Candlesticks Data Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    httplib::Headers reqHeaders     = {{"content-type", "application/json"}};
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParams, mHeaders);
 
-    ELOG(INFO, "Get Klines/Candlesticks Data Response Body: %s.", mResponseBody.c_str());
+    ELOG(INFO, "Get Klines/Candlesticks Data Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
 
-    Json::Value  mAPIJson;
-    Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse(mResponseBody.c_str(), mAPIJson);
+    std::string responseBody        = getRequest(reqEndpoint, reqParams, reqHeaders);
 
-    if (!mParsingSuccessful)
+    ELOG(INFO, "Get Klines/Candlesticks Data Response Body: %s.", responseBody.c_str());
+
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful  = parserReader.parse(responseBody.c_str(), parsedResponse);
+
+    if (!parsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
         return false;
     }
 
-    if (!mAPIJson.isArray())
+    if (!parsedResponse.isArray())
     {
         ELOG(ERROR, "JSON is not array.");
         return false;
     }
 
-    int mCandlesSize = static_cast<int>(mAPIJson.size());
+    int mCandlesSize = static_cast<int>(parsedResponse.size());
 
     if (symbol == mSymbol)
     {
         for (int i = 0; i < mCandlesSize; i++)
         {
-            // std::cout << mAPIJson[i][4] << std::endl;
+            // std::cout << parsedResponse[i][4] << std::endl;
 
-            mTradeCandlesOpenPrices.push_back(mAPIJson[i][1].asString());
-            mTradeCandlesHighPrices.push_back(mAPIJson[i][2].asString());
-            mTradeCandlesLowPrices.push_back(mAPIJson[i][3].asString());
-            mTradeCandlesClosePrices.push_back(mAPIJson[i][4].asString());
+            mTradeCandlesOpenPrices.push_back(parsedResponse[i][1].asString());
+            mTradeCandlesHighPrices.push_back(parsedResponse[i][2].asString());
+            mTradeCandlesLowPrices.push_back(parsedResponse[i][3].asString());
+            mTradeCandlesClosePrices.push_back(parsedResponse[i][4].asString());
         }
     }
 
     if (symbol == mFollowSymbol)
     {
-        for (int i = 0; i<static_cast<int>(mAPIJson.size()); i++)
+        for (int i = 0; i<static_cast<int>(parsedResponse.size()); i++)
         {
-            mFollowCandlesOpenPrices.push_back(mAPIJson[i][1].asString());
-            mFollowCandlesHighPrices.push_back(mAPIJson[i][2].asString());
-            mFollowCandlesLowPrices.push_back(mAPIJson[i][3].asString());
-            mFollowCandlesClosePrices.push_back(mAPIJson[i][4].asString());
+            mFollowCandlesOpenPrices.push_back(parsedResponse[i][1].asString());
+            mFollowCandlesHighPrices.push_back(parsedResponse[i][2].asString());
+            mFollowCandlesLowPrices.push_back(parsedResponse[i][3].asString());
+            mFollowCandlesClosePrices.push_back(parsedResponse[i][4].asString());
         }
     }
     
@@ -1165,40 +1185,40 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
  */
 bool BinanceRequests::getTickSize (std::string symbol)
 {
-    std::string mTimestamp              = pBu.get()->getTimestamp();
+    std::string reqTimestamp        = pBu.get()->getTimestamp();
 
-    std::string mEndpoint               = "/api/v3/exchangeInfo";
-
-
-    std::string mParams                 = "symbol="+symbol;
+    std::string reqEndpoint         = "/api/v3/exchangeInfo";
 
 
-    httplib::Headers mHeaders           = {{"content-type", "application/json"}};
+    std::string reqParams           = "symbol="+symbol;
 
 
-    ELOG(INFO, "Get Tick Size Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    httplib::Headers reqHeaders     = {{"content-type", "application/json"}};
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParams, mHeaders);
 
-    ELOG(INFO, "Get Tick Size Response Body: %s.", mResponseBody.c_str());
+    ELOG(INFO, "Get Tick Size Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
 
-    Json::Value  mAPIJson;
-    Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse(mResponseBody.c_str(), mAPIJson);
+    std::string responseBody        = getRequest(reqEndpoint, reqParams, reqHeaders);
 
-    if (!mParsingSuccessful)
+    ELOG(INFO, "Get Tick Size Response Body: %s.", responseBody.c_str());
+
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful  = parserReader.parse(responseBody.c_str(), parsedResponse);
+
+    if (!parsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
         return false;
     }
 
-    if (!mAPIJson.isObject())
+    if (!parsedResponse.isObject())
     {
         ELOG(ERROR, "JSON is not object.");
         return false;
     }
 
-    Json::Value mFiltersJson = mAPIJson["symbols"][0]["filters"];
+    Json::Value mFiltersJson = parsedResponse["symbols"][0]["filters"];
 
     for (int i = 0; i<static_cast<int>(mFiltersJson.size()); i++)
     {
@@ -1241,58 +1261,58 @@ bool BinanceRequests::getTickSize (std::string symbol)
  */
 bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price)
 {
-    std::string mTimestamp              = pBu.get()->getTimestamp();
+    std::string reqTimestamp            = pBu.get()->getTimestamp();
 
-    std::string mEndpoint               = "/api/v3/order";
+    std::string reqEndpoint             = "/api/v3/order";
 
     std::string mRoundedQuantity        = pBu.get()->roundString(quantity, mSymbolTickSize);
 
 
-    std::string mParams                 = "symbol="+symbol+"&side="+side;
-                mParams                 += "&type="+type+"&timeInForce=GTC";
-                mParams                 += "&quantity="+quantity+"&price="+price;
-                mParams                 += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
+    std::string reqParams               = "symbol="+symbol+"&side="+side;
+                reqParams               += "&type="+type+"&timeInForce=GTC";
+                reqParams               += "&quantity="+quantity+"&price="+price;
+                reqParams               += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
 
-    std::string mSignature              = pBu.get()->getSignature(mParams);
+    std::string reqSignature            = pBu.get()->getSignature(reqParams);
 
-    httplib::Params mSignatureParams    = {{ "signature", mSignature }};
-
-
-    httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
+    httplib::Params mSignatureParams    = {{ "signature", reqSignature }};
 
 
-    ELOG(INFO, "Create New Order Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    httplib::Headers reqHeaders         = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
-    std::string mResponseBody           = postRequest(mEndpoint, mParams, mSignatureParams, mHeaders);
 
-    ELOG(INFO, "Create New Order Response Body: %s.", mResponseBody.c_str());
+    ELOG(INFO, "Create New Order Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
 
-    Json::Value  mAPIJson;
-    Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse(mResponseBody.c_str(), mAPIJson);
+    std::string responseBody            = postRequest(reqEndpoint, reqParams, mSignatureParams, reqHeaders);
 
-    if (!mParsingSuccessful)
+    ELOG(INFO, "Create New Order Response Body: %s.", responseBody.c_str());
+
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful      = parserReader.parse(responseBody.c_str(), parsedResponse);
+
+    if (!parsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
         return false;
     }
 
-    if (!mAPIJson.isObject())
+    if (!parsedResponse.isObject())
     {
         ELOG(ERROR, "JSON is not object.");
         return false;
     }
 
-    int mOrderId                = mAPIJson["orderId"].asInt();
-    std::string mSide           = mAPIJson["side"].asString();
-    std::string mStatus         = mAPIJson["status"].asString();
-    std::string mSymbol         = mAPIJson["symbol"].asString();
-    std::string mPrice          = mAPIJson["price"].asString();
-    std::string mQuantity       = mAPIJson["origQty"].asString();
-    std::string mExecutedQty    = mAPIJson["executedQty"].asString();
-    std::string mTransactTime   = mAPIJson["transactTime"].asString();
+    int mOrderId                = parsedResponse["orderId"].asInt();
+    std::string mSide           = parsedResponse["side"].asString();
+    std::string mStatus         = parsedResponse["status"].asString();
+    std::string mSymbol         = parsedResponse["symbol"].asString();
+    std::string mPrice          = parsedResponse["price"].asString();
+    std::string mQuantity       = parsedResponse["origQty"].asString();
+    std::string mExecutedQty    = parsedResponse["executedQty"].asString();
+    std::string mTransactTime   = parsedResponse["transactTime"].asString();
 
-    std::string mError          = mAPIJson["Error"].asString();
+    std::string mError          = parsedResponse["Error"].asString();
 
     if (mError.size() == 0)
     {
@@ -1333,7 +1353,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
         else if (mStatus == "FILLED")
         {
             // check filled commission
-            Json::Value mAPIFills   = mAPIJson["fills"][0];
+            Json::Value mAPIFills   = parsedResponse["fills"][0];
             std::string mCommission = mAPIFills["commission"].asString();
 
             mQuantity               = pBu.get()->subTwoStrings(mQuantity, mCommission);
@@ -1389,47 +1409,47 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
  */
 bool BinanceRequests::cancelOrder(std::string symbol, int orderId)
 {
-    std::string mTimestamp              = pBu.get()->getTimestamp();
+    std::string reqTimestamp        = pBu.get()->getTimestamp();
 
-    std::string mEndpoint               = "/api/v3/order";
-
-
-    std::string mParams                 = "symbol="+symbol+"&orderId="+std::to_string(orderId);
-                mParams                 += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
-
-    std::string mSignature              = pBu.get()->getSignature(mParams);
-
-    std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
+    std::string reqEndpoint         = "/api/v3/order";
 
 
-    httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
+    std::string reqParams           = "symbol="+symbol+"&orderId="+std::to_string(orderId);
+                reqParams           += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string reqSignature        = pBu.get()->getSignature(reqParams);
+
+    std::string reqParamsWithSign   = reqParams+"&signature="+reqSignature;
 
 
-    ELOG(INFO, "Cancel Order Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    httplib::Headers reqHeaders     = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
-    std::string mResponseBody           = deleteRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
-    ELOG(INFO, "Cancel Order Response Body: %s.", mResponseBody.c_str());
+    ELOG(INFO, "Cancel Order Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
 
-    Json::Value  mAPIJson;
-    Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse(mResponseBody.c_str(), mAPIJson);
+    std::string responseBody        = deleteRequest(reqEndpoint, reqParamsWithSign, reqHeaders);
 
-    if (!mParsingSuccessful)
+    ELOG(INFO, "Cancel Order Response Body: %s.", responseBody.c_str());
+
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful  = parserReader.parse(responseBody.c_str(), parsedResponse);
+
+    if (!parsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
         return false;
     }
 
-    if (!mAPIJson.isObject())
+    if (!parsedResponse.isObject())
     {
         ELOG(ERROR, "JSON is not object.");
         return false;
     }
 
-    int mOrderId        = mAPIJson["orderId"].asInt();
-    std::string mSide   = mAPIJson["side"].asString();
-    std::string mStatus = mAPIJson["status"].asString();
+    int mOrderId        = parsedResponse["orderId"].asInt();
+    std::string mSide   = parsedResponse["side"].asString();
+    std::string mStatus = parsedResponse["status"].asString();
 
     if (mStatus!="CANCELED")
     {
@@ -1451,44 +1471,44 @@ bool BinanceRequests::cancelOrder(std::string symbol, int orderId)
  */
 bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
 {
-    std::string mTimestamp              = pBu.get()->getTimestamp();
+    std::string reqTimestamp        = pBu.get()->getTimestamp();
 
-    std::string mEndpoint               = "/api/v3/openOrders";
-
-
-    std::string mParams                 = "symbol="+symbol+"&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
-
-    std::string mSignature              = pBu.get()->getSignature(mParams);
-
-    std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
+    std::string reqEndpoint         = "/api/v3/openOrders";
 
 
-    httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
+    std::string reqParams           = "symbol="+symbol+"&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string reqSignature        = pBu.get()->getSignature(reqParams);
+
+    std::string reqParamsWithSign   = reqParams+"&signature="+reqSignature;
 
 
-    ELOG(INFO, "Cancel All Open Orders Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    httplib::Headers reqHeaders     = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
-    std::string mResponseBody           = deleteRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
-    ELOG(INFO, "Cancel All Open Orders Response Body: %s.", mResponseBody.c_str());
+    ELOG(INFO, "Cancel All Open Orders Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
 
-    Json::Value  mAPIJson;
-    Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse(mResponseBody.c_str(), mAPIJson);
+    std::string responseBody        = deleteRequest(reqEndpoint, reqParamsWithSign, reqHeaders);
 
-    if (!mParsingSuccessful)
+    ELOG(INFO, "Cancel All Open Orders Response Body: %s.", responseBody.c_str());
+
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful  = parserReader.parse(responseBody.c_str(), parsedResponse);
+
+    if (!parsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
         return false;
     }
 
-    if (!mAPIJson.isArray())
+    if (!parsedResponse.isArray())
     {
         ELOG(ERROR, "JSON is not array.");
         return false;
     }
 
-    std::string mStatus = mAPIJson[0]["status"].asString();
+    std::string mStatus = parsedResponse[0]["status"].asString();
 
     if (mStatus!="CANCELED")
     {
@@ -1512,54 +1532,54 @@ bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
  */
 bool BinanceRequests::queryOrder(std::string symbol, int orderId)
 {
-    std::string mTimestamp              = pBu.get()->getTimestamp();
+    std::string reqTimestamp        = pBu.get()->getTimestamp();
 
-    std::string mEndpoint               = "/api/v3/order";
-
-
-    std::string mParams                 = "symbol="+symbol+"&orderId="+std::to_string(orderId);
-                mParams                 += "&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
-
-    std::string mSignature              = pBu.get()->getSignature(mParams);
-
-    std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
+    std::string reqEndpoint         = "/api/v3/order";
 
 
-    httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
+    std::string reqParams           = "symbol="+symbol+"&orderId="+std::to_string(orderId);
+                reqParams           += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string reqSignature        = pBu.get()->getSignature(reqParams);
+
+    std::string reqParamsWithSign   = reqParams+"&signature="+reqSignature;
 
 
-    // ELOG(INFO, "Query Order Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    httplib::Headers reqHeaders     = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
-    ELOG(INFO, "Query Order Response Body: %s.", mResponseBody.c_str());
+    // ELOG(INFO, "Query Order Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
 
-    Json::Value  mAPIJson;
-    Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse(mResponseBody.c_str(), mAPIJson);
+    std::string responseBody        = getRequest(reqEndpoint, reqParamsWithSign, reqHeaders);
 
-    if (!mParsingSuccessful)
+    ELOG(INFO, "Query Order Response Body: %s.", responseBody.c_str());
+
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful  = parserReader.parse(responseBody.c_str(), parsedResponse);
+
+    if (!parsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
         return false;
     }
 
-    if (!mAPIJson.isObject())
+    if (!parsedResponse.isObject())
     {
         ELOG(ERROR, "JSON is not object.");
         return false;
     }
 
-    int mOrderId                = mAPIJson["orderId"].asInt();
-    std::string mSide           = mAPIJson["side"].asString();
-    std::string mStatus         = mAPIJson["status"].asString();
-    std::string mSymbol         = mAPIJson["symbol"].asString();
-    std::string mPrice          = mAPIJson["price"].asString();
-    std::string mQuantity       = mAPIJson["origQty"].asString();
-    std::string mExecutedQty    = mAPIJson["executedQty"].asString();
-    std::string mTime           = mAPIJson["updateTime"].asString();
+    int mOrderId                = parsedResponse["orderId"].asInt();
+    std::string mSide           = parsedResponse["side"].asString();
+    std::string mStatus         = parsedResponse["status"].asString();
+    std::string mSymbol         = parsedResponse["symbol"].asString();
+    std::string mPrice          = parsedResponse["price"].asString();
+    std::string mQuantity       = parsedResponse["origQty"].asString();
+    std::string mExecutedQty    = parsedResponse["executedQty"].asString();
+    std::string mTime           = parsedResponse["updateTime"].asString();
 
-    std::string mError          = mAPIJson["Error"].asString();
+    std::string mError          = parsedResponse["Error"].asString();
 
     if (mError.size() == 0)
     {
@@ -1742,38 +1762,38 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
  */
 bool BinanceRequests::currentOpenOrders(std::string symbol)
 {
-    std::string mTimestamp              = pBu.get()->getTimestamp();
+    std::string reqTimestamp        = pBu.get()->getTimestamp();
 
-    std::string mEndpoint               = "/api/v3/openOrders";
-
-
-    std::string mParams                 = "symbol="+symbol+"&timestamp="+mTimestamp+"&recvWindow="+mRecvWindow;
-
-    std::string mSignature              = pBu.get()->getSignature(mParams);
-
-    std::string mParamsWithSignature    = mParams+"&signature="+mSignature;
+    std::string reqEndpoint         = "/api/v3/openOrders";
 
 
-    httplib::Headers mHeaders           = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
+    std::string reqParams           = "symbol="+symbol+"&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string reqSignature        = pBu.get()->getSignature(reqParams);
+
+    std::string reqParamsWithSign   = reqParams+"&signature="+reqSignature;
 
 
-    ELOG(INFO, "Current Open Orders Request Timestamp: %s, Endpoint: %s", mTimestamp.c_str(), mEndpoint.c_str());
+    httplib::Headers reqHeaders     = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
 
-    std::string mResponseBody           = getRequest(mEndpoint, mParamsWithSignature, mHeaders);
 
-    ELOG(INFO, "Current Open Orders Response Body: %s.", mResponseBody.c_str());
+    ELOG(INFO, "Current Open Orders Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
 
-    Json::Value  mAPIJson;
-    Json::Reader mReader;
-    bool         mParsingSuccessful = mReader.parse(mResponseBody.c_str(), mAPIJson);
+    std::string responseBody        = getRequest(reqEndpoint, reqParamsWithSign, reqHeaders);
 
-    if (!mParsingSuccessful)
+    ELOG(INFO, "Current Open Orders Response Body: %s.", responseBody.c_str());
+
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful  = parserReader.parse(responseBody.c_str(), parsedResponse);
+
+    if (!parsingSuccessful)
     {
         ELOG(ERROR, "Failed to JSON parse.");
         return false;
     }
 
-    if (!mAPIJson.isArray())
+    if (!parsedResponse.isArray())
     {
         ELOG(ERROR, "JSON is not array.");
         return false;
