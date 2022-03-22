@@ -51,7 +51,7 @@
 
 #define  LogConsole                 std::cout
 
-class eLog
+class elog
 {
     private:
         std::ofstream               LogFile;
@@ -60,30 +60,32 @@ class eLog
         std::string                 LogFileNameInfix = "1";         // Must be defined as an integer
         std::string                 LogFileNameSuffix = ".log";
 
-    public:
-        inline                      eLog();
-        inline                      ~eLog();
-
-        void                        writeLogToFile(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message);
-        void                        writeLogToConsole(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message);
         void                        addLogHeadToFile();
-        void                        changeFile();
         std::string                 currentDateTime();
         std::string                 getLogFileFullName();
         std::ifstream::pos_type     fileSize(const char* fName);
+
+    public:
+        std::mutex                  MutexLock;
+        char const*                 LevelNames[ 4 ] = { "ERROR", "WARNING", "DEBUG", "INFO" };
+
+
+        inline                      elog();
+        inline                      ~elog();
+
+        void                        changeFile();
+        void                        writeLogToFile(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message);
+        void                        writeLogToConsole(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message);
         std::string                 addSpacesToConstChar(const char* getChar, uint8_t maxSize);
         std::string                 addSpacesToUnsignedInt(unsigned int getInt, uint8_t maxSize);
-
-        char const*                 LevelNames[ 4 ] = { "ERROR", "WARNING", "DEBUG", "INFO" };
-        std::mutex                  MutexLock;
 };
 
 
 /**
- * @brief Construct a new eLog::eLog object
+ * @brief Construct a new elog::elog object
  * 
  */
-inline eLog::eLog()
+inline elog::elog()
 {
     char            *_Message       = (char *)malloc(MAX_MESSAGE_LENGTH);
     const char*     _FileName       = __FILENAME__;
@@ -128,10 +130,10 @@ inline eLog::eLog()
 
 
 /**
- * @brief Destroy the eLog::eLog object
+ * @brief Destroy the elog::elog object
  * 
  */
-inline eLog::~eLog()
+inline elog::~elog()
 {
     char            *_Message       = (char *)malloc(MAX_MESSAGE_LENGTH);
     const char*     _FileName       = __FILENAME__;
@@ -166,7 +168,7 @@ inline eLog::~eLog()
 }
   
 
-extern eLog _eLog;
+extern elog _elog;
 
 
 /**
@@ -190,7 +192,7 @@ void getLog(char const *file, unsigned int line, char const * function, unsigned
 
         if (_Message)
         {
-            _eLog.MutexLock.lock();
+            _elog.MutexLock.lock();
 
             // /full/path/to/file.c to file.c
             file = (strrchr(file, '/') ? strrchr(file, '/') + 1 : file);
@@ -199,24 +201,24 @@ void getLog(char const *file, unsigned int line, char const * function, unsigned
             snprintf (_Message, MAX_MESSAGE_LENGTH-1, f, args...);
 
             #if LOG_CONSOLE_OR_FILE == 0
-                _eLog.writeLogToConsole(file,
+                _elog.writeLogToConsole(file,
                                     std::to_string(gettid()),
                                     function,
                                     std::to_string(line),
-                                    _eLog.LevelNames[ lvl ],
+                                    _elog.LevelNames[ lvl ],
                                     _Message);
             #else
-                _eLog.writeLogToFile(_eLog.addSpacesToConstChar(file, MAX_FILE_NAME_SIZE),
-                                    _eLog.addSpacesToUnsignedInt(gettid(), MAX_TID_SIZE),
-                                    _eLog.addSpacesToConstChar(function, MAX_FUNC_NAME_SIZE),
-                                    _eLog.addSpacesToUnsignedInt(line, MAX_LINE_SIZE),
-                                    _eLog.addSpacesToConstChar(_eLog.LevelNames[ lvl ], MAX_LEVEL_SIZE),
+                _elog.writeLogToFile(_elog.addSpacesToConstChar(file, MAX_FILE_NAME_SIZE),
+                                    _elog.addSpacesToUnsignedInt(gettid(), MAX_TID_SIZE),
+                                    _elog.addSpacesToConstChar(function, MAX_FUNC_NAME_SIZE),
+                                    _elog.addSpacesToUnsignedInt(line, MAX_LINE_SIZE),
+                                    _elog.addSpacesToConstChar(_elog.LevelNames[ lvl ], MAX_LEVEL_SIZE),
                                     _Message);
 
-                _eLog.changeFile();
+                _elog.changeFile();
             #endif
 
-            _eLog.MutexLock.unlock();
+            _elog.MutexLock.unlock();
 
             free(_Message);
         }

@@ -89,7 +89,6 @@ class BinanceWebsocket
                                     ~BinanceWebsocket();
 
         void                        init();
-
 };
 
 #endif

@@ -25,16 +25,22 @@
 using       SoldOrdersMap   = std::multimap<int, std::map<std::string, std::string>>;
 
 // Structs
-struct candle_data : public std::mutex
+struct socket_error : public std::mutex
 {
-    bool                    isUpdated = false;
-    std::string             symbol;
-    std::string             timestamp;
-    std::string             openPrice;
-    std::string             closePrice;
-    std::string             highPrice;
-    std::string             lowPrice;
-    bool                    isClosed;
+    std::string         message;
+    std::string         symbol;
+};
+
+struct candle_data  : public std::mutex
+{
+    bool                isUpdated = false;
+    std::string         symbol;
+    std::string         timestamp;
+    std::string         openPrice;
+    std::string         closePrice;
+    std::string         highPrice;
+    std::string         lowPrice;
+    bool                isClosed;
 };
 
 
@@ -43,6 +49,7 @@ class Opel
     private:
         bool                        mExitSignal = 1;
         bool                        mIsActive;
+
         std::string                 mTradeSymbol;
         std::string                 mFollowSymbol;
 
@@ -60,9 +67,10 @@ class Opel
                                     
         static Opel                 *instance();
 
+        static struct socket_error  *getSocketErrorStruct();
         static struct candle_data   *getTradeCandleStruct();
         static struct candle_data   *getFollowCandleStruct();
-
+        
         void                        setExitSignal(bool signal);
         bool                        getExitSignal();
 

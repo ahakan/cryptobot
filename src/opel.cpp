@@ -40,6 +40,24 @@ Opel* Opel::instance()
 
 
 /**
+ * @brief Socket error struct
+ * 
+ * @return struct socket_error* 
+ */
+struct socket_error* Opel::getSocketErrorStruct()
+{
+    static struct socket_error *pSocketErrorData;
+
+    if (pSocketErrorData == NULL)
+    {
+        pSocketErrorData = new socket_error;
+    }
+    
+    return pSocketErrorData;
+}
+
+
+/**
  * @brief Trade Candle data struct
  * 
  * @return struct candle_data* 

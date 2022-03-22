@@ -29,10 +29,9 @@ Webserver::~Webserver()
  */
 void Webserver::start()
 {
-    readRequest();
-    checkDeadline();
+    ELOG(INFO, "Webserver is started.");
 
-    ELOG(INFO, "Webserver start.");
+    readRequest();
 }
 
 
@@ -162,6 +161,8 @@ void Webserver::writeResponse()
             self->mSocket.shutdown(tcp::socket::shutdown_send, ec);
             self->mDeadline.cancel();
         });
+
+    checkDeadline();
 }
 
 
@@ -264,7 +265,7 @@ void BinanceWebserver::checkExitSignal()
         {
             mIoc.stop();
 
-            ELOG(INFO, "Thread Webserver detached..");
+            ELOG(INFO, "Thread Webserver detached.");
 
             break;
         }

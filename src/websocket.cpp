@@ -61,6 +61,12 @@ void Websocket::resolve(beast::error_code ec, tcp::resolver::results_type result
     if (ec)
     {
         ELOG(ERROR, "Resolve error: %s", ec.message().c_str());
+
+        // Close the WebSocket connection
+        mWs.async_close(websocket::close_code::normal,
+            beast::bind_front_handler(
+                &Websocket::close,
+                shared_from_this()));
     }
 
     ELOG(INFO, "Websocket on resolve.");
@@ -88,6 +94,12 @@ void Websocket::connect(beast::error_code ec, tcp::resolver::results_type::endpo
     if (ec)
     {
         ELOG(ERROR, "Connect error: %s", ec.message().c_str());
+
+        // Close the WebSocket connection
+        mWs.async_close(websocket::close_code::normal,
+            beast::bind_front_handler(
+                &Websocket::close,
+                shared_from_this()));
     }
 
     ELOG(INFO, "Websocket connected successfully.");
@@ -120,15 +132,13 @@ void Websocket::connect(beast::error_code ec, tcp::resolver::results_type::endpo
                 &Websocket::close,
                 shared_from_this()));
     }
-    else
-    {
-        // Perform the SSL handshake
-        mWs.next_layer().async_handshake(
-            ssl::stream_base::client,
-            beast::bind_front_handler(
-                &Websocket::sslHandshake,
-                shared_from_this()));
-    }
+
+    // Perform the SSL handshake
+    mWs.next_layer().async_handshake(
+        ssl::stream_base::client,
+        beast::bind_front_handler(
+            &Websocket::sslHandshake,
+            shared_from_this()));
 }
 
 
@@ -142,7 +152,14 @@ void Websocket::sslHandshake(beast::error_code ec)
     if (ec)
     {
         ELOG(ERROR, "SSL Handshake error: %s", ec.message().c_str());
+
+        // Close the WebSocket connection
+        mWs.async_close(websocket::close_code::normal,
+            beast::bind_front_handler(
+                &Websocket::close,
+                shared_from_this()));
     }
+
     ELOG(INFO, "Websocket SSL handshake did successfully.");
 
     // Turn off the timeout on the tcp_stream, because
@@ -173,14 +190,13 @@ void Websocket::sslHandshake(beast::error_code ec)
                 &Websocket::close,
                 shared_from_this()));
     }
-    else
-    {
-        // Perform the websocket handshake
-        mWs.async_handshake(mHost, mEndpoint,
-            beast::bind_front_handler(
-                &Websocket::handshake,
-                shared_from_this()));
-    }
+
+    // Perform the websocket handshake
+    mWs.async_handshake(mHost, mEndpoint,
+        beast::bind_front_handler(
+            &Websocket::handshake,
+            shared_from_this()));
+    
 }
 
 
@@ -194,6 +210,12 @@ void Websocket::handshake(beast::error_code ec)
     if (ec)
     {
         ELOG(ERROR, "Handshake error: %s", ec.message().c_str());
+
+        // Close the WebSocket connection
+        mWs.async_close(websocket::close_code::normal,
+            beast::bind_front_handler(
+                &Websocket::close,
+                shared_from_this()));
     }
 
     ELOG(INFO, "Websocket handshake did successfully.");
@@ -208,15 +230,13 @@ void Websocket::handshake(beast::error_code ec)
                 &Websocket::close,
                 shared_from_this()));
     }
-    else
-    {
-        // Read a message into our buffer
-        mWs.async_read(
-            mBuffer,
-            beast::bind_front_handler(
-                &Websocket::read,
-                shared_from_this()));
-    }
+
+    // Read a message into our buffer
+    mWs.async_read(
+        mBuffer,
+        beast::bind_front_handler(
+            &Websocket::read,
+            shared_from_this()));
 }
 
 
@@ -233,7 +253,12 @@ void Websocket::read( beast::error_code ec, std::size_t bytes_transferred)
     if (ec)
     {
         ELOG(ERROR, "Read error: %s", ec.message().c_str());
-        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+        // Close the WebSocket connection
+        mWs.async_close(websocket::close_code::normal,
+            beast::bind_front_handler(
+                &Websocket::close,
+                shared_from_this()));
     }
 
     Opel *iOpel = Opel::instance();
@@ -332,6 +357,10 @@ void Websocket::close(beast::error_code ec)
 {
     if (ec)
     {
+        struct socket_error *pSocketError = Opel::getSocketErrorStruct();
+
+        pSocketError->message = ec.message();
+
         ELOG(INFO, "Websocket closed. Code: %s", ec.message().c_str());
     }
 
@@ -380,7 +409,6 @@ BinanceWebsocket::~BinanceWebsocket()
     ELOG(INFO, "BinanceWebsocket destructor.");
 
     mIoc.stop();
-    mIoc.reset();
 }
 
 
@@ -390,17 +418,42 @@ BinanceWebsocket::~BinanceWebsocket()
  */
 void BinanceWebsocket::init()
 {
-    // This holds the root certificate used for verification
-    load_root_certificates(mCtx);
+    Opel *iOpel = Opel::instance();
+    
+    ELOG(INFO, "Websocket is initializing.");
 
-    ELOG(INFO, "Websocket init function.");
+    while (iOpel->getExitSignal())
+    {
+        struct socket_error *pSocketError = Opel::getSocketErrorStruct();
 
-    // Launch the asynchronous operation
-    std::make_shared<Websocket>(mIoc, mCtx)->run(mHost, mPort, mEndpointT);
+        if (pSocketError->message.length() > 0)
+        {
+            mIoc.stop();
 
-    std::make_shared<Websocket>(mIoc, mCtx)->run(mHost, mPort, mEndpointF);
+            ELOG(INFO, "Received a Socket Error. Restarting socket connection. Error: %s.", pSocketError->message.c_str());
 
-    // Run the I/O service. The call will return when
-    // the socket is closed.
-    mIoc.run();
+            pSocketError->message = "";
+        }
+
+        if (iOpel->getExitSignal())
+        {
+            // This holds the root certificate used for verification
+            load_root_certificates(mCtx);
+
+            // Launch the asynchronous operation
+            std::make_shared<Websocket>(mIoc, mCtx)->run(mHost, mPort, mEndpointT);
+
+            std::make_shared<Websocket>(mIoc, mCtx)->run(mHost, mPort, mEndpointF);
+
+            ELOG(INFO, "Websocket initialized.");
+
+            // Run the I/O service. The call will return when
+            // the socket is closed.
+            mIoc.run();
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    ELOG(INFO, "Thread Websocket detached.");
 }

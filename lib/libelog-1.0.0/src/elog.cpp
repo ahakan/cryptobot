@@ -13,58 +13,10 @@
 
 
 /**
- * @brief Write a log message to log file
- * 
- * @param _FileName 
- * @param _TID 
- * @param _FunctionName 
- * @param _Line 
- * @param _LevelNames 
- * @param _Message 
- */
-void eLog::writeLogToFile(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message)
-{
-    if (LogFile.is_open())
-    {
-        LogFile << "[" << currentDateTime() << "]";
-        LogFile << "[" << _FileName << "]";
-        LogFile << "[" << _TID << "]";
-        LogFile << "[" << _FunctionName << "]";
-        LogFile << "[" << _Line << "]";
-        LogFile << "[" << _LevelNames  << "]" << ": ";
-        LogFile << _Message << std::endl;
-        LogFile.flush();
-    }
-}
-
-
-/**
- * @brief Write a log message to console
- * 
- * @param _FileName 
- * @param _TID 
- * @param _FunctionName 
- * @param _Line 
- * @param _LevelNames 
- * @param _Message 
- */
-void eLog::writeLogToConsole(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message)
-{
-    LogConsole << "[" << currentDateTime() << "]";
-    LogConsole << "[" << _FileName << "]";
-    LogConsole << "[" << _TID << "]";
-    LogConsole << "[" << _FunctionName << "]";
-    LogConsole << "[" << _Line << "]";
-    LogConsole << "[" << _LevelNames << "]" << ": ";
-    LogConsole << _Message << std::endl;
-}
-
-
-/**
  * @brief Write a head to log file
  * 
  */
-void eLog::addLogHeadToFile()
+void elog::addLogHeadToFile()
 {
     if (LogFile.is_open())
     {
@@ -81,31 +33,11 @@ void eLog::addLogHeadToFile()
 
 
 /**
- * @brief Create a new log file
- * 
- */
-void eLog::changeFile()
-{
-    uint32_t _FileSize = fileSize((getLogFileFullName()).c_str());
-
-    if (_FileSize >= MAX_FILE_SIZE)
-    {
-        LogFile.close();
-
-        LogFileNameInfix = std::to_string(std::stoi(LogFileNameInfix)+1);
-
-        LogFile.open(getLogFileFullName());
-
-        addLogHeadToFile();
-    }
-}
-
-/**
  * @brief Get current datetime
  * 
  * @return std::string 
  */
-std::string eLog::currentDateTime()
+std::string elog::currentDateTime()
 {
     const auto              p1 = std::chrono::system_clock::now();
     uint16_t                milliseconds = (std::chrono::duration_cast<std::chrono::milliseconds>(p1.time_since_epoch()).count())%1000;
@@ -131,7 +63,7 @@ std::string eLog::currentDateTime()
  * 
  * @return std::string 
  */
-std::string eLog::getLogFileFullName()
+std::string elog::getLogFileFullName()
 {
     return LogFilePath + LogFileNamePrefix + LogFileNameInfix + LogFileNameSuffix;
 }
@@ -143,11 +75,80 @@ std::string eLog::getLogFileFullName()
  * @param fName 
  * @return std::ifstream::pos_type 
  */
-std::ifstream::pos_type eLog::fileSize(const char* fName)
+std::ifstream::pos_type elog::fileSize(const char* fName)
 {
     std::ifstream file(fName, std::ifstream::ate | std::ifstream::binary);
 
     return file.tellg();
+}
+
+
+/**
+ * @brief Create a new log file
+ * 
+ */
+void elog::changeFile()
+{
+    uint32_t _FileSize = fileSize((getLogFileFullName()).c_str());
+
+    if (_FileSize >= MAX_FILE_SIZE)
+    {
+        LogFile.close();
+
+        LogFileNameInfix = std::to_string(std::stoi(LogFileNameInfix)+1);
+
+        LogFile.open(getLogFileFullName());
+
+        addLogHeadToFile();
+    }
+}
+
+
+/**
+ * @brief Write a log message to log file
+ * 
+ * @param _FileName 
+ * @param _TID 
+ * @param _FunctionName 
+ * @param _Line 
+ * @param _LevelNames 
+ * @param _Message 
+ */
+void elog::writeLogToFile(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message)
+{
+    if (LogFile.is_open())
+    {
+        LogFile << "[" << currentDateTime() << "]";
+        LogFile << "[" << _FileName << "]";
+        LogFile << "[" << _TID << "]";
+        LogFile << "[" << _FunctionName << "]";
+        LogFile << "[" << _Line << "]";
+        LogFile << "[" << _LevelNames  << "]" << ": ";
+        LogFile << _Message << std::endl;
+        LogFile.flush();
+    }
+}
+
+
+/**
+ * @brief Write a log message to console
+ * 
+ * @param _FileName 
+ * @param _TID 
+ * @param _FunctionName 
+ * @param _Line 
+ * @param _LevelNames 
+ * @param _Message 
+ */
+void elog::writeLogToConsole(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message)
+{
+    LogConsole << "[" << currentDateTime() << "]";
+    LogConsole << "[" << _FileName << "]";
+    LogConsole << "[" << _TID << "]";
+    LogConsole << "[" << _FunctionName << "]";
+    LogConsole << "[" << _Line << "]";
+    LogConsole << "[" << _LevelNames << "]" << ": ";
+    LogConsole << _Message << std::endl;
 }
 
 
@@ -158,7 +159,7 @@ std::ifstream::pos_type eLog::fileSize(const char* fName)
  * @param maxSize 
  * @return std::string 
  */
-std::string eLog::addSpacesToConstChar(const char* getChar, uint8_t maxSize)
+std::string elog::addSpacesToConstChar(const char* getChar, uint8_t maxSize)
 {
     std::string     _StringWithSpace;
 
@@ -179,7 +180,7 @@ std::string eLog::addSpacesToConstChar(const char* getChar, uint8_t maxSize)
  * @param maxSize 
  * @return std::string 
  */
-std::string eLog::addSpacesToUnsignedInt(unsigned int getInt, uint8_t maxSize)
+std::string elog::addSpacesToUnsignedInt(unsigned int getInt, uint8_t maxSize)
 {
     std::string     _StringWithSpace;
     size_t          _IntLength = std::to_string(getInt).length();
@@ -193,4 +194,4 @@ std::string eLog::addSpacesToUnsignedInt(unsigned int getInt, uint8_t maxSize)
     return _StringWithSpace;
 }
 
-eLog _eLog;
+elog _elog;
