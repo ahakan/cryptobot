@@ -10,6 +10,15 @@ Utilities::Utilities()
     // Log file init
     mConfigFile.open("config.json", std::ifstream::binary);
 
+    if (!mConfigFile.is_open())
+    {
+        ELOG(ERROR, "Failed to open Config file.");
+
+        setExitSignal(0);
+    }
+
+    ELOG(INFO, "Configuration file opened successfully.");
+
     mConfigFile >> mConfigJson;
 
     if (mConfigJson.size() == 0)

@@ -612,8 +612,8 @@ bool BinanceRequests::newBuyOrder()
 
     if (!isNewRSILessThanOversold)
     {
-        // if we have not a buy order or bought order we create a new buy order
-        if (mBuyOrders.size() < 1 && mBoughtOrders.size() < 1)
+        // if we have not a buy order we create a new buy order
+        if (mBuyOrders.size() < 1)
         {
             // check user wallet balance
             bool walletBalanceAmount    = getCoinBalance(mBalanceSymbol);

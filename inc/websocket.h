@@ -60,13 +60,13 @@ class Websocket : public std::enable_shared_from_this<Websocket>
         void                        sslHandshake(beast::error_code ec);
         void                        handshake(beast::error_code ec);
         void                        read( beast::error_code ec, std::size_t bytes_transferred);
-        void                        close(beast::error_code ec);
 
     public:
         explicit                    Websocket(net::io_context& ioc, ssl::context& ctx);
                                     ~Websocket();
 
         void                        run(std::string host, std::string port, std::string endpoint);
+        void                        close();
     
 };
 
