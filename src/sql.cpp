@@ -82,10 +82,9 @@ void Sql::init()
 {
     Opel *iOpel = Opel::instance();
 
-    AllOrdersMap *mBoughtOrders = iOpel->getBoughtOrdersMap();
-    AllOrdersMap *mSellOrders   = iOpel->getSellOrdersMap();
-
     getBotTable();
+
+    getBoughtCoin();
 
     while (iOpel->getExitSignal())
     {
@@ -133,6 +132,9 @@ void Sql::init()
     // Record all bought coins
     if (!iOpel->getExitSignal())
     {
+        AllOrdersMap *mBoughtOrders = iOpel->getBoughtOrdersMap();
+        AllOrdersMap *mSellOrders   = iOpel->getSellOrdersMap();
+
         if (mBoughtOrders->size() > 0)
         {
             for (MapIterator order = mBoughtOrders->begin(); order != mBoughtOrders->end(); ++order)
@@ -144,8 +146,6 @@ void Sql::init()
                 std::string time        = order->second["BoughtTime"];
 
                 addBoughtCoin(orderId, symbol, price, quantity, time);
-
-                ELOG(INFO, "Added bought coin. Order id: %d, Symbol: %s, Price: %s.", orderId, symbol.c_str(), price.c_str());
             }
         }
 
@@ -377,9 +377,55 @@ bool Sql::addBoughtCoin(int id, std::string boughtsymbol, std::string boughtpric
             "', '" + boughtquantity + \
             "', '" + boughttimestamp + "');";
 
-    ELOG(INFO, "Bought Coin Added to Database. Order id: %d", id);
+    ELOG(INFO, "Added bought coin. Order id: %d, Symbol: %s, Price: %s, Quantity: %s.", id, boughtsymbol.c_str(), boughtprice.c_str(), boughtquantity.c_str());
 
     return allQuery(sql);
+}
+
+
+/**
+ * @brief Get bought coin
+ * 
+ */
+void Sql::getBoughtCoin()
+{
+    // Create SQL statement
+    sql = "SELECT * FROM BOUGHTCOIN";
+
+    ELOG(INFO, "Bot activation check. Query: %s.", sql.c_str());
+
+    Record records          = selectQuery(sql);
+
+    int recordSize  = 6;
+    int orderSize   = static_cast<int>(records.size())/6;
+
+    for(int i = 0; i < orderSize; i++)
+    {
+        int orderId             = std::stoi(records[i*recordSize].second);
+        std::string symbol      = records[i*recordSize + 1].second;
+        std::string price       = records[i*recordSize + 2].second;
+        std::string quantity    = records[i*recordSize + 3].second;
+        std::string timestamp   = records[i*recordSize + 4].second;
+
+
+        OrderMap order;
+
+        order.emplace("Symbol", symbol);
+        order.emplace("BoughtPrice", price);
+        order.emplace("Quantity", quantity);
+        order.emplace("BoughtTime", timestamp);
+
+        Opel *iOpel = Opel::instance();
+
+        AllOrdersMap *mBoughtOrders = iOpel->getBoughtOrdersMap();
+
+        mBoughtOrders->emplace(orderId, order);
+
+        // Remove bought coin
+        removeBoughtCoin(orderId);
+
+        ELOG(INFO, "Bought Coin Added to Bought Orders Map. Order id: %d, Symbol: %s, Price: %s, Quantity: %s.", orderId, symbol.c_str(), price.c_str(), quantity.c_str());
+    }
 }
 
 

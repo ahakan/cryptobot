@@ -56,7 +56,9 @@ class Sql
         void                        getBotTable();
         bool                        addUserData(std::string status, bool read, bool spot, bool transfer);
         bool                        addClosedKlinePrice(std::string timestamp, std::string openPrice, std::string closePrice, std::string highPrice, std::string lowPrice);
+        
         bool                        addBoughtCoin(int id, std::string boughtsymbol, std::string boughtprice, std::string boughtquantity, std::string boughttimestamp);
+        void                        getBoughtCoin();
         bool                        removeBoughtCoin(int id);
 };
 
