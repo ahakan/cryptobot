@@ -184,13 +184,57 @@ std::string Opel::getFollowSymbol()
 
 
 /**
+ * @brief Set bought orders map
+ * 
+ * @param orders 
+ */
+void Opel::setBoughtOrdersMap(AllOrdersMap *orders)
+{
+    mBoughtOrdersMap = orders;
+}
+
+
+/**
+ * @brief Get bought orders map
+ * 
+ * @return AllOrdersMap* 
+ */
+AllOrdersMap *Opel::getBoughtOrdersMap()
+{
+    return mBoughtOrdersMap;
+}
+
+
+/**
+ * @brief Set sell orders map
+ * 
+ * @param orders 
+ */
+void Opel::setSellOrdersMap(AllOrdersMap *orders)
+{
+    mSellOrdersMap = orders;
+}
+
+
+/**
+ * @brief Get sell orders map
+ * 
+ * @return AllOrdersMap* 
+ */
+AllOrdersMap *Opel::getSellOrdersMap()
+{
+    return mSellOrdersMap;
+}
+
+
+/**
  * @brief Set sold orders map
  * 
  * @param orders 
  */
 void Opel::setSoldOrdersMap(SoldOrdersMap *orders)
 {
-    mSoldOrders = orders;
+    mSoldOrdersMap = orders;
 }
 
 
@@ -201,5 +245,5 @@ void Opel::setSoldOrdersMap(SoldOrdersMap *orders)
  */
 SoldOrdersMap *Opel::getSoldOrdersMap()
 {
-    return mSoldOrders;
+    return mSoldOrdersMap;
 }

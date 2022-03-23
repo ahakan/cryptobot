@@ -26,8 +26,11 @@ Requests::Requests(std::shared_ptr<BinanceUtilities> pBu)
     mRSIOversold            = pBu.get()->getRSIOversold();
     mRSIOverbought          = pBu.get()->getRSIOverbought();
 
+
     Opel *iOpel             = Opel::instance();
 
+    iOpel->setBoughtOrdersMap(&mBoughtOrders);
+    iOpel->setSellOrdersMap(&mSellOrders);
     iOpel->setSoldOrdersMap(&mSoldOrders);
 
     ELOG(INFO, "Requests constructor initialized. mSymbol: %s, mFollowSymbol: %s, mInterval: %s, mBalanceSymbol: %s, mBalanceAmount: %s.", mSymbol.c_str(), mFollowSymbol.c_str(), mInterval.c_str(), mBalanceSymbol.c_str(), mBalanceAmount.c_str());
@@ -548,13 +551,6 @@ void BinanceRequests::init()
         binance();
     }
 
-    if (mBuyOrders.size() > 0)
-    {
-        ELOG(INFO, "Closed last buy order. Order id: %d.", mBuyOrders.begin()->first);
-
-        cancelOrder(mSymbol, mBuyOrders.begin()->first);
-    }
-
     ELOG(INFO, "Thread Requests detached.");
 }
 
@@ -596,6 +592,9 @@ void BinanceRequests::binance()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
+
+    // Cancel all orders
+    cancelAllOpenOrders(mSymbol);
 }
 
 
@@ -747,7 +746,7 @@ bool BinanceRequests::checkSellOrders()
     if (mSellOrders.size() > 0)
     {
         // Cancel to filled or canceled status orders
-        for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+        for (MapIterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
         {
             int orderId = i->first;
 
@@ -778,7 +777,7 @@ bool BinanceRequests::checkSellOrders()
 
                 if (isNewRSIHigh)
                 {
-                    for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+                    for (MapIterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
                     {
                         int orderId = i->first;
 
@@ -794,7 +793,7 @@ bool BinanceRequests::checkSellOrders()
         }     
 
         // Check sell orders
-        for (AllOrdersMap::iterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+        for (MapIterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
         {
             int orderId = i->first;
 
@@ -1339,6 +1338,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
                 mOrder.emplace("Price", mPrice);
                 mOrder.emplace("BoughtPrice", mBoughtOrders.begin()->second["BoughtPrice"]);
                 mOrder.emplace("Quantity", mQuantity);
+                mOrder.emplace("BoughtTime", mBoughtOrders.begin()->second["BoughtTime"]);
                 mOrder.emplace("TransactTime", mTransactTime);
 
                 mSellOrders.emplace(mOrderId, mOrder);
@@ -1379,6 +1379,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
                 mOrder.emplace("Price", mPrice);
                 mOrder.emplace("BoughtPrice", mBoughtOrders.begin()->second["BoughtPrice"]);
                 mOrder.emplace("Quantity", mQuantity);
+                mOrder.emplace("BoughtTime", mBoughtOrders.begin()->second["BoughtTime"]);
                 mOrder.emplace("SoldTime", mTransactTime);
 
                 mSoldOrders.emplace(mOrderId, mOrder);
@@ -1508,12 +1509,54 @@ bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
         return false;
     }
 
-    std::string mStatus = parsedResponse[0]["status"].asString();
+    int responseSize = static_cast<int>(parsedResponse.size());
 
-    if (mStatus!="CANCELED")
+    ELOG(INFO, "Cancel All Open Orders. List size: %d.", responseSize);
+
+    for (int i = 0; i < responseSize; i++)
     {
-        ELOG(ERROR, "Failed to Cancel the All Open Orders.");
-        return false;
+        if (parsedResponse[i]["side"] == mSellSide)
+        {
+            int orderId                 = parsedResponse[i]["orderId"].asInt();
+            std::string status          = parsedResponse[i]["status"].asString();
+            std::string symbol          = parsedResponse[i]["symbol"].asString();
+            std::string price           = parsedResponse[i]["price"].asString();
+            std::string origQty         = parsedResponse[i]["origQty"].asString();
+            std::string executedQty     = parsedResponse[i]["executedQty"].asString();
+
+
+            MapIterator findOrder       = mSellOrders.find(orderId);
+
+            if (findOrder != mSellOrders.end())
+            {
+                OrderMap newOrder;
+
+                newOrder.emplace("Symbol", symbol);
+                newOrder.emplace("BoughtPrice", findOrder->second["BoughtPrice"]);
+                newOrder.emplace("BoughtTime", findOrder->second["BoughtTime"]);
+
+                ELOG(INFO, "Canceled Order. Order id: %d, Status: %s, Symbol: %s, Bought Price: %s.", orderId, status.c_str(), symbol.c_str(), findOrder->second["BoughtPrice"].c_str());
+
+                bool isHigherThanZero = pBu.get()->compareTwoStrings("00.00", executedQty);       // if return false partially filled
+
+                // Partially filled
+                if (!isHigherThanZero)
+                {
+                    std::string lastQuantity = pBu.get()->subTwoStrings(origQty, executedQty);
+
+                    newOrder.emplace("Quantity", lastQuantity);
+                }
+                else
+                {
+                    newOrder.emplace("Quantity", origQty);
+                }
+            
+                // Update order
+                findOrder->second = newOrder;
+
+                ELOG(INFO, "Updated Order in Sell Orders Map. Status: %s, Order id: %d.", status.c_str(), orderId);
+            }
+        }
     }
 
     ELOG(INFO, "Canceled All Open Orders.");
@@ -1596,7 +1639,7 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
                 mOrder.emplace("Quantity", mExecutedQty);
                 mOrder.emplace("BoughtTime", mTime);
 
-                if (mBoughtOrders.find(orderId) == mBoughtOrders.end())
+                if (mBoughtOrders.find(mOrderId) == mBoughtOrders.end())
                     mBoughtOrders.emplace(mOrderId, mOrder);
 
                 if (mBuyOrders.find(orderId) != mBuyOrders.end())
@@ -1622,7 +1665,7 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
 
                 ELOG(INFO, "Added Sold Order Item. Order id: %d, Map size: %d.", mOrderId, mSoldOrders.size());
             
-                AllOrdersMap::iterator find = mSellOrders.find(mOrderId);
+                MapIterator find = mSellOrders.find(mOrderId);
 
                 if (find != mSellOrders.end())
                 {
@@ -1643,9 +1686,9 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
         }
         else if (mStatus == "CANCELED")
         {
-            bool isHigherThanZero       = pBu.get()->compareTwoStrings("00.00", mExecutedQty);   // if return false
-            bool isLowerThanQuantity    = pBu.get()->compareTwoStrings(mExecutedQty, mQuantity); // if return false
-                                                                                            // that means partially filled
+            bool isHigherThanZero       = pBu.get()->compareTwoStrings("00.00", mExecutedQty);      // if return false
+            bool isLowerThanQuantity    = pBu.get()->compareTwoStrings(mExecutedQty, mQuantity);    // if return false
+                                                                                                    // that means partially filled
             if (!isHigherThanZero && !isLowerThanQuantity)
             {
                 if (mSide == mBuySide)
@@ -1657,7 +1700,7 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
                     mOrder.emplace("Quantity", mExecutedQty);
                     mOrder.emplace("BoughtTime", mTime);
 
-                    if (mBoughtOrders.find(orderId) == mBoughtOrders.end())
+                    if (mBoughtOrders.find(mOrderId) == mBoughtOrders.end())
                         mBoughtOrders.emplace(mOrderId, mOrder);
 
                     if (mBuyOrders.find(orderId) != mBuyOrders.end())
@@ -1684,16 +1727,17 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
 
                     ELOG(INFO, "Added Sold Order Item. Order id: %d, Map size: %d.", mOrderId, mSoldOrders.size());
 
-                    AllOrdersMap::iterator find = mSellOrders.find(mOrderId);
+                    MapIterator find = mSellOrders.find(mOrderId);
 
                     if (find != mSellOrders.end())
                     {
                         // added bought price and new quantity
                         mOrder.emplace("BoughtPrice", find->second["BoughtPrice"]);
+                        mOrder.emplace("BoughtTime", find->second["BoughtTime"]);
                         mOrder["Quantity"] = pBu.get()->subTwoStrings(mQuantity, mExecutedQty);
 
                         // check if not exists add sell order to bought order list
-                        if (mBoughtOrders.find(mOrderId) == mBoughtOrders.end())
+                        if (mBoughtOrders.find(orderId) == mBoughtOrders.end())
                             mBoughtOrders.emplace(orderId, mOrder);
 
                         // update sell coin value
@@ -1723,8 +1767,8 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
             }
             else if (mSide == mSellSide)
             {
-                AllOrdersMap::iterator findSell     = mSellOrders.find(mOrderId);
-                AllOrdersMap::iterator findBought   = mBoughtOrders.find(mOrderId);
+                MapIterator findSell     = mSellOrders.find(mOrderId);
+                MapIterator findBought   = mBoughtOrders.find(mOrderId);
 
                 if (findBought == mBoughtOrders.end())
                     if (findSell != mSellOrders.end())

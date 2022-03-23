@@ -23,8 +23,13 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <iterator>
 
-using Record    = std::vector<std::pair<std::string, std::string>>;
+// Namespaces
+using Record            = std::vector<std::pair<std::string, std::string>>;
+using OrderMap          = std::map<std::string, std::string>;
+using AllOrdersMap      = std::map<int, OrderMap>;
+using MapIterator       = std::map<int, OrderMap>::iterator;
 
 class Sql
 {
@@ -48,9 +53,11 @@ class Sql
                                     ~Sql();
 
         void                        init();
-        void                        getBOTTable();
+        void                        getBotTable();
         bool                        addUserData(std::string status, bool read, bool spot, bool transfer);
         bool                        addClosedKlinePrice(std::string timestamp, std::string openPrice, std::string closePrice, std::string highPrice, std::string lowPrice);
+        bool                        addBoughtCoin(int id, std::string boughtsymbol, std::string boughtprice, std::string boughtquantity, std::string boughttimestamp);
+        bool                        removeBoughtCoin(int id);
 };
 
 #endif

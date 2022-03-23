@@ -23,7 +23,6 @@ Sql::Sql()
 
     allQuery(sql);
 
-
     // Create USER Table
     sql = "CREATE TABLE IF NOT EXISTS USER("  \
         "id                     INT PRIMARY KEY     NOT NULL," \
@@ -50,6 +49,17 @@ Sql::Sql()
 
     allQuery(sql);
 
+    // Create Bought Coin Table 
+    sql = "CREATE TABLE IF NOT EXISTS BOUGHTCOIN("  \
+        "orderid            INT PRIMARY KEY     NOT NULL," \
+        "symbol             TEXT," \
+        "price              TEXT," \
+        "quantity           TEXT," \
+        "timestamp          TEXT," \
+        "datelocal          DATETIME DEFAULT (datetime('now','localtime')));";
+
+    allQuery(sql);
+
     ELOG(INFO, "Sql constructor initialized.");
 }
 
@@ -72,13 +82,13 @@ void Sql::init()
 {
     Opel *iOpel = Opel::instance();
 
-    getBOTTable();
+    AllOrdersMap *mBoughtOrders = iOpel->getBoughtOrdersMap();
+    AllOrdersMap *mSellOrders   = iOpel->getSellOrdersMap();
 
+    getBotTable();
 
     while (iOpel->getExitSignal())
     {
-        // getBOTTable();
-
         // struct candle_data *pTradeCandleData = Opel::getTradeCandleStruct();
 
         // pTradeCandleData->lock();
@@ -117,9 +127,43 @@ void Sql::init()
         // }
         // pFollowCandleData->unlock();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
 
-        // ELOG(INFO, "getIsActive: %d", pOpel->getIsActive());
+    // Record all bought coins
+    if (!iOpel->getExitSignal())
+    {
+        if (mBoughtOrders->size() > 0)
+        {
+            for (MapIterator order = mBoughtOrders->begin(); order != mBoughtOrders->end(); ++order)
+            {
+                int orderId             = order->first;
+                std::string symbol      = order->second["Symbol"];
+                std::string price       = order->second["BoughtPrice"];
+                std::string quantity    = order->second["Quantity"];
+                std::string time        = order->second["BoughtTime"];
+
+                addBoughtCoin(orderId, symbol, price, quantity, time);
+
+                ELOG(INFO, "Added bought coin. Order id: %d, Symbol: %s, Price: %s.", orderId, symbol.c_str(), price.c_str());
+            }
+        }
+
+        if (mSellOrders->size() > 0)
+        {
+            for (MapIterator order = mSellOrders->begin(); order != mSellOrders->end(); ++order)
+            {
+                int orderId             = order->first;
+                std::string symbol      = order->second["Symbol"];
+                std::string price       = order->second["BoughtPrice"];
+                std::string quantity    = order->second["Quantity"];
+                std::string time        = order->second["BoughtTime"];
+
+                addBoughtCoin(orderId, symbol, price, quantity, time);
+
+                ELOG(INFO, "Added sell coin. Order id: %d, Symbol: %s, Price: %s.", orderId, symbol.c_str(), price.c_str());
+            }
+        }
     }
 
     ELOG(INFO, "Thread SQL detached.");
@@ -247,7 +291,7 @@ int Sql::allCallback(void *pData, int numFields, char **pFields, char **pColName
  * @brief Get BOT table
  * 
  */
-void Sql::getBOTTable()
+void Sql::getBotTable()
 {
     // Create SQL statement
     sql = "SELECT * FROM BOT WHERE id=1";
@@ -307,6 +351,52 @@ bool Sql::addClosedKlinePrice(std::string timestamp, std::string openPrice, std:
             ", " + closePrice + \
             ", " + highPrice + \
             ", " + lowPrice + ");";
+
+    return allQuery(sql);
+}
+
+
+/**
+ * @brief Add bought coin
+ * 
+ * @param orderid 
+ * @param symbol 
+ * @param price 
+ * @param quantity 
+ * @param timestamp 
+ * @return true 
+ * @return false 
+ */
+bool Sql::addBoughtCoin(int id, std::string boughtsymbol, std::string boughtprice, std::string boughtquantity, std::string boughttimestamp)
+{
+    // Create SQL statement
+    sql = "INSERT INTO BOUGHTCOIN (orderid, symbol, price, quantity, timestamp) "  \
+            "VALUES (" + std::to_string(id) + \
+            ", '" + boughtsymbol + \
+            "', '" + boughtprice + \
+            "', '" + boughtquantity + \
+            "', '" + boughttimestamp + "');";
+
+    ELOG(INFO, "Bought Coin Added to Database. Order id: %d", id);
+
+    return allQuery(sql);
+}
+
+
+/**
+ * @brief Remove bought coin
+ * 
+ * @param orderid 
+ * @return true 
+ * @return false 
+ */
+bool Sql::removeBoughtCoin(int id)
+{
+    // Create SQL statement
+    sql = "DELETE FROM BOUGHTCOIN "  \
+            "WHERE orderid = " + std::to_string(id) + ";";
+
+    ELOG(INFO, "Bought Coin Removed to Database. Order id: %d", id);
 
     return allQuery(sql);
 }

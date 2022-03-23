@@ -22,7 +22,9 @@
 #include <map>
 
 // Namespaces
-using       SoldOrdersMap   = std::multimap<int, std::map<std::string, std::string>>;
+using OrderMap          = std::map<std::string, std::string>;
+using AllOrdersMap      = std::map<int, OrderMap>;
+using SoldOrdersMap     = std::multimap<int, OrderMap>;
 
 // Structs
 struct socket_error : public std::mutex
@@ -53,7 +55,9 @@ class Opel
         std::string                 mTradeSymbol;
         std::string                 mFollowSymbol;
 
-        SoldOrdersMap               *mSoldOrders;
+        AllOrdersMap                *mBoughtOrdersMap;
+        AllOrdersMap                *mSellOrdersMap;
+        SoldOrdersMap               *mSoldOrdersMap;
         
 
     protected:
@@ -82,6 +86,12 @@ class Opel
 
         void                        setFollowSymbol(std::string symbol);
         std::string                 getFollowSymbol();
+
+        void                        setBoughtOrdersMap(AllOrdersMap *orders);
+        AllOrdersMap                *getBoughtOrdersMap();
+
+        void                        setSellOrdersMap(AllOrdersMap *orders);
+        AllOrdersMap                *getSellOrdersMap();
 
         void                        setSoldOrdersMap(SoldOrdersMap *orders);
         SoldOrdersMap               *getSoldOrdersMap();

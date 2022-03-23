@@ -107,7 +107,6 @@ void Websocket::connect(beast::error_code ec, tcp::resolver::results_type::endpo
     {
         ec = beast::error_code(static_cast<int>(::ERR_get_error()),
             net::error::get_ssl_category());
-        // return fail(ec, "connect");
     }
 
     // Perform the SSL handshake
