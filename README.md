@@ -29,13 +29,13 @@ Attention! Don't forget to edit the config file.
 
 ## Installation
 
-### *Step 1: Install Boost*
+### *Installing Prerequisites: CMake and Boost*
 
-crytobot use Boost/Beast library for websocket. You must has Boost library.
-Please install it. [Boost C++ Libraries][boost].
+crytobot use CMake for building the app and Boost/Beast library for websocket. You must has CMake and Boost library.
 
+Please install [CMake][cmake] and [Boost Libraries][boost].
 
-### *Step 2: Clone cryptobot*
+### *Step 1: Clone cryptobot*
 
 Clone [cryptobot][cryptobot].
 
@@ -43,14 +43,14 @@ Clone [cryptobot][cryptobot].
 git clone https://github.com/ahakan/cryptobot.git   
 ```
 
-### *Step 3.1: Build cryptobot with bash script*
+### *Step 2.1: Build cryptobot with bash script*
 ```sh
 cd cryptobot
 chmod +x build.sh
 ./build.sh
 ```
 
-### *Step 3.2: Build cryptobot with CMake*
+### *Step 2.2: Build cryptobot with CMake*
 ```sh
 cd cryptobot
 mkdir build && cd build
@@ -68,6 +68,10 @@ If you don't want build some libraries with cmake you can use these configuratio
 ```sh
 cd build           
 ./cryptobot        
+```
+or
+```sh
+./cryptobot.sh      
 ```
 
 ## Configuration
@@ -120,39 +124,41 @@ When use the crypto bot, you have to make some configurations.
 
 - `user`
   - .
-    | Configuration     | Description                       |
-    | ------------------| --------------------------------- |
-    | `exchange`        | Exchange name (Binance)           |
-    | `interval`        | Klines interval type (15m)        |
-    | `symbol`          | Trade coin symbol (ETH/USDT)      |
-    | `quantity`        | Trade coin quantity               |
-    | `balance symbol`  | Wallet balance symbol (USDT)      |
-    | `balance amount`  | Wallet balance amount (400$)      |
-    | `follow symbol`   | Follow coin symbol (BTC/USDT)     |
-    | `average amount`  | Average amount for trade (0.25)   |
-    | `RSI period`      | RSI period                        |
-    | `RSI oversold`    | RSI oversold signal level         |
-    | `RSI overbought`  | RSI overbought signal level       |
+    | Configuration         | Description                       |
+    | --------------------- | --------------------------------- |
+    | Exchange`str`         | Exchange name (Binance)           |
+    | Symbol`str`           | Trade coin symbol (ETH/USDT)      |
+    | Interval`str`         | Klines interval type (15m)        |
+    | Quantity`str`         | Trade coin quantity               |
+    | Balance symbol`str`   | Wallet balance symbol (USDT)      |
+    | Balance amount`str`   | Wallet balance amount (400$)      |
+    | Follow symbol`str`    | Follow coin symbol (BTC/USDT)     |
+    | Average auto-cal`bool`| Average auto calculate            |
+    | Average amount`str`   | Average amount for trade (0.25)   |
+    | RSI period`int`       | RSI period                        |
+    | RSI oversold`str`     | RSI oversold signal level         |
+    | RSI overbought`str`   | RSI overbought signal level       |
 
 - `binance`
   - .
-    | Configuration     | Description                       |
-    | ------------------| --------------------------------- |
-    | `websocket base`  | Binance websocket address         |
-    | `websocket port`  | Binance websocket port            |
-    | `api base`        | Binance api address               |
-    | `api key`         | Binance api key                   |
-    | `secret key`      | Binance secret key                |
+    | Configuration         | Description                       |
+    | --------------------- | --------------------------------- |
+    | Websocket base`str`   | Binance websocket address         |
+    | Websocket port`int`   | Binance websocket port            |
+    | Api base`str`         | Binance api address               |
+    | Api key`str`          | Binance api key                   |
+    | Secret key`str`       | Binance secret key                |
 
 - `webserver`
   - .
-    | Configuration     | Description                       |
-    | ------------------| --------------------------------- |
-    | `base`            | Webserver address                 |
-    | `port`            | Webserver port                    |
+    | Configuration         | Description                       |
+    | --------------------- | --------------------------------- |
+    | Base`str`             | Webserver address                 |
+    | Port`int`             | Webserver port                    |
 
 
 ## Licence
 
 [cryptobot]: https://github.com/ahakan/cryptobot.git
+[cmake]: https://cmake.org/
 [boost]: https://www.boost.org/
