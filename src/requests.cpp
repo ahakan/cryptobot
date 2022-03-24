@@ -164,7 +164,7 @@ bool Requests::calcOrderPriceAverage()
         float highestPrice          = std::stof(*std::max_element(mTradeCandlesHighPrices.begin(), mTradeCandlesHighPrices.end()));
         float lowestPrice           = std::stof(*std::min_element(mTradeCandlesLowPrices.begin(), mTradeCandlesLowPrices.end()));
 
-        float calculatedAverage     = (highestPrice-lowestPrice)/(mRSIPeriod/2.0);
+        float calculatedAverage     = (highestPrice-lowestPrice)/mRSIPeriod;
 
         mNewOrderCalculatedAverage  = pBu.get()->roundString(std::to_string(calculatedAverage), mSymbolTickSize); 
 
@@ -607,9 +607,10 @@ void BinanceRequests::binance()
 bool BinanceRequests::newBuyOrder()
 {
     // if RSI is Less than mRSIOversold, we create a new buy order
-    bool isNewRSILessThanOversold = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold);
+    bool isNewTradeRSILessOversold      = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold);
+    bool isNewFollowRSILessOversold     = pBu.get()->compareTwoStrings(mFollowCandlesCloseRSI, mRSIOversold);
 
-    if (!isNewRSILessThanOversold)
+    if (!isNewTradeRSILessOversold && !isNewFollowRSILessOversold)
     {
         // if we have not a buy order we create a new buy order
         if (mBuyOrders.size() < 1)
@@ -660,9 +661,10 @@ bool BinanceRequests::newBuyOrder()
 bool BinanceRequests::newSellOrder()
 {
     // if RSI is higher than mRSIOverbought, we create a new sell order
-    bool isNewRSIHighOverbought = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought);
+    bool isNewTradeRSIHighOverbought    = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought);
+    bool isNewFollowRSIHighOverbought   = pBu.get()->compareTwoStrings(mFollowCandlesCloseRSI, mRSIOverbought);
 
-    if (isNewRSIHighOverbought)
+    if (isNewTradeRSIHighOverbought && isNewFollowRSIHighOverbought)
     {
         // if we bought a coin we'll create a sell order
         if (mBoughtOrders.size() > 0)
@@ -699,14 +701,16 @@ bool BinanceRequests::checkBuyOrders()
         if (mBuyOrdersNewTradeRSI && mBuyOrdersNewFollowRSI)
         {
             // if new rsi is less than oversold rsi it returns true.
-            bool isNewRSILessThanOversold = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold);
+            bool isNewTradeRSILessOversold      = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold);
+            bool isNewFollowRSILessOversold     = pBu.get()->compareTwoStrings(mFollowCandlesCloseRSI, mRSIOversold);
 
-            if (!isNewRSILessThanOversold)
+            if (!isNewTradeRSILessOversold && !isNewFollowRSILessOversold)
             {
                 // if new rsi higher than old rsi it returns true.
-                bool isNewRSIHigh = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mOldTradeCandlesCloseRSI);
+                bool isNewTradeRSIHigh          = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mOldTradeCandlesCloseRSI);
+                bool isNewFollowRSIHigh         = pBu.get()->compareTwoStrings(mFollowCandlesCloseRSI, mOldFollowCandlesCloseRSI);
 
-                if (!isNewRSIHigh)
+                if (!isNewTradeRSIHigh && !isNewFollowRSIHigh)
                 {
                     int orderId = mBuyOrders.begin()->first;
 
@@ -752,13 +756,13 @@ bool BinanceRequests::checkSellOrders()
 
             if (i->second["Status"] == "FILLED")
             {
-                ELOG(DEBUG, "Removed Filled Sell Order. Order id: %d, Status: %s, BoughtPrice: %s, SoldPrice: %s.", orderId, i->second["Status"].c_str(), i->second["BoughtPrice"].c_str(), i->second["SoldPrice"].c_str());
+                ELOG(INFO, "Removed Filled Sell Order. Order id: %d, Status: %s, BoughtPrice: %s, SoldPrice: %s.", orderId, i->second["Status"].c_str(), i->second["BoughtPrice"].c_str(), i->second["SoldPrice"].c_str());
                 
                 mSellOrders.erase(i);
             }
             else if (i->second["Status"] == "CANCELED")
             {
-                ELOG(DEBUG, "Removed Canceled Sell Order. Order id: %d, Status: %s, BoughtPrice: %s.", orderId, i->second["Status"].c_str(), i->second["BoughtPrice"].c_str());
+                ELOG(INFO, "Removed Canceled Sell Order. Order id: %d, Status: %s, BoughtPrice: %s.", orderId, i->second["Status"].c_str(), i->second["BoughtPrice"].c_str());
 
                 mSellOrders.erase(i);
             }
@@ -768,14 +772,16 @@ bool BinanceRequests::checkSellOrders()
         if (mSellOrdersNewTradeRSI && mSellOrdersNewFollowRSI)
         {
             // if new rsi is higher than overbought rsi it returns true.
-            bool isNewRSIHighOverbought = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought);
+            bool isNewTradeRSIHighOverbought    = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought);
+            bool isNewFollowRSIHighOverbought   = pBu.get()->compareTwoStrings(mFollowCandlesCloseRSI, mRSIOverbought);
 
-            if (isNewRSIHighOverbought)
+            if (isNewTradeRSIHighOverbought && isNewFollowRSIHighOverbought)
             {
                 // if new rsi is higher than old rsi it returns true.
-                bool isNewRSIHigh = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mOldTradeCandlesCloseRSI);
+                bool isNewTradeRSIHigh          = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mOldTradeCandlesCloseRSI);
+                bool isNewFollowRSIHigh         = pBu.get()->compareTwoStrings(mFollowCandlesCloseRSI, mOldFollowCandlesCloseRSI);
 
-                if (isNewRSIHigh)
+                if (isNewTradeRSIHigh && isNewFollowRSIHigh)
                 {
                     for (MapIterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
                     {
@@ -1123,7 +1129,7 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
     httplib::Headers reqHeaders     = {{"content-type", "application/json"}};
 
 
-    ELOG(INFO, "Get Klines/Candlesticks Data Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
+    ELOG(INFO, "Get Klines/Candlesticks Data Request Timestamp: %s, Endpoint: %s, Start Timestamp: %s.", reqTimestamp.c_str(), reqEndpoint.c_str(), startTime.c_str());
 
     std::string responseBody        = getRequest(reqEndpoint, reqParams, reqHeaders);
 
@@ -1146,6 +1152,8 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
     }
 
     int mCandlesSize = static_cast<int>(parsedResponse.size());
+
+    ELOG(INFO, "Got Candlesticks Data. Candles size: %d.", mCandlesSize);
 
     if (symbol == mSymbol)
     {
@@ -1779,13 +1787,14 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
                     OrderMap mOrder;
 
                     mOrder.emplace("Status", "CANCELED");
+                    mOrder.emplace("BoughtPrice", findSell->second["BoughtPrice"]);
 
                     findSell->second = mOrder;
 
                     ELOG(DEBUG, "Added Status to Canceled Order. mOrder Status: %s, Second Status: %s.", mOrder["Status"].c_str(), findSell->second["Status"].c_str());
                 }
 
-                ELOG(INFO, "Canceled a Sell Order. OrderId: %d, Symbol: %s, Price: %s, Bought Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mSellOrders.find(orderId)->second["BoughtPrice"].c_str(), mQuantity.c_str());
+                ELOG(INFO, "Canceled a Sell Order. OrderId: %d, Symbol: %s, Price: %s, Bought Price: %s, Quantity: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), findSell->second["BoughtPrice"].c_str(), mQuantity.c_str());
             
                 return true;
             }
