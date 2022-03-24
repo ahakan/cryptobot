@@ -516,10 +516,10 @@ std::string Utilities::roundString(std::string price, int tickSize)
 {
     for (int i=static_cast<int>(price.size())-1; i>=0; i--)
     {
-        if (price[i-tickSize] == 46)                        // 46=>. ASCII
+        if (price[i-tickSize] == 46)                        // 46=>ASCII = . 
             break;
 
-        price[i] = 48;                                      // 48=>0 ASCII
+        price[i] = 48;                                      // 48=>ASCII = 0 
     }
 
     return price;
@@ -637,7 +637,7 @@ int Utilities::getTickSize(std::string data)
 
     for (int i=static_cast<int>(data.size())-1; i>=0; i--)
     {
-        if (data[i] == 49)              // 49=>1 ASCII
+        if (data[i] == 49)              // 49=>ASCII = 1 
             break;
 
         tickSize--;

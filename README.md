@@ -127,35 +127,35 @@ When use the crypto bot, you have to make some configurations.
   - If you fill in the Calculate average section with 1, the bot will automatically calculate the average with candlesticks data. 
     | Configuration                         | Description                       |
     | ------------------------------------- | --------------------------------- |
-    | `Exchange` <sub>str</sub>             | Exchange name (Binance)           |
-    | `Symbol` <sub>str</sub>               | Trade coin symbol (ETH/USDT)      |
-    | `Interval` <sub>str</sub>             | Klines interval type (15m)        |
-    | `Quantity` <sub>str</sub>             | Trade coin quantity               |
-    | `Balance symbol` <sub>str</sub>       | Wallet balance symbol (USDT)      |
-    | `Balance amount` <sub>str</sub>       | Wallet balance amount (400$)      |
-    | `Follow symbol` <sub>str</sub>        | Follow coin symbol (BTC/USDT)     |
-    | `Average calculate` <sub>bool</sub>   | Average auto calculate            |
-    | `Average amount` <sub>str</sub>       | Average amount for trade (0.25)   |
-    | `RSI period` <sub>int</sub>           | RSI period                        |
-    | `RSI oversold` <sub>str</sub>         | RSI oversold signal level         |
-    | `RSI overbought` <sub>str</sub>       | RSI overbought signal level       |
+    | `Exchange` <sub>(str)</sub>           | Exchange name (Binance)           |
+    | `Symbol` <sub>(str)</sub>             | Trade coin symbol (ETH/USDT)      |
+    | `Interval` <sub>(str)</sub>           | Klines interval type (15m)        |
+    | `Quantity` <sub>(str)</sub>           | Trade coin quantity               |
+    | `Balance symbol` <sub>(str)</sub>     | Wallet balance symbol (USDT)      |
+    | `Balance amount` <sub>(str)</sub>     | Wallet balance amount (400$)      |
+    | `Follow symbol` <sub>(str)</sub>      | Follow coin symbol (BTC/USDT)     |
+    | `Average calculate` <sub>(bool)</sub> | Average auto calculate            |
+    | `Average amount` <sub>(str)</sub>     | Average amount for trade (0.25)   |
+    | `RSI period` <sub>(int)</sub>         | RSI period                        |
+    | `RSI oversold` <sub>(str)</sub>       | RSI oversold signal level         |
+    | `RSI overbought` <sub>(str)</sub>     | RSI overbought signal level       |
 
 - `binance`
   - You must fill in API Key and SECRET Key.
     | Configuration                         | Description                       |
     | ------------------------------------- | --------------------------------- |
-    | `Websocket base` <sub>str</sub>       | Binance websocket address         |
-    | `Websocket port` <sub>int</sub>       | Binance websocket port            |
-    | `Api base` <sub>str</sub>             | Binance api address               |
-    | `Api key` <sub>str</sub>              | Binance api key                   |
-    | `Secret key` <sub>str</sub>           | Binance secret key                |
+    | `Websocket base` <sub>(str)</sub>     | Binance websocket address         |
+    | `Websocket port` <sub>(int)</sub>     | Binance websocket port            |
+    | `Api base` <sub>(str)</sub>           | Binance api address               |
+    | `Api key` <sub>(str)</sub>            | Binance api key                   |
+    | `Secret key` <sub>(str)</sub>         | Binance secret key                |
 
 - `webserver`
   - If you want to see orders with browser you can use the web server. (New feature)
     | Configuration                         | Description                       |
     | ------------------------------------- | --------------------------------- |
-    | `Base` <sub>str</sub>                 | Webserver address                 |
-    | `Port` <sub>int</sub>                 | Webserver port                    |
+    | `Base` <sub>(str)</sub>               | Webserver address                 |
+    | `Port` <sub>(int)</sub>               | Webserver port                    |
 
 
 ## Licence

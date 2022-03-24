@@ -1272,12 +1272,12 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
 
     std::string reqEndpoint             = "/api/v3/order";
 
-    std::string mRoundedQuantity        = pBu.get()->roundString(quantity, mSymbolTickSize);
+    std::string roundedQuantity        = pBu.get()->roundString(quantity, mSymbolTickSize);
 
 
     std::string reqParams               = "symbol="+symbol+"&side="+side;
                 reqParams               += "&type="+type+"&timeInForce=GTC";
-                reqParams               += "&quantity="+quantity+"&price="+price;
+                reqParams               += "&quantity="+roundedQuantity+"&price="+price;
                 reqParams               += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
 
     std::string reqSignature            = pBu.get()->getSignature(reqParams);
@@ -1378,8 +1378,6 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
                 mBoughtOrders.emplace(mOrderId, mOrder);
 
                 ELOG(INFO, "Created and Filled a New Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
-
-                return true;
             }
             else if (mSide == "SELL")
             {
@@ -1395,9 +1393,12 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
                 mBoughtOrders.erase(mBoughtOrders.begin());
 
                 ELOG(INFO, "Created and Filled  a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", mOrderId, mSymbol.c_str(), mPrice.c_str(), mQuantity.c_str(), mTransactTime.c_str());
-
-                return true;
             }
+
+            // calculate new balance amount
+            calcNewBalanceAmount(mSide, mPrice, mQuantity);
+
+            return true;
         }
     }
     
