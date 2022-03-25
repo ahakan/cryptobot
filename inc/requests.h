@@ -50,9 +50,11 @@ class Requests
         std::string             mAPI_KEY;
         std::string             mSECRET_KEY;
         
-        std::string             mSymbol;
         std::string             mInterval;
         std::string             mQuantity;
+        std::string             mCoinSymbol;
+        std::string             mCoinQuantity;
+        std::string             mTradeSymbol;
         std::string             mFollowSymbol;
         std::string             mBalanceSymbol;
         std::string             mBalanceAmount;

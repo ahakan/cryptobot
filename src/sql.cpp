@@ -392,7 +392,7 @@ void Sql::getBoughtCoin()
     // Create SQL statement
     sql = "SELECT * FROM BOUGHTCOIN";
 
-    ELOG(INFO, "Bot activation check. Query: %s.", sql.c_str());
+    ELOG(INFO, "Bought coin check. Query: %s.", sql.c_str());
 
     Record records          = selectQuery(sql);
 

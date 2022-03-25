@@ -157,11 +157,35 @@ std::string Utilities::getOldTimestamp()
 
 
 /**
- * @brief Get symbol
+ * @brief Get coin symbol
  * 
  * @return std::string 
  */
-std::string Utilities::getSymbol()
+std::string Utilities::getCoinSymbol()
+{
+    std::string mTradeSymbol    = getTradeSymbol();
+
+    std::string mBalanceSymbol  = getBalanceSymbol();
+
+    std::string coinSymbol      = mTradeSymbol.substr(0, mTradeSymbol.find(mBalanceSymbol));
+
+    if (coinSymbol.length() == 0)
+    {
+        ELOG(ERROR, "Failed to parse Coin Symbol.");
+
+        setExitSignal(0);
+    }
+
+    return coinSymbol;
+}
+
+
+/**
+ * @brief Get trade symbol
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getTradeSymbol()
 {
     std::string mTradeSymbol = mTradeJson["symbol"].asString();
     
@@ -723,7 +747,7 @@ std::string BinanceUtilities::getWebsocketPort()
  */
 std::string BinanceUtilities::getWebsocketEndpointT()
 {
-    std::string symbol      = upperToLower(getSymbol());
+    std::string symbol      = upperToLower(getTradeSymbol());
 
     std::string endpoint    = "/ws/" + symbol + "@kline_" + getInterval();
         

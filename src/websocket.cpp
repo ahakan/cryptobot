@@ -213,44 +213,44 @@ void Websocket::read(beast::error_code ec, std::size_t bytes_transferred)
         {
             std::string bufferJson = beast::buffers_to_string(mBuffer.data());
 
-            Json::Value     mCandlestickJson;
+            Json::Value     rCandlestickJson;
             Json::Reader    reader;
 
-            bool parsingSuccessful = reader.parse( bufferJson.c_str(), mCandlestickJson );
+            bool parsingSuccessful = reader.parse( bufferJson.c_str(), rCandlestickJson );
 
             if ( !parsingSuccessful )
             {
                 ELOG(ERROR, "Failed to JSON parse.");
             }
             
-            Json::Value mKData              = mCandlestickJson["k"];
+            Json::Value rKData              = rCandlestickJson["k"];
 
-            bool mIsClosed                  = mCandlestickJson["k"].get("x", true).asBool();
+            bool rIsClosed                  = rCandlestickJson["k"].get("x", true).asBool();
 
-            std::string mSymbol             = mCandlestickJson["s"].asString();
-            std::string mTimestamp          = mKData["t"].asString();
-            std::string mOpenPrice          = mKData["o"].asString();
-            std::string mClosePrice         = mKData["c"].asString();
-            std::string mHighPrice          = mKData["h"].asString();
-            std::string mLowPrice           = mKData["l"].asString();
+            std::string rSymbol             = rCandlestickJson["s"].asString();
+            std::string rTimestamp          = rKData["t"].asString();
+            std::string rOpenPrice          = rKData["o"].asString();
+            std::string rClosePrice         = rKData["c"].asString();
+            std::string rHighPrice          = rKData["h"].asString();
+            std::string rLowPrice           = rKData["l"].asString();
 
-            ELOG(INFO, "WS Read. Symbol: %s, Price: %s, Buffer size: %dKB.", mSymbol.c_str(), mClosePrice.c_str(), mBuffer.size());
+            ELOG(INFO, "WS Read. Symbol: %s, Price: %s, Buffer size: %dKB.", rSymbol.c_str(), rClosePrice.c_str(), mBuffer.size());
 
             Opel *iOpel = Opel::instance();
             
-            if (mSymbol == iOpel->getTradeSymbol())
+            if (rSymbol == iOpel->getTradeSymbol())
             {
                 struct candle_data *pTradeCandleData    = Opel::getTradeCandleStruct();
 
                 pTradeCandleData->lock();
                 pTradeCandleData->isUpdated             = true;
-                pTradeCandleData->symbol                = mSymbol;
-                pTradeCandleData->timestamp             = mTimestamp;
-                pTradeCandleData->openPrice             = mOpenPrice;
-                pTradeCandleData->closePrice            = mClosePrice;
-                pTradeCandleData->highPrice             = mHighPrice;
-                pTradeCandleData->lowPrice              = mLowPrice;
-                pTradeCandleData->isClosed              = mIsClosed;
+                pTradeCandleData->symbol                = rSymbol;
+                pTradeCandleData->timestamp             = rTimestamp;
+                pTradeCandleData->openPrice             = rOpenPrice;
+                pTradeCandleData->closePrice            = rClosePrice;
+                pTradeCandleData->highPrice             = rHighPrice;
+                pTradeCandleData->lowPrice              = rLowPrice;
+                pTradeCandleData->isClosed              = rIsClosed;
                 pTradeCandleData->unlock();
             }
             else
@@ -259,13 +259,13 @@ void Websocket::read(beast::error_code ec, std::size_t bytes_transferred)
 
                 pFollowCandleData->lock();
                 pFollowCandleData->isUpdated            = true;
-                pFollowCandleData->symbol               = mSymbol;
-                pFollowCandleData->timestamp            = mTimestamp;
-                pFollowCandleData->openPrice            = mOpenPrice;
-                pFollowCandleData->closePrice           = mClosePrice;
-                pFollowCandleData->highPrice            = mHighPrice;
-                pFollowCandleData->lowPrice             = mLowPrice;
-                pFollowCandleData->isClosed             = mIsClosed;
+                pFollowCandleData->symbol               = rSymbol;
+                pFollowCandleData->timestamp            = rTimestamp;
+                pFollowCandleData->openPrice            = rOpenPrice;
+                pFollowCandleData->closePrice           = rClosePrice;
+                pFollowCandleData->highPrice            = rHighPrice;
+                pFollowCandleData->lowPrice             = rLowPrice;
+                pFollowCandleData->isClosed             = rIsClosed;
                 pFollowCandleData->unlock();
             }
             
@@ -308,7 +308,7 @@ BinanceWebsocket::BinanceWebsocket(std::shared_ptr<BinanceUtilities> pBu)
     mPort           = pBu.get()->getWebsocketPort();
     mEndpointT      = pBu.get()->getWebsocketEndpointT();
     mEndpointF      = pBu.get()->getWebsocketEndpointF();
-    mTradeSymbol    = pBu.get()->getSymbol();
+    mTradeSymbol    = pBu.get()->getTradeSymbol();
     mFollowSymbol   = pBu.get()->getFollowSymbol();
 
 

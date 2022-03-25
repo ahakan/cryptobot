@@ -35,6 +35,7 @@
 class Utilities
 {
     private:
+    
     protected:
         std::ifstream           mConfigFile;
         Json::Value             mConfigJson;
@@ -51,7 +52,8 @@ class Utilities
 
         std::string             getTimestamp();
         std::string             getOldTimestamp();
-        std::string             getSymbol();
+        std::string             getCoinSymbol();
+        std::string             getTradeSymbol();
         std::string             getFollowSymbol();
         std::string             getInterval();
         std::string             getQuantity();
