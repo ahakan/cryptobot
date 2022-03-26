@@ -562,40 +562,10 @@ void BinanceRequests::init()
  */
 void BinanceRequests::binance()
 {
-    // Check bought orders map and update balance amount
-    // if we have bought orders and we have not enough balance
-    // we must sell first and we make money after that we can create a buy order
-    if (mBoughtOrders.size() > 0)
-    {
-        // Do we have this orders?
-        // Check user wallet
-        mCoinQuantity           = "00.00";
-
-        for (MapIterator order = mBoughtOrders.begin(); order != mBoughtOrders.end(); ++order)
-        {
-            mCoinQuantity = pBu.get()->addTwoStrings(mCoinQuantity, order->second["Quantity"]);
-        }
-
-        mCoinQuantity           = pBu.get()->roundString(mCoinQuantity, mSymbolTickSize);
-
-        bool checkCoinBalance   = getCoinBalance(mCoinSymbol);
-
-        if (checkCoinBalance)
-        {
-            ELOG(WARNING, "Sufficient coin quantity. Balance amount will be recalculated. Quantity: %s.", mCoinQuantity.c_str());
-
-            for (MapIterator order = mBoughtOrders.begin(); order != mBoughtOrders.end(); ++order)
-            {
-                calcNewBalanceAmount(mBuySide, order->second["BoughtPrice"], order->second["Quantity"]);
-            }
-        }
-        else
-        {
-            ELOG(WARNING, "Unsufficient coin quantity. Bougt orders map will be cleared. Quantity: %s.", mCoinQuantity.c_str());
-
-            mBoughtOrders.clear();
-        }
-    }
+    // Check bought orders
+    // if we have old bought orders
+    // we check and we sell
+    checkBoughtOrders();
 
     // Main loop
     Opel *pOpel = Opel::instance();
@@ -631,7 +601,10 @@ void BinanceRequests::binance()
     }
 
     // Cancel all orders
-    cancelAllOpenOrders(mTradeSymbol);
+    if (mBuyOrders.size() > 0 || mSellOrders.size() > 0)
+    {
+        cancelAllOpenOrders(mTradeSymbol);
+    }
 }
 
 
@@ -846,6 +819,52 @@ bool BinanceRequests::checkSellOrders()
         }
     }
         
+    return true;
+}
+
+
+/**
+ * @brief Check old bought orders to start selling new
+ * 
+ * @return true 
+ * @return false 
+ */
+bool BinanceRequests::checkBoughtOrders()
+{
+    // Check bought orders map and update balance amount
+    // if we have bought orders and we have not enough balance
+    // we must sell first and we make money after that we can create a buy order
+    if (mBoughtOrders.size() > 0)
+    {
+        // Do we have this orders?
+        // Check user wallet
+        mCoinQuantity           = "00.00";
+
+        for (MapIterator order = mBoughtOrders.begin(); order != mBoughtOrders.end(); ++order)
+        {
+            mCoinQuantity = pBu.get()->addTwoStrings(mCoinQuantity, order->second["Quantity"]);
+        }
+
+        mCoinQuantity           = pBu.get()->roundString(mCoinQuantity, mSymbolTickSize);
+
+        bool checkCoinBalance   = getCoinBalance(mCoinSymbol);
+
+        if (checkCoinBalance)
+        {
+            ELOG(WARNING, "Sufficient coin quantity. Balance amount will be recalculated. Quantity: %s.", mCoinQuantity.c_str());
+
+            for (MapIterator order = mBoughtOrders.begin(); order != mBoughtOrders.end(); ++order)
+            {
+                calcNewBalanceAmount(mBuySide, order->second["BoughtPrice"], order->second["Quantity"]);
+            }
+        }
+        else
+        {
+            ELOG(WARNING, "Unsufficient coin quantity. Bougt orders map will be cleared. Quantity: %s.", mCoinQuantity.c_str());
+
+            mBoughtOrders.clear();
+        }
+    }
 
     return true;
 }
@@ -863,9 +882,9 @@ std::string BinanceRequests::getRequest(std::string endpoint, std::string parame
 {
     httplib::Client cli(mBase);
 
-    cli.set_connection_timeout(1, 500000);  // 1 second 500 milliseconds
-    cli.set_read_timeout(2, 0);        // 2 seconds
-    cli.set_write_timeout(2, 0);       // 2 seconds
+    cli.set_connection_timeout(1, 500000);  // 1500 milliseconds
+    cli.set_read_timeout(2, 500000);        // 2500 milliseconds
+    cli.set_write_timeout(2, 500000);       // 2500 milliseconds
 
     std::string endpointWithParameters = endpoint + "?" + parameters;
 
@@ -877,6 +896,13 @@ std::string BinanceRequests::getRequest(std::string endpoint, std::string parame
     } 
     else
     {
+        if (res == nullptr)
+        {
+            std::string errorMessage = "{'Error': 'NULLPTR'}"; 
+
+            return errorMessage;
+        }
+
         auto err = res.error();
 
         std::string errorMessage = "{'Error': '"+httplib::to_string(err)+"'}"; 
@@ -898,9 +924,9 @@ std::string BinanceRequests::postRequest(std::string endpoint, std::string param
 {
     httplib::Client cli(mBase);
 
-    cli.set_connection_timeout(1, 500000);  // 1 second 500 milliseconds
-    cli.set_read_timeout(1, 500000);        // 1 second 500 milliseconds
-    cli.set_write_timeout(1, 500000);       // 1 second 500 milliseconds
+    cli.set_connection_timeout(1, 500000);  // 1500 milliseconds
+    cli.set_read_timeout(2, 500000);        // 2500 milliseconds
+    cli.set_write_timeout(2, 500000);       // 2500 milliseconds
 
     std::string endpointWithParameters = endpoint + "?" + parameters;
 
@@ -912,6 +938,13 @@ std::string BinanceRequests::postRequest(std::string endpoint, std::string param
     } 
     else
     {
+        if (res == nullptr)
+        {
+            std::string errorMessage = "{'Error': 'NULLPTR'}"; 
+
+            return errorMessage;
+        }
+
         auto err = res.error();
 
         std::string errorMessage = "{'Error': '"+httplib::to_string(err)+"'}"; 
@@ -933,9 +966,9 @@ std::string BinanceRequests::deleteRequest(std::string endpoint, std::string par
 {
     httplib::Client cli(mBase);
 
-    cli.set_connection_timeout(1, 500000);  // 1 second 500 milliseconds
-    cli.set_read_timeout(1, 500000);        // 1 second 500 milliseconds
-    cli.set_write_timeout(1, 500000);       // 1 second 500 milliseconds
+    cli.set_connection_timeout(1, 500000);  // 1500 milliseconds
+    cli.set_read_timeout(2, 500000);        // 2500 milliseconds
+    cli.set_write_timeout(2, 500000);       // 2500 milliseconds
 
     std::string endpointWithParameters = endpoint + "?" + parameters;
 
@@ -947,6 +980,13 @@ std::string BinanceRequests::deleteRequest(std::string endpoint, std::string par
     } 
     else
     {
+        if (res == nullptr)
+        {
+            std::string errorMessage = "{'Error': 'NULLPTR'}"; 
+
+            return errorMessage;
+        }
+
         auto err = res.error();
 
         std::string errorMessage = "{'Error': '"+httplib::to_string(err)+"'}"; 

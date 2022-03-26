@@ -158,6 +158,7 @@ class BinanceRequests : public Requests
         bool                    newSellOrder();
         bool                    checkBuyOrders();
         bool                    checkSellOrders();
+        bool                    checkBoughtOrders();
 
         std::string             getRequest(std::string endpoint, std::string parameters, httplib::Headers headers);
         std::string             postRequest(std::string endpoint, std::string parameters, httplib::Params signature, httplib::Headers headers);
