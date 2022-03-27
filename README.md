@@ -116,7 +116,7 @@ When use the crypto bot, you have to make some configurations.
             "SECRET_KEY": "YOUR_SECRET_KEY"
         }
     },
-    "webserver": {
+    "server": {
         "base": "127.0.0.1",
         "port": 8080
     }
@@ -150,12 +150,12 @@ When use the crypto bot, you have to make some configurations.
     | `Api key` <sub>(str)</sub>            | Binance api key                   |
     | `Secret key` <sub>(str)</sub>         | Binance secret key                |
 
-- `webserver`
+- `server`
   - If you want to see orders with browser you can use the web server. (New feature)
     | Configuration                         | Description                       |
     | ------------------------------------- | --------------------------------- |
-    | `Base` <sub>(str)</sub>               | Webserver address                 |
-    | `Port` <sub>(int)</sub>               | Webserver port                    |
+    | `Base` <sub>(str)</sub>               | Server address                 |
+    | `Port` <sub>(int)</sub>               | Server port                    |
 
 
 ## Licence

@@ -1,12 +1,12 @@
-#include "../inc/requests.h"
+#include "../inc/client.h"
 
 
 /**
- * @brief Construct a new Requests::Requests object
+ * @brief Construct a new Client::Client object
  * 
  * @param pBu 
  */
-Requests::Requests(std::shared_ptr<BinanceUtilities> pBu)
+Client::Client(std::shared_ptr<BinanceUtilities> pBu)
 {
     this->pBu               = pBu;
     mBase                   = pBu.get()->getAPIBase();
@@ -34,17 +34,17 @@ Requests::Requests(std::shared_ptr<BinanceUtilities> pBu)
     iOpel->setSellOrdersMap(&mSellOrders);
     iOpel->setSoldOrdersMap(&mSoldOrders);
 
-    ELOG(INFO, "Requests constructor initialized. mTradeSymbol: %s, mFollowSymbol: %s, mInterval: %s, mBalanceSymbol: %s, mBalanceAmount: %s.", mTradeSymbol.c_str(), mFollowSymbol.c_str(), mInterval.c_str(), mBalanceSymbol.c_str(), mBalanceAmount.c_str());
+    ELOG(INFO, "Client constructor initialized. mTradeSymbol: %s, mFollowSymbol: %s, mInterval: %s, mBalanceSymbol: %s, mBalanceAmount: %s.", mTradeSymbol.c_str(), mFollowSymbol.c_str(), mInterval.c_str(), mBalanceSymbol.c_str(), mBalanceAmount.c_str());
 }
 
 
 /**
- * @brief Destroy the Requests::Requests object
+ * @brief Destroy the Client::Client object
  * 
  */
-Requests::~Requests()
+Client::~Client()
 {
-    ELOG(INFO, "Requests destructor.");
+    ELOG(INFO, "Client destructor.");
 }
 
 
@@ -54,7 +54,7 @@ Requests::~Requests()
  * @param boughtPrice 
  * @return std::string 
  */
-std::string Requests::calcNewSellPrice(std::string boughtPrice)
+std::string Client::calcNewSellPrice(std::string boughtPrice)
 {
     if (boughtPrice.length() > 0)
     {
@@ -92,7 +92,7 @@ std::string Requests::calcNewSellPrice(std::string boughtPrice)
  * 
  * @return std::string 
  */
-std::string Requests::calcNewBuyPrice()
+std::string Client::calcNewBuyPrice()
 {
     bool isBuyAverageCalculated    = calcOrderPriceAverage();
 
@@ -120,7 +120,7 @@ std::string Requests::calcNewBuyPrice()
  * @return true 
  * @return false 
  */
-bool Requests::calcNewBalanceAmount(std::string side, std::string price, std::string quantity)
+bool Client::calcNewBalanceAmount(std::string side, std::string price, std::string quantity)
 {
     std::string totalOrderPrice     = pBu.get()->multiplyTwoStrings(price, quantity);
     std::string roundedTotalPrice   = pBu.get()->roundString(totalOrderPrice, mSymbolTickSize);
@@ -158,7 +158,7 @@ bool Requests::calcNewBalanceAmount(std::string side, std::string price, std::st
  * @return true 
  * @return false 
  */
-bool Requests::calcOrderPriceAverage()
+bool Client::calcOrderPriceAverage()
 {
     if (mAverageAutoCalculate)
     {
@@ -195,7 +195,7 @@ bool Requests::calcOrderPriceAverage()
  * @return true 
  * @return false 
  */
-bool Requests::calcSymbolRSI()
+bool Client::calcSymbolRSI()
 {
     if (mTradeCandlesClosePrices.size() != 0)
     {
@@ -205,7 +205,7 @@ bool Requests::calcSymbolRSI()
         mBuyOrdersNewTradeRSI               = mOldTradeCandlesCloseRSI == "00.00" ? false : true;   // ignore to first calculation for cancel order
         mSellOrdersNewTradeRSI              = mOldTradeCandlesCloseRSI == "00.00" ? false : true;   // ignore to first calculation for cancel order
 
-        ELOG(INFO, "Calculated Symbol RSI. Trade Candles New Close RSI: %s, Old Close RSI: %s, mBuyOrdersNewTradeRSI: %d, mSellOrdersNewTradeRSI: %d.", mTradeCandlesCloseRSI.c_str(), mOldTradeCandlesCloseRSI.c_str(), mBuyOrdersNewTradeRSI, mSellOrdersNewTradeRSI);
+        ELOG(INFO, "Calculated Symbol RSI. Trade Candles New Close RSI: %s, Old Close RSI: %s.", mTradeCandlesCloseRSI.c_str(), mOldTradeCandlesCloseRSI.c_str());
 
         return true;
     }
@@ -222,7 +222,7 @@ bool Requests::calcSymbolRSI()
  * @return true 
  * @return false 
  */
-bool Requests::calcFollowRSI()
+bool Client::calcFollowRSI()
 {
     if (mFollowCandlesClosePrices.size() != 0)
     {
@@ -233,7 +233,7 @@ bool Requests::calcFollowRSI()
         mSellOrdersNewFollowRSI             = mOldFollowCandlesCloseRSI == "00.00" ? false : true;   // ignore to first calculation for cancel order
 
 
-        ELOG(INFO, "Calculated Follow Symbol RSI. Follow Candles New Close RSI: %s, Old Close RSI: %s, mBuyOrdersNewFollowRSI: %d, mSellOrdersNewFollowRSI: %d.", mFollowCandlesCloseRSI.c_str(), mOldFollowCandlesCloseRSI.c_str(), mBuyOrdersNewFollowRSI, mSellOrdersNewFollowRSI);
+        ELOG(INFO, "Calculated Follow Symbol RSI. Follow Candles New Close RSI: %s, Old Close RSI: %s.", mFollowCandlesCloseRSI.c_str(), mOldFollowCandlesCloseRSI.c_str());
 
         return true;
     }
@@ -250,7 +250,7 @@ bool Requests::calcFollowRSI()
  * @return true 
  * @return false 
  */
-bool Requests::calcSymbolAverages()
+bool Client::calcSymbolAverages()
 {
     if (mTradeCandlesClosePrices.size() != 0)
     {
@@ -283,7 +283,7 @@ bool Requests::calcSymbolAverages()
  * @return true 
  * @return false 
  */
-bool Requests::calcFollowAverages()
+bool Client::calcFollowAverages()
 {
     if (mFollowCandlesClosePrices.size() != 0)
     {
@@ -316,7 +316,7 @@ bool Requests::calcFollowAverages()
  * @return true 
  * @return false 
  */
-bool Requests::readCandleData()
+bool Client::readCandleData()
 {
     struct candle_data *pTradeCandleData = Opel::getTradeCandleStruct();
 
@@ -351,7 +351,7 @@ bool Requests::readCandleData()
 
         pTradeCandleData->isUpdated = false;
 
-        ELOG(INFO, "mBuyOrderSize: %d, mBoughtOrderSize: %d, mSellOrderSize: %d, mSoldOrderSize: %d.", mBuyOrders.size(), mBoughtOrders.size(), mSellOrders.size(), mSoldOrders.size());
+        ELOG(INFO, "BuyOrderSize: %d, BoughtOrderSize: %d, SellOrderSize: %d, SoldOrderSize: %d.", mBuyOrders.size(), mBoughtOrders.size(), mSellOrders.size(), mSoldOrders.size());
     }
 
     pTradeCandleData->unlock();
@@ -405,7 +405,7 @@ bool Requests::readCandleData()
  * @return true 
  * @return false 
  */
-bool Requests::addClosedCandlePrices(std::string symbol, std::string open, std::string close, std::string high, std::string low)
+bool Client::addClosedCandlePrices(std::string symbol, std::string open, std::string close, std::string high, std::string low)
 {
     if (symbol==mTradeSymbol)
     {
@@ -451,33 +451,33 @@ bool Requests::addClosedCandlePrices(std::string symbol, std::string open, std::
 
 
 /**
- * @brief Construct a new BinanceRequests::BinanceRequests object
+ * @brief Construct a new BinanceClient::BinanceClient object
  * 
  * @param pBu 
  */
-BinanceRequests::BinanceRequests(std::shared_ptr<BinanceUtilities> pBu)
-    : Requests(pBu)
+BinanceClient::BinanceClient(std::shared_ptr<BinanceUtilities> pBu)
+    : Client(pBu)
 {
-    ELOG(INFO, "BinanceRequests constructor initialized.");
+    ELOG(INFO, "BinanceClient constructor initialized.");
 }
 
 
 /**
- * @brief Destroy the BinanceRequests::BinanceRequests object
+ * @brief Destroy the BinanceClient::BinanceClient object
  * 
  */
-BinanceRequests::~BinanceRequests()
+BinanceClient::~BinanceClient()
 {
-    ELOG(INFO, "BinanceRequests destructor.");
+    ELOG(INFO, "BinanceClient destructor.");
 }
 
 
 /**
- * @brief Requests initializing.
+ * @brief Client initializing.
  * 
  * @param candle 
  */
-void BinanceRequests::init()
+void BinanceClient::init()
 {
     Opel *pOpel = Opel::instance();
 
@@ -552,7 +552,7 @@ void BinanceRequests::init()
         binance();
     }
 
-    ELOG(INFO, "Thread Requests detached.");
+    ELOG(INFO, "Thread Client detached.");
 }
 
 
@@ -560,7 +560,7 @@ void BinanceRequests::init()
  * @brief Binance main loop
  * 
  */
-void BinanceRequests::binance()
+void BinanceClient::binance()
 {
     // Check bought orders
     // if we have old bought orders
@@ -614,7 +614,7 @@ void BinanceRequests::binance()
  * @return true 
  * @return false 
  */
-bool BinanceRequests::newBuyOrder()
+bool BinanceClient::newBuyOrder()
 {
     // if RSI is Less than mRSIOversold, we create a new buy order
     bool isNewTradeRSILessOversold      = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold);
@@ -668,7 +668,7 @@ bool BinanceRequests::newBuyOrder()
  * @return true 
  * @return false 
  */
-bool BinanceRequests::newSellOrder()
+bool BinanceClient::newSellOrder()
 {
     // if RSI is higher than mRSIOverbought, we create a new sell order
     bool isNewTradeRSIHighOverbought    = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought);
@@ -702,7 +702,7 @@ bool BinanceRequests::newSellOrder()
  * @return true 
  * @return false 
  */
-bool BinanceRequests::checkBuyOrders()
+bool BinanceClient::checkBuyOrders()
 {
     // Check buy orders
     if (mBuyOrders.size() > 0)
@@ -754,7 +754,7 @@ bool BinanceRequests::checkBuyOrders()
  * @return true 
  * @return false 
  */
-bool BinanceRequests::checkSellOrders()
+bool BinanceClient::checkSellOrders()
 {
     // Check sell orders
     if (mSellOrders.size() > 0)
@@ -829,7 +829,7 @@ bool BinanceRequests::checkSellOrders()
  * @return true 
  * @return false 
  */
-bool BinanceRequests::checkBoughtOrders()
+bool BinanceClient::checkBoughtOrders()
 {
     // Check bought orders map and update balance amount
     // if we have bought orders and we have not enough balance
@@ -878,7 +878,7 @@ bool BinanceRequests::checkBoughtOrders()
  * @param headers 
  * @return std::string 
  */
-std::string BinanceRequests::getRequest(std::string endpoint, std::string parameters, httplib::Headers headers)
+std::string BinanceClient::getRequest(std::string endpoint, std::string parameters, httplib::Headers headers)
 {
     httplib::Client cli(mBase);
 
@@ -920,7 +920,7 @@ std::string BinanceRequests::getRequest(std::string endpoint, std::string parame
  * @param headers 
  * @return httplib::Result 
  */
-std::string BinanceRequests::postRequest(std::string endpoint, std::string parameters, httplib::Params signature, httplib::Headers headers)
+std::string BinanceClient::postRequest(std::string endpoint, std::string parameters, httplib::Params signature, httplib::Headers headers)
 {
     httplib::Client cli(mBase);
 
@@ -962,7 +962,7 @@ std::string BinanceRequests::postRequest(std::string endpoint, std::string param
  * @param headers 
  * @return httplib::Result 
  */
-std::string BinanceRequests::deleteRequest(std::string endpoint, std::string parameters, httplib::Headers headers)
+std::string BinanceClient::deleteRequest(std::string endpoint, std::string parameters, httplib::Headers headers)
 {
     httplib::Client cli(mBase);
 
@@ -1002,7 +1002,7 @@ std::string BinanceRequests::deleteRequest(std::string endpoint, std::string par
  * @return true 
  * @return false 
  */
-bool BinanceRequests::getAccountStatus()
+bool BinanceClient::getAccountStatus()
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
@@ -1061,7 +1061,7 @@ bool BinanceRequests::getAccountStatus()
  * @return true 
  * @return false 
  */
-bool BinanceRequests::getAPIKeyPermission()
+bool BinanceClient::getAPIKeyPermission()
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
@@ -1121,7 +1121,7 @@ bool BinanceRequests::getAPIKeyPermission()
  * @return true 
  * @return false 
  */
-bool BinanceRequests::getCoinBalance(std::string symbol)
+bool BinanceClient::getCoinBalance(std::string symbol)
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
@@ -1212,7 +1212,7 @@ bool BinanceRequests::getCoinBalance(std::string symbol)
  * @return true 
  * @return false 
  */
-bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interval, std::string startTime)
+bool BinanceClient::getCandlesticksData(std::string symbol, std::string interval, std::string startTime)
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
@@ -1286,7 +1286,7 @@ bool BinanceRequests::getCandlesticksData(std::string symbol, std::string interv
  * @return true 
  * @return false 
  */
-bool BinanceRequests::getTickSize (std::string symbol)
+bool BinanceClient::getTickSize (std::string symbol)
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
@@ -1362,7 +1362,7 @@ bool BinanceRequests::getTickSize (std::string symbol)
  * @return true 
  * @return false 
  */
-bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price)
+bool BinanceClient::createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price)
 {
     std::string reqTimestamp            = pBu.get()->getTimestamp();
 
@@ -1513,7 +1513,7 @@ bool BinanceRequests::createNewOrder(std::string symbol, std::string side, std::
  * @return true 
  * @return false 
  */
-bool BinanceRequests::cancelOrder(std::string symbol, int orderId)
+bool BinanceClient::cancelOrder(std::string symbol, int orderId)
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
@@ -1575,7 +1575,7 @@ bool BinanceRequests::cancelOrder(std::string symbol, int orderId)
  * @return true 
  * @return false 
  */
-bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
+bool BinanceClient::cancelAllOpenOrders(std::string symbol)
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
@@ -1678,7 +1678,7 @@ bool BinanceRequests::cancelAllOpenOrders(std::string symbol)
  * @return true 
  * @return false 
  */
-bool BinanceRequests::queryOrder(std::string symbol, int orderId)
+bool BinanceClient::queryOrder(std::string symbol, int orderId)
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
@@ -1910,7 +1910,7 @@ bool BinanceRequests::queryOrder(std::string symbol, int orderId)
  * @return true 
  * @return false 
  */
-bool BinanceRequests::currentOpenOrders(std::string symbol)
+bool BinanceClient::currentOpenOrders(std::string symbol)
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 

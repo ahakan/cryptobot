@@ -12,8 +12,8 @@
 // Includes
 #include "../inc/opel.h"
 #include "../inc/websocket.h"
-#include "../inc/webserver.h"
-#include "../inc/requests.h"
+#include "../inc/server.h"
+#include "../inc/client.h"
 #include "../inc/utilities.h"
 #include "../inc/sql.h"
 
@@ -58,8 +58,8 @@ int main()
 
     std::shared_ptr<BinanceUtilities>   bUtil(new BinanceUtilities);
     std::shared_ptr<BinanceWebsocket>   bSoc(new BinanceWebsocket(bUtil));
-    std::shared_ptr<BinanceRequests>    bReq(new BinanceRequests(bUtil));
-    std::shared_ptr<BinanceWebserver>   bWeb(new BinanceWebserver(bUtil));
+    std::shared_ptr<BinanceClient>      bReq(new BinanceClient(bUtil));
+    std::shared_ptr<BinanceServer>      bWeb(new BinanceServer(bUtil));
 
 
     sigemptyset(&sigIntHandler.sa_mask);
@@ -69,9 +69,9 @@ int main()
 
     
     std::thread sqlTh           = std::thread(&Sql::init, pSql);
-    std::thread reqTh           = std::thread(&BinanceRequests::init, bReq);
+    std::thread reqTh           = std::thread(&BinanceClient::init, bReq);
     std::thread socTh           = std::thread(&BinanceWebsocket::init, bSoc);
-    std::thread webTh           = std::thread(&BinanceWebserver::init, bWeb);
+    std::thread webTh           = std::thread(&BinanceServer::init, bWeb);
 
     sigaction(SIGINT, &sigIntHandler, NULL);
 

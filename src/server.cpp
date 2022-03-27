@@ -1,35 +1,35 @@
-#include "../inc/webserver.h"
+#include "../inc/server.h"
 
 
 /**
- * @brief Construct a new Webserver::Webserver object
+ * @brief Construct a new Server::Server object
  * 
  * @param socket 
  */
-Webserver::Webserver(tcp::socket socket)
+Server::Server(tcp::socket socket)
     : mSocket(std::move(socket))
 {
-    ELOG(INFO, "Webserver constructor initialized.");
+    ELOG(INFO, "Server constructor initialized.");
 }
 
 
 /**
- * @brief Destroy the Webserver::Webserver object
+ * @brief Destroy the Server::Server object
  * 
  */
-Webserver::~Webserver()
+Server::~Server()
 {
-    ELOG(INFO, "Webserver destructor.");
+    ELOG(INFO, "Server destructor.");
 }
 
 
 /**
- * @brief Start webserver
+ * @brief Start server
  * 
  */
-void Webserver::start()
+void Server::start()
 {
-    ELOG(INFO, "Webserver is started.");
+    ELOG(INFO, "Server is started.");
 
     readRequest();
 }
@@ -39,11 +39,11 @@ void Webserver::start()
  * @brief Read requests
  * 
  */
-void Webserver::readRequest()
+void Server::readRequest()
 {
     auto self = shared_from_this();
 
-    ELOG(INFO, "Webserver read request.");
+    ELOG(INFO, "Server read request.");
 
     http::async_read(
         mSocket,
@@ -63,12 +63,12 @@ void Webserver::readRequest()
  * @brief Process requests
  * 
  */
-void Webserver::processRequest()
+void Server::processRequest()
 {
     mResponse.version(mRequest.version());
     mResponse.keep_alive(false);
 
-    ELOG(INFO, "Webserver process request.");
+    ELOG(INFO, "Server process request.");
 
     switch(mRequest.method())
     {
@@ -98,9 +98,9 @@ void Webserver::processRequest()
  * @brief Create responses
  * 
  */
-void Webserver::createResponse()
+void Server::createResponse()
 {
-    ELOG(INFO, "Webserver create response.");
+    ELOG(INFO, "Server create response.");
 
     if(mRequest.target() == "/")
     {
@@ -145,13 +145,13 @@ void Webserver::createResponse()
  * @brief Write responses
  * 
  */
-void Webserver::writeResponse()
+void Server::writeResponse()
 {
     auto self = shared_from_this();
 
     mResponse.content_length(mResponse.body().size());
 
-    ELOG(INFO, "Webserver write response.");
+    ELOG(INFO, "Server write response.");
 
     http::async_write(
         mSocket,
@@ -170,7 +170,7 @@ void Webserver::writeResponse()
  * @brief Check deadline
  * 
  */
-void Webserver::checkDeadline()
+void Server::checkDeadline()
 {
     auto self = shared_from_this();
 
@@ -180,30 +180,30 @@ void Webserver::checkDeadline()
             self->mSocket.close(ec);
         });
     
-    ELOG(INFO, "Webserver closed. Socket released.");
+    ELOG(INFO, "Server closed. Socket released.");
 }
 
 
 /**
- * @brief Construct a new BinanceWebserver::BinanceWebserver object
+ * @brief Construct a new BinanceServer::BinanceServer object
  * 
  */
-BinanceWebserver::BinanceWebserver(std::shared_ptr<BinanceUtilities> pBu)
+BinanceServer::BinanceServer(std::shared_ptr<BinanceUtilities> pBu)
 {
     mWebserverBase      = pBu.get()->getWebserverBase();
     mWebserverSocket    = pBu.get()->getWebserverPort();
     
-    ELOG(INFO, "BinanceWebserver constructor initialized. Base: %s, Socket: %d.", mWebserverBase.c_str(), mWebserverSocket);
+    ELOG(INFO, "BinanceServer constructor initialized. Base: %s, Socket: %d.", mWebserverBase.c_str(), mWebserverSocket);
 }
 
 
 /**
- * @brief Destroy the BinanceWebserver::BinanceWebserver object
+ * @brief Destroy the BinanceServer::BinanceServer object
  * 
  */
-BinanceWebserver::~BinanceWebserver()
+BinanceServer::~BinanceServer()
 {
-    ELOG(INFO, "BinanceWebserver destructor.");
+    ELOG(INFO, "BinanceServer destructor.");
 }
 
 
@@ -213,15 +213,15 @@ BinanceWebserver::~BinanceWebserver()
  * @param acceptor 
  * @param socket 
  */
-void BinanceWebserver::httpServer(tcp::acceptor& acceptor, tcp::socket& socket)
+void BinanceServer::httpServer(tcp::acceptor& acceptor, tcp::socket& socket)
 {
-    ELOG(INFO, "BinanceWebserver http server.");
+    ELOG(INFO, "BinanceServer http server.");
 
     acceptor.async_accept(socket,
         [&](beast::error_code ec)
         {
             if(!ec)
-                std::make_shared<Webserver>(std::move(socket))->start();
+                std::make_shared<Server>(std::move(socket))->start();
 
             httpServer(acceptor, socket);
         });
@@ -229,13 +229,13 @@ void BinanceWebserver::httpServer(tcp::acceptor& acceptor, tcp::socket& socket)
 
 
 /**
- * @brief Initialize webserver
+ * @brief Initialize server
  * 
  */
-void BinanceWebserver::init()
+void BinanceServer::init()
 {
     // Create a thread for check exit signal
-    std::thread         sigTh(&BinanceWebserver::checkExitSignal, this);
+    std::thread         sigTh(&BinanceServer::checkExitSignal, this);
 
     // Create a acceptor and socket
     tcp::acceptor       acceptor{mIoc, {net::ip::make_address(mWebserverBase), mWebserverSocket}};
@@ -243,7 +243,7 @@ void BinanceWebserver::init()
 
     httpServer(acceptor, socket);
 
-    ELOG(INFO, "BinanceWebserver initialized.");
+    ELOG(INFO, "BinanceServer initialized.");
 
     mIoc.run();
 
@@ -255,7 +255,7 @@ void BinanceWebserver::init()
  * @brief Check exit signal
  * 
  */
-void BinanceWebserver::checkExitSignal()
+void BinanceServer::checkExitSignal()
 {
     Opel *iOpel = Opel::instance();
 
@@ -265,7 +265,7 @@ void BinanceWebserver::checkExitSignal()
         {
             mIoc.stop();
 
-            ELOG(INFO, "Thread Webserver detached.");
+            ELOG(INFO, "Thread Server detached.");
 
             break;
         }

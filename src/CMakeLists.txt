@@ -7,8 +7,8 @@ set(SOURCES
   ${SOURCE_DIR}/opel.cpp
   ${SOURCE_DIR}/utilities.cpp
   ${SOURCE_DIR}/websocket.cpp
-  ${SOURCE_DIR}/webserver.cpp
-  ${SOURCE_DIR}/requests.cpp
+  ${SOURCE_DIR}/server.cpp
+  ${SOURCE_DIR}/client.cpp
   ${SOURCE_DIR}/main.cpp
 
 )

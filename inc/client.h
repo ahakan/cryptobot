@@ -1,5 +1,5 @@
 /**
- * @file requests.h
+ * @file client.h
  * @author ahc (ahmethakan@pm.me)
  * @brief 
  * @version 0.1
@@ -39,7 +39,7 @@ using MapIterator       = std::map<int, OrderMap>::iterator;
 
 using AverageVector     = std::vector<std::string>;
 
-class Requests
+class Client
 {
     private:
 
@@ -145,11 +145,11 @@ class Requests
         bool                    addClosedCandlePrices(std::string symbol, std::string open, std::string close, std::string high, std::string low);
 
     public:
-                                Requests(std::shared_ptr<BinanceUtilities> pBu);
-        virtual                 ~Requests();
+                                Client(std::shared_ptr<BinanceUtilities> pBu);
+        virtual                 ~Client();
 };
 
-class BinanceRequests : public Requests
+class BinanceClient : public Client
 {
     private:        
         void                    binance();
@@ -181,8 +181,8 @@ class BinanceRequests : public Requests
         bool                    currentOpenOrders(std::string symbol);
 
     public:
-                                BinanceRequests(std::shared_ptr<BinanceUtilities> pBu);
-                                ~BinanceRequests();
+                                BinanceClient(std::shared_ptr<BinanceUtilities> pBu);
+                                ~BinanceClient();
 
         void                    init();
         

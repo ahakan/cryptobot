@@ -1,5 +1,5 @@
 /**
- * @file webserver.h
+ * @file server.h
  * @author ahc (ahmethakan@pm.me)
  * @brief 
  * @version 0.1
@@ -76,7 +76,7 @@ namespace html_page
     }
 }
 
-class Webserver : public std::enable_shared_from_this<Webserver>
+class Server : public std::enable_shared_from_this<Server>
 {
     private:
         tcp::socket             mSocket;
@@ -94,15 +94,15 @@ class Webserver : public std::enable_shared_from_this<Webserver>
         void                    checkDeadline();
 
     public:
-                                Webserver(tcp::socket socket);
-                                ~Webserver();
+                                Server(tcp::socket socket);
+                                ~Server();
 
         void                    start();
     
 };
 
 
-class BinanceWebserver
+class BinanceServer
 {
     private:
         net::io_context         mIoc{1};
@@ -111,8 +111,8 @@ class BinanceWebserver
         unsigned short          mWebserverSocket;
 
     public:
-                                BinanceWebserver(std::shared_ptr<BinanceUtilities> pBu);
-                                ~BinanceWebserver();
+                                BinanceServer(std::shared_ptr<BinanceUtilities> pBu);
+                                ~BinanceServer();
 
         void                    httpServer(tcp::acceptor& acceptor, tcp::socket& socket);
         void                    init();

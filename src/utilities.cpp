@@ -58,8 +58,8 @@ Utilities::Utilities()
         setExitSignal(0);
     }
 
-    // Get webserver config
-    mWebserverJson   = mConfigJson["webserver"];
+    // Get server config
+    mWebserverJson   = mConfigJson["server"];
 
     if (mWebserverJson.size() == 0)
     {
@@ -402,7 +402,7 @@ std::string Utilities::getRSIOverbought()
 
 
 /**
- * @brief Get webserver base
+ * @brief Get server base
  * 
  * @return std::string 
  */
@@ -412,7 +412,7 @@ std::string Utilities::getWebserverBase()
 
     if (mWebserverBase.length() == 0)
     {
-        ELOG(ERROR, "Failed to parse webserver base.");
+        ELOG(ERROR, "Failed to parse server base.");
 
         setExitSignal(0);
     }
@@ -422,7 +422,7 @@ std::string Utilities::getWebserverBase()
 
 
 /**
- * @brief Get webserver socket
+ * @brief Get server socket
  * 
  * @return unsigned short 
  */
@@ -432,7 +432,7 @@ unsigned short Utilities::getWebserverPort()
 
     if (mWebserverPort <= 0)
     {
-        ELOG(ERROR, "Failed to parse webserver port.");
+        ELOG(ERROR, "Failed to parse server port.");
 
         setExitSignal(0);
     }
