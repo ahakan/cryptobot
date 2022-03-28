@@ -509,6 +509,11 @@ void BinanceClient::init()
             std::this_thread::sleep_for(std::chrono::milliseconds(3000));
         }
 
+        if (!mAccountStatus || !mAPIKeyPermission)
+        {
+            break;
+        }
+
         if (pOpel->getExitSignal())
         {
             bool  getSymbolTickSize = getTickSize(mTradeSymbol);
@@ -521,19 +526,25 @@ void BinanceClient::init()
 
                 if (getTradeSymbolCandles && getFollowSymbolCandles)
                 {
-                    bool calculateSymbolAverages   = calcSymbolAverages();
-                    bool calculateSymbolRSI        = calcSymbolRSI();
+                    bool calculateSymbolAverages    = calcSymbolAverages();
+                    bool calculateSymbolRSI         = calcSymbolRSI();
 
-                    bool calculateFollowAverages   = calcFollowAverages();
-                    bool calculateFollowRSI        = calcFollowRSI();
+                    bool calculateFollowAverages    = calcFollowAverages();
+                    bool calculateFollowRSI         = calcFollowRSI();
 
                     if (calculateSymbolAverages && calculateFollowAverages && calculateSymbolRSI && calculateFollowRSI)
                     {
-                        bool getWalletBalance  = getCoinBalance(mBalanceSymbol);
+                        bool getWalletBalance       = getCoinBalance(mBalanceSymbol);
 
                         if (getWalletBalance)
                         {
-                            break;
+                            bool getTradeDailySymbol    = getDailyVolume(mTradeSymbol);
+                            bool getFollowDailySymbol   = getDailyVolume(mFollowSymbol);
+
+                            if (getTradeDailySymbol && getFollowDailySymbol) 
+                            {
+                                break;
+                            }
                         }
                     }
                 }
@@ -542,8 +553,6 @@ void BinanceClient::init()
         
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-
-    // std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     if (pOpel->getExitSignal())
     {
@@ -898,7 +907,7 @@ std::string BinanceClient::getRequest(std::string endpoint, std::string paramete
     {
         if (res == nullptr)
         {
-            std::string errorMessage = "{'Error': 'NULLPTR'}"; 
+            std::string errorMessage = "{'Error': 'nullptr'}"; 
 
             return errorMessage;
         }
@@ -940,7 +949,7 @@ std::string BinanceClient::postRequest(std::string endpoint, std::string paramet
     {
         if (res == nullptr)
         {
-            std::string errorMessage = "{'Error': 'NULLPTR'}"; 
+            std::string errorMessage = "{'Error': 'nullptr'}"; 
 
             return errorMessage;
         }
@@ -982,7 +991,7 @@ std::string BinanceClient::deleteRequest(std::string endpoint, std::string param
     {
         if (res == nullptr)
         {
-            std::string errorMessage = "{'Error': 'NULLPTR'}"; 
+            std::string errorMessage = "{'Error': 'nullptr'}"; 
 
             return errorMessage;
         }
@@ -1345,6 +1354,77 @@ bool BinanceClient::getTickSize (std::string symbol)
                 return true;
             }
         }
+    }
+
+    return false;
+}
+
+
+/**
+ * @brief Get daily coin volume
+ * 
+ * @param symbol 
+ * @return true 
+ * @return false 
+ */
+bool BinanceClient::getDailyVolume(std::string symbol)
+{
+    std::string reqTimestamp        = pBu.get()->getTimestamp();
+
+    std::string reqEndpoint         = "/api/v3/ticker/24hr";
+
+
+    std::string reqParams           = "symbol="+symbol;
+
+
+    httplib::Headers reqHeaders     = {{"content-type", "application/json"}};
+
+
+    ELOG(INFO, "Get Daily Volume Size Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
+
+    std::string responseBody        = getRequest(reqEndpoint, reqParams, reqHeaders);
+
+    ELOG(INFO, "Get Daily Volume Size Response Body: %s.", responseBody.c_str());
+
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful  = parserReader.parse(responseBody.c_str(), parsedResponse);
+
+    if (!parsingSuccessful)
+    {
+        ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    if (!parsedResponse.isObject())
+    {
+        ELOG(ERROR, "JSON is not object.");
+        return false;
+    }
+
+    std::string rSymbol         = parsedResponse["symbol"].asString();
+    std::string rVolume         = parsedResponse["volume"].asString();
+    std::string rQuoteVolume    = parsedResponse["quoteVolume"].asString();
+
+
+    if (rSymbol == mTradeSymbol)
+    {
+        mTradeSymbolDailyVolume         = rVolume;
+        mTradeSymbolDailyQuoteVolume    = rQuoteVolume;
+        
+        ELOG(INFO, "%s Volume Size: %s, Quote Volume Size: %s.", symbol.c_str(), mTradeSymbolDailyVolume.c_str(), mTradeSymbolDailyQuoteVolume.c_str());
+
+        return true;
+    }
+
+    if (rSymbol == mFollowSymbol)
+    {
+        mFollowSymbolDailyVolume        = rVolume;
+        mFollowSymbolDailyQuoteVolume   = rQuoteVolume;
+        
+        ELOG(INFO, "%s Volume Size: %s, Quote Volume Size: %s.", symbol.c_str(), mFollowSymbolDailyVolume.c_str(), mFollowSymbolDailyQuoteVolume.c_str());
+
+        return true;
     }
 
     return false;

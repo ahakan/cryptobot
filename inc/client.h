@@ -86,6 +86,10 @@ class Client
         std::string             mFollowLivePrice;
         std::string             mNewOrderCalculatedAverage;
 
+        std::string             mTradeSymbolDailyVolume;
+        std::string             mTradeSymbolDailyQuoteVolume;
+        std::string             mFollowSymbolDailyVolume;
+        std::string             mFollowSymbolDailyQuoteVolume;
 
         AllOrdersMap            mBuyOrders;
         AllOrdersMap            mBoughtOrders;
@@ -172,6 +176,7 @@ class BinanceClient : public Client
         // Market Data Endpoints
         bool                    getCandlesticksData(std::string symbol, std::string interval, std::string startTime);
         bool                    getTickSize(std::string symbol);
+        bool                    getDailyVolume(std::string symbol);
 
         // Spot Account/Trade
         bool                    createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price);
