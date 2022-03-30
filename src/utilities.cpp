@@ -538,12 +538,32 @@ std::string Utilities::upperToLower(std::string data)
  */
 std::string Utilities::roundString(std::string price, int tickSize)
 {
-    for (int i=static_cast<int>(price.size())-1; i>=0; i--)
+    int size = 0;
+
+    for (int i = static_cast<int>(price.size())-1; i >= 0; i--)
     {
-        if (price[i-tickSize] == 46)                        // 46=>ASCII = . 
+        if (price[i] == 46)                                     // 46=>ASCII = . 
             break;
 
-        price[i] = 48;                                      // 48=>ASCII = 0 
+        size++;
+    }
+
+    if (size <= tickSize)
+    {
+        for (int i = tickSize; i > size; i--)
+        {
+            price = price + "0";
+        }
+    }
+    else
+    {
+        for (int i = static_cast<int>(price.size())-1; i >=0 ; i--)
+        {
+            if (price[i-tickSize] == 46)                        // 46=>ASCII = . 
+                break;
+
+            price[i] = 48;                                      // 48=>ASCII = 0 
+        }
     }
 
     return price;
@@ -657,17 +677,25 @@ bool Utilities::compareTwoStrings(std::string firstPrice, std::string secondPric
  */
 int Utilities::getTickSize(std::string data)
 {
-    int tickSize = 10;                  // Why 10? Because data has \n and " => +2 
+    int size = 0;
+
+    for (int i = static_cast<int>(data.size())-1; i >= 0; i--)
+    {
+        if (data[i] == 46)                                      // 46=>ASCII = . 
+            break;
+
+        size++;
+    }
 
     for (int i=static_cast<int>(data.size())-1; i>=0; i--)
     {
-        if (data[i] == 49)              // 49=>ASCII = 1 
+        if (data[i] == 49)                                      // 49=>ASCII = 1 
             break;
 
-        tickSize--;
+        size--;
     }
 
-    return tickSize;
+    return size;
 }
 
 

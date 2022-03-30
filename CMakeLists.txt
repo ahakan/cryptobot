@@ -69,6 +69,9 @@ configure_file(${CMAKE_SOURCE_DIR}/config.json ${CMAKE_BINARY_DIR}/config.json)
 add_subdirectory(src)
 add_subdirectory(lib)
 add_subdirectory(test)
+enable_testing()
+
+add_test(NAME cryptobot_test COMMAND ${CMAKE_BINARY_DIR}/cryptobot_test)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
