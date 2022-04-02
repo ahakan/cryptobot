@@ -14,13 +14,14 @@ NOTFOUND=0
 
 CMAKE_COMMAND="cmake .. "
 
-CMAKEURL="https://github.com/Kitware/CMake.git"
+CMAKE_URL="https://github.com/Kitware/CMake.git"
 
 # Install cmake
 if [[ "$CMAKE" == 1 ]]; then
-    git clone $CMAKEURL
+    git clone $CMAKE_URL
     cd CMake
     ./bootstrap && make && sudo make install
+    cd ..
 fi
 
 # Check libcap

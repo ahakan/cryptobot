@@ -6,7 +6,7 @@ include_directories(${INCLUDE_DIR})
 include_directories(${TEST_INCLUDE_DIR})
 
 set(SOURCES 
-    test_utilities.cpp
+    test_utilities.cc
     ${SOURCE_DIR}/sql.cpp
     ${SOURCE_DIR}/opel.cpp
     ${SOURCE_DIR}/utilities.cpp
@@ -16,6 +16,6 @@ set(SOURCES
 )
 
 
-add_executable(cryptobot_test test_main.cpp ${SOURCES})
+add_executable(cryptobot_test test_main.cc ${SOURCES})
 
 target_link_libraries(cryptobot_test sub::libgtest sub::libelog sub::libjson sub::libhttp -lcap ${SQLite3_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${CURL_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
