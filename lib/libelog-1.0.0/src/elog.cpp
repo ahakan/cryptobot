@@ -21,8 +21,8 @@ void elog::addLogHeadToFile()
     if (LogFile.is_open())
     {
         LogFile << "[" << "            Date / Time"<< "]";
-        LogFile << "[" << addSpacesToConstChar("File", MAX_FILE_NAME_SIZE)<< "]";
         LogFile << "[" << addSpacesToConstChar("TID", MAX_TID_SIZE) << "]";
+        LogFile << "[" << addSpacesToConstChar("File", MAX_FILE_NAME_SIZE)<< "]";
         LogFile << "[" << addSpacesToConstChar("Function", MAX_FUNC_NAME_SIZE) << "]";
         LogFile << "[" << addSpacesToConstChar("Line", MAX_LINE_SIZE) << "]";
         LogFile << "[" << addSpacesToConstChar("Level", MAX_LEVEL_SIZE) << "]" << ": ";
@@ -114,13 +114,13 @@ void elog::changeFile()
  * @param _LevelNames 
  * @param _Message 
  */
-void elog::writeLogToFile(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message)
+void elog::writeLogToFile(std::string _TID, std::string _FileName, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message)
 {
     if (LogFile.is_open())
     {
         LogFile << "[" << currentDateTime() << "]";
-        LogFile << "[" << _FileName << "]";
         LogFile << "[" << _TID << "]";
+        LogFile << "[" << _FileName << "]";
         LogFile << "[" << _FunctionName << "]";
         LogFile << "[" << _Line << "]";
         LogFile << "[" << _LevelNames  << "]" << ": ";
@@ -140,11 +140,11 @@ void elog::writeLogToFile(std::string _FileName, std::string _TID, std::string _
  * @param _LevelNames 
  * @param _Message 
  */
-void elog::writeLogToConsole(std::string _FileName, std::string _TID, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message)
+void elog::writeLogToConsole(std::string _TID, std::string _FileName, std::string _FunctionName, std::string _Line, std::string _LevelNames, char* _Message)
 {
     LogConsole << "[" << currentDateTime() << "]";
-    LogConsole << "[" << _FileName << "]";
     LogConsole << "[" << _TID << "]";
+    LogConsole << "[" << _FileName << "]";
     LogConsole << "[" << _FunctionName << "]";
     LogConsole << "[" << _Line << "]";
     LogConsole << "[" << _LevelNames << "]" << ": ";
