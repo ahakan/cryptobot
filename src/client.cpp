@@ -311,6 +311,65 @@ bool Client::calcFollowAverages()
 
 
 /**
+ * @brief Calculate new buy order with some parameters
+ * 
+ * @param price 
+ * @return true 
+ * @return false 
+ */
+bool Client::calcNewBuyOrder(std::string price)
+{
+    // if RSI is Less than mRSIOversold, we create a new buy order
+    bool isNewTradeRSILessOversold      = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold);
+    bool isNewFollowRSILessOversold     = pBu.get()->compareTwoStrings(mFollowCandlesCloseRSI, mRSIOversold);
+
+    if (!isNewTradeRSILessOversold && !isNewFollowRSILessOversold)
+    {
+        // calculate total order price
+        std::string totalOrderPrice     = pBu.get()->multiplyTwoStrings(price, mQuantity);
+
+        // check balance amount
+        std::string orderPrice          = pBu.get()->roundString(totalOrderPrice, mSymbolTickSize);
+
+        // compare balance amount and order price 
+        bool compareBalanceOrderPrice   = pBu.get()->compareTwoStrings(mBalanceAmount, orderPrice);
+
+        if (compareBalanceOrderPrice)
+        {
+            return true;
+        }
+        else
+        {
+            ELOG(WARNING, "Insufficient user balance. Balance: %s. ", mBalanceAmount.c_str());
+        }
+    }
+
+    return false;
+}
+
+
+/**
+ * @brief Calcuate new sell order with some parameters
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Client::calcNewSellOrder()
+{
+    // if RSI is higher than mRSIOverbought, we create a new sell order
+    bool isNewTradeRSIHighOverbought    = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought);
+    bool isNewFollowRSIHighOverbought   = pBu.get()->compareTwoStrings(mFollowCandlesCloseRSI, mRSIOverbought);
+
+    if (isNewTradeRSIHighOverbought && isNewFollowRSIHighOverbought)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+/**
  * @brief Check candle data struct
  * 
  * @return true 
@@ -625,48 +684,34 @@ void BinanceClient::binance()
  */
 bool BinanceClient::newBuyOrder()
 {
-    // if RSI is Less than mRSIOversold, we create a new buy order
-    bool isNewTradeRSILessOversold      = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOversold);
-    bool isNewFollowRSILessOversold     = pBu.get()->compareTwoStrings(mFollowCandlesCloseRSI, mRSIOversold);
-
-    if (!isNewTradeRSILessOversold && !isNewFollowRSILessOversold)
+    // if we have not a buy order we create a new buy order
+    if (mBuyOrders.size() < 1)
     {
-        // if we have not a buy order we create a new buy order
-        if (mBuyOrders.size() < 1)
+        // check user wallet balance
+        bool walletBalanceAmount    = getCoinBalance(mBalanceSymbol);
+
+        if (walletBalanceAmount)
         {
-            // check user wallet balance
-            bool walletBalanceAmount    = getCoinBalance(mBalanceSymbol);
+            // calculate new buy price
+            std::string newPrice        = calcNewBuyPrice();
 
-            if (walletBalanceAmount)
+            // calculate new bur order
+            bool isCalcNewBuyOrder      = calcNewBuyOrder(newPrice);
+
+            if (isCalcNewBuyOrder)
             {
-                // calculate new buy price
-                std::string newPrice        = calcNewBuyPrice();
+                bool isCreated          = createNewOrder(mTradeSymbol, mBuySide, mOrderType, mQuantity, newPrice);
 
-                // calculate total order price
-                std::string totalOrderPrice = pBu.get()->multiplyTwoStrings(newPrice, mQuantity);
-
-                // check balance amount
-                std::string orderPrice      = pBu.get()->roundString(totalOrderPrice, mSymbolTickSize);
-
-                if (pBu.get()->compareTwoStrings(mBalanceAmount, orderPrice))
+                if (isCreated)
                 {
-                    bool isCreated          = createNewOrder(mTradeSymbol, mBuySide, mOrderType, mQuantity, newPrice);
+                    ELOG(INFO, "Created a New BUY Order. User balance amount is sufficient. Price: %s. ", newPrice.c_str());
 
-                    if (isCreated)
-                    {
-                        ELOG(INFO, "Created a New BUY Order. User balance amount is sufficient. Price: %s. ", newPrice.c_str());
-
-                        return true;
-                    }
-                }
-                else
-                {
-                    ELOG(WARNING, "Insufficient user balance. Balance: %s. ", mBalanceAmount.c_str());
+                    return true;
                 }
             }
         }
     }
-    
+
     return false;
 }
 
@@ -679,14 +724,12 @@ bool BinanceClient::newBuyOrder()
  */
 bool BinanceClient::newSellOrder()
 {
-    // if RSI is higher than mRSIOverbought, we create a new sell order
-    bool isNewTradeRSIHighOverbought    = pBu.get()->compareTwoStrings(mTradeCandlesCloseRSI, mRSIOverbought);
-    bool isNewFollowRSIHighOverbought   = pBu.get()->compareTwoStrings(mFollowCandlesCloseRSI, mRSIOverbought);
-
-    if (isNewTradeRSIHighOverbought && isNewFollowRSIHighOverbought)
+    // if we bought a coin we'll create a sell order
+    if (mBoughtOrders.size() > 0)
     {
-        // if we bought a coin we'll create a sell order
-        if (mBoughtOrders.size() > 0)
+        bool isCalcNewSellOrder = calcNewSellOrder();
+
+        if (isCalcNewSellOrder)
         {
             std::string newPrice    = calcNewSellPrice(mBoughtOrders.begin()->second["BoughtPrice"]);
 

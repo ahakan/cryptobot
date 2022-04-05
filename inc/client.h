@@ -145,6 +145,8 @@ class Client
         bool                    calcFollowRSI();
         bool                    calcSymbolAverages();
         bool                    calcFollowAverages();
+        bool                    calcNewBuyOrder(std::string price);
+        bool                    calcNewSellOrder();
         bool                    readCandleData();
         bool                    addClosedCandlePrices(std::string symbol, std::string open, std::string close, std::string high, std::string low);
 
