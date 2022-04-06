@@ -668,10 +668,22 @@ void BinanceClient::binance()
         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     }
 
-    // Cancel all orders
-    if (mBuyOrders.size() > 0 || mSellOrders.size() > 0)
+    // Cancel buy orders
+    if (mBuyOrders.size() > 0)
     {
-        cancelAllOpenOrders(mTradeSymbol);
+        for (MapIterator i = mBuyOrders.begin(); i != mBuyOrders.end(); ++i)
+        {
+            cancelOrder(i->second["Symbol"], i->first);
+        }
+    }
+
+    // Cancel sell orders
+    if (mSellOrders.size() > 0)
+    {
+        for (MapIterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+        {
+            cancelOrder(i->second["Symbol"], i->first);
+        }
     }
 }
 

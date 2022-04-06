@@ -70,6 +70,8 @@ Sql::Sql()
  */
 Sql::~Sql() 
 {
+    sqlite3_close(db);
+
     ELOG(INFO, "Sql destructor.");
 }
 
