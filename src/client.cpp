@@ -101,11 +101,9 @@ std::string Client::calcNewBuyPrice()
         ELOG(ERROR, "Failed to Calculated New Buy Price Average.");
     }
 
-    ELOG(INFO, "Calculate New Buy Price. Live Price: %s, Calculated Average: %s", mSymbolLivePrice.c_str(), mNewOrderCalculatedAverage.c_str());
-
     std::string calculatedPrice = pBu.get()->subTwoStrings(mSymbolLivePrice, mNewOrderCalculatedAverage);
 
-    ELOG(INFO, "Calculated New Sell Price. Live Price: %s, Sell Price: %s.", mSymbolLivePrice.c_str(), calculatedPrice.c_str());
+    ELOG(INFO, "Calculate New Buy Price. Live Price: %s, Calculated Average: %s, Buy Price: %s.", mSymbolLivePrice.c_str(), mNewOrderCalculatedAverage.c_str(), calculatedPrice.c_str());
 
     return pBu.get()->roundString(calculatedPrice, mSymbolTickSize);
 }
@@ -389,13 +387,12 @@ bool Client::readCandleData()
 
             if (areAdded)
             {
-                bool mCalculateSymbolAverages       = calcSymbolAverages();
                 bool mCalculateSymbolRSI            = calcSymbolRSI();
                 bool mCalculateOrderPriceAverage    = calcOrderPriceAverage();
 
-                if (mCalculateSymbolAverages && mCalculateSymbolRSI && mCalculateOrderPriceAverage)
+                if (mCalculateSymbolRSI && mCalculateOrderPriceAverage)
                 {
-                    ELOG(INFO, "Added new symbol closed price data and calculated symbol averages, RSI and order price average. Calculated Average: %s.", mNewOrderCalculatedAverage.c_str());
+                    ELOG(INFO, "Added new symbol closed price data, RSI and order price average. Calculated Average: %s.", mNewOrderCalculatedAverage.c_str());
                 }
             }
         }
@@ -428,12 +425,11 @@ bool Client::readCandleData()
 
             if (areAdded)
             {
-                bool mCalculateFollowAverages   = calcFollowAverages();
                 bool mCalculateFollowRSI        = calcFollowRSI();
 
-                if (mCalculateFollowAverages && mCalculateFollowRSI)
+                if (mCalculateFollowRSI)
                 {
-                    ELOG(INFO, "Added new follow symbol closed price data and calculated symbol averages and RSI.");
+                    ELOG(INFO, "Added new follow symbol closed price data and RSI.");
                 }
             }
         }
@@ -585,13 +581,11 @@ void BinanceClient::init()
 
                 if (getTradeSymbolCandles && getFollowSymbolCandles)
                 {
-                    bool calculateSymbolAverages    = calcSymbolAverages();
                     bool calculateSymbolRSI         = calcSymbolRSI();
 
-                    bool calculateFollowAverages    = calcFollowAverages();
                     bool calculateFollowRSI         = calcFollowRSI();
 
-                    if (calculateSymbolAverages && calculateFollowAverages && calculateSymbolRSI && calculateFollowRSI)
+                    if (calculateSymbolRSI && calculateFollowRSI)
                     {
                         bool getWalletBalance       = getCoinBalance(mBalanceSymbol);
 
