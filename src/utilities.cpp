@@ -127,28 +127,24 @@ std::string Utilities::getTimestamp() {
  * @param millisecond 
  * @return std::string 
  */
-std::string Utilities::getOldTimestamp()
+std::string Utilities::getRSITimestamp(int rsiPeriod, std::string interval)
 {
-    int mRSISize                = getRSIPeriod();
-
-    std::string mInterval       = getInterval();
-
     long long int mTimestamp    = std::stol(getTimestamp());
 
-    if (mInterval == "1m")  return std::to_string(mTimestamp  -= 60*mRSISize*1000);
-    if (mInterval == "3m")  return std::to_string(mTimestamp  -= 60*mRSISize*3*1000);
-    if (mInterval == "5m")  return std::to_string(mTimestamp  -= 60*mRSISize*5*1000);
-    if (mInterval == "15m") return std::to_string(mTimestamp  -= 60*mRSISize*15*1000);
-    if (mInterval == "30m") return std::to_string(mTimestamp  -= 60*mRSISize*30*1000);
-    if (mInterval == "1h")  return std::to_string(mTimestamp  -= 60*mRSISize*60*1000);
-    if (mInterval == "2h")  return std::to_string(mTimestamp  -= 60*mRSISize*120*1000);
-    if (mInterval == "4h")  return std::to_string(mTimestamp  -= 60*mRSISize*240*1000);
-    if (mInterval == "6h")  return std::to_string(mTimestamp  -= 60*mRSISize*360*1000);
-    if (mInterval == "8h")  return std::to_string(mTimestamp  -= 60*mRSISize*480*1000);
-    if (mInterval == "12h") return std::to_string(mTimestamp  -= 60*mRSISize*720*1000);
-    if (mInterval == "1d")  return std::to_string(mTimestamp  -= 60*mRSISize*1440*1000);
-    if (mInterval == "3d")  return std::to_string(mTimestamp  -= 60*mRSISize*4320*1000);
-    if (mInterval == "1w")  return std::to_string(mTimestamp  -= 60*mRSISize*10080*1000);
+    if (interval == "1m")  return std::to_string(mTimestamp  -= 60*rsiPeriod*1000);
+    if (interval == "3m")  return std::to_string(mTimestamp  -= 60*rsiPeriod*3*1000);
+    if (interval == "5m")  return std::to_string(mTimestamp  -= 60*rsiPeriod*5*1000);
+    if (interval == "15m") return std::to_string(mTimestamp  -= 60*rsiPeriod*15*1000);
+    if (interval == "30m") return std::to_string(mTimestamp  -= 60*rsiPeriod*30*1000);
+    if (interval == "1h")  return std::to_string(mTimestamp  -= 60*rsiPeriod*60*1000);
+    if (interval == "2h")  return std::to_string(mTimestamp  -= 60*rsiPeriod*120*1000);
+    if (interval == "4h")  return std::to_string(mTimestamp  -= 60*rsiPeriod*240*1000);
+    if (interval == "6h")  return std::to_string(mTimestamp  -= 60*rsiPeriod*360*1000);
+    if (interval == "8h")  return std::to_string(mTimestamp  -= 60*rsiPeriod*480*1000);
+    if (interval == "12h") return std::to_string(mTimestamp  -= 60*rsiPeriod*720*1000);
+    if (interval == "1d")  return std::to_string(mTimestamp  -= 60*rsiPeriod*1440*1000);
+    if (interval == "3d")  return std::to_string(mTimestamp  -= 60*rsiPeriod*4320*1000);
+    if (interval == "1w")  return std::to_string(mTimestamp  -= 60*rsiPeriod*10080*1000);
     
     ELOG(ERROR, "Failed to calculate old timestamp.");
 
@@ -163,11 +159,11 @@ std::string Utilities::getOldTimestamp()
  */
 std::string Utilities::getCoinSymbol()
 {
-    std::string mTradeSymbol    = getTradeSymbol();
+    std::string tradeSymbol     = getTradeSymbol();
 
-    std::string mBalanceSymbol  = getBalanceSymbol();
+    std::string balanceSymbol   = getBalanceSymbol();
 
-    std::string coinSymbol      = mTradeSymbol.substr(0, mTradeSymbol.find(mBalanceSymbol));
+    std::string coinSymbol      = tradeSymbol.substr(0, tradeSymbol.find(balanceSymbol));
 
     if (coinSymbol.length() == 0)
     {
@@ -187,16 +183,16 @@ std::string Utilities::getCoinSymbol()
  */
 std::string Utilities::getTradeSymbol()
 {
-    std::string mTradeSymbol = mTradeJson["symbol"].asString();
+    std::string tradeSymbol = mTradeJson["symbol"].asString();
     
-    if (mTradeSymbol.length() == 0)
+    if (tradeSymbol.length() == 0)
     {
         ELOG(ERROR, "Failed to parse Trade Symbol.");
 
         setExitSignal(0);
     }
 
-    return mTradeSymbol;
+    return tradeSymbol;
 }
 
 
@@ -207,16 +203,16 @@ std::string Utilities::getTradeSymbol()
  */
 std::string Utilities::getFollowSymbol()
 {
-    std::string mFollowSymbol = mTradeJson["follow"]["symbol"].asString();
+    std::string followSymbol = mTradeJson["follow"]["symbol"].asString();
 
-    if (mFollowSymbol.length() == 0)
+    if (followSymbol.length() == 0)
     {
         ELOG(ERROR, "Failed to parse Follow Symbol.");
 
         setExitSignal(0);
     }
 
-    return mFollowSymbol;
+    return followSymbol;
 }
 
 
@@ -227,16 +223,16 @@ std::string Utilities::getFollowSymbol()
  */
 std::string Utilities::getInterval()
 {
-    std::string mInterval = mTradeJson["interval"].asString();
+    std::string interval = mTradeJson["interval"].asString();
 
-    if (mInterval.length() == 0)
+    if (interval.length() == 0)
     {
         ELOG(ERROR, "Failed to parse interval.");
 
         setExitSignal(0);
     }
 
-    return mInterval;
+    return interval;
 }
 
 
@@ -247,16 +243,16 @@ std::string Utilities::getInterval()
  */
 std::string Utilities::getQuantity()
 {
-    std::string mQuantity = mTradeJson["quantity"].asString();
+    std::string quantity = mTradeJson["quantity"].asString();
 
-    if (mQuantity.length() == 0)
+    if (quantity.length() == 0)
     {
         ELOG(ERROR, "Failed to parse quantity.");
 
         setExitSignal(0);
     }
 
-    return mQuantity;
+    return quantity;
 }
 
 
@@ -267,16 +263,16 @@ std::string Utilities::getQuantity()
  */
 std::string Utilities::getBalanceSymbol()
 {
-    std::string mBalanceSymbol = mTradeJson["balance"]["symbol"].asString();
+    std::string balanceSymbol = mTradeJson["balance"]["symbol"].asString();
 
-    if (mBalanceSymbol.length() == 0)
+    if (balanceSymbol.length() == 0)
     {
         ELOG(ERROR, "Failed to parse balance symbol.");
 
         setExitSignal(0);
     }
 
-    return mBalanceSymbol;
+    return balanceSymbol;
 }
 
 
@@ -287,16 +283,16 @@ std::string Utilities::getBalanceSymbol()
  */
 std::string Utilities::getBalanceAmount()
 {
-    std::string mBalanceAmount = mTradeJson["balance"]["amount"].asString();
+    std::string balanceAmount = mTradeJson["balance"]["amount"].asString();
 
-    if (mBalanceAmount.length() == 0)
+    if (balanceAmount.length() == 0)
     {
         ELOG(ERROR, "Failed to parse balance amount.");
 
         setExitSignal(0);
     }
 
-    return mBalanceAmount;
+    return balanceAmount;
 }
 
 
@@ -307,16 +303,16 @@ std::string Utilities::getBalanceAmount()
  */
 std::string Utilities::getAverageAmount()
 {
-    std::string mAverageAmount = mTradeJson["average"]["amount"].asString();
+    std::string averageAmount = mTradeJson["average"]["amount"].asString();
 
-    if (mAverageAmount.length() == 0)
+    if (averageAmount.length() == 0)
     {
         ELOG(ERROR, "Failed to parse average amount.");
 
         setExitSignal(0);
     }
 
-    return mAverageAmount;
+    return averageAmount;
 }
 
 
@@ -328,16 +324,16 @@ std::string Utilities::getAverageAmount()
  */
 bool Utilities::getAverageAutoCalculate()
 {
-    bool mAutoCalculate = mTradeJson["average"]["auto-calculate"].asBool();
+    bool autoCalculate = mTradeJson["average"]["auto-calculate"].asBool();
 
-    if (mAutoCalculate != 0 && mAutoCalculate != 1)
+    if (autoCalculate != 0 && autoCalculate != 1)
     {
         ELOG(ERROR, "Failed to parse average auto calculate.");
 
         setExitSignal(0);
     }
 
-    return mAutoCalculate;
+    return autoCalculate;
 }
 
 
@@ -348,16 +344,16 @@ bool Utilities::getAverageAutoCalculate()
  */
 int Utilities::getRSIPeriod()
 {
-    int mPeriod = mTradeJson["RSI"]["period"].asInt();
+    int period = mTradeJson["RSI"]["period"].asInt();
 
-    if (mPeriod < 0 || mPeriod > 97)
+    if (period < 0 || period > 97)
     {
         ELOG(ERROR, "Failed to parse RSI period. Period, must be between (1-96).");
 
         setExitSignal(0);
     }
 
-    return mPeriod;
+    return period;
 }
 
 
@@ -368,16 +364,16 @@ int Utilities::getRSIPeriod()
  */
 std::string Utilities::getRSIOversold()
 {
-    std::string mOversold = mTradeJson["RSI"]["oversold"].asString();
+    std::string oversold = mTradeJson["RSI"]["oversold"].asString();
 
-    if (mOversold.length() == 0)
+    if (oversold.length() == 0)
     {
         ELOG(ERROR, "Failed to parse RSI oversold.");
 
         setExitSignal(0);
     }
 
-    return mOversold;
+    return oversold;
 }
 
 
@@ -388,16 +384,16 @@ std::string Utilities::getRSIOversold()
  */
 std::string Utilities::getRSIOverbought()
 {
-    std::string mOverbought = mTradeJson["RSI"]["overbought"].asString();
+    std::string overbought = mTradeJson["RSI"]["overbought"].asString();
 
-    if (mOverbought.length() == 0)
+    if (overbought.length() == 0)
     {
         ELOG(ERROR, "Failed to parse RSI overebought.");
 
         setExitSignal(0);
     }
 
-    return mOverbought;
+    return overbought;
 }
 
 
@@ -408,16 +404,16 @@ std::string Utilities::getRSIOverbought()
  */
 std::string Utilities::getWebserverBase()
 {
-    std::string mWebserverBase = mWebserverJson["base"].asString();
+    std::string webserverBase = mWebserverJson["base"].asString();
 
-    if (mWebserverBase.length() == 0)
+    if (webserverBase.length() == 0)
     {
         ELOG(ERROR, "Failed to parse server base.");
 
         setExitSignal(0);
     }
 
-    return mWebserverBase;
+    return webserverBase;
 }
 
 
@@ -428,16 +424,16 @@ std::string Utilities::getWebserverBase()
  */
 unsigned short Utilities::getWebserverPort()
 {
-    unsigned short mWebserverPort = mWebserverJson["port"].asUInt();
+    unsigned short webserverPort = mWebserverJson["port"].asUInt();
 
-    if (mWebserverPort <= 0)
+    if (webserverPort <= 0)
     {
         ELOG(ERROR, "Failed to parse server port.");
 
         setExitSignal(0);
     }
 
-    return mWebserverPort;
+    return webserverPort;
 }
 
 
@@ -735,16 +731,16 @@ BinanceUtilities::~BinanceUtilities()
  */
 std::string BinanceUtilities::getWebsocketBase()
 {
-    std::string mWebsocketBase = mWebsocketJson["base"].asString();
+    std::string websocketBase = mWebsocketJson["base"].asString();
 
-    if (mWebsocketBase.length() == 0)
+    if (websocketBase.length() == 0)
     {
         ELOG(ERROR, "Failed to parse websocket base.");
 
         setExitSignal(0);
     }
 
-    return mWebsocketBase;
+    return websocketBase;
 }
 
 
@@ -755,16 +751,16 @@ std::string BinanceUtilities::getWebsocketBase()
  */
 std::string BinanceUtilities::getWebsocketPort()
 {
-    std::string mWebsocketPort = std::to_string(mWebsocketJson["port"].asInt());
+    std::string websocketPort = std::to_string(mWebsocketJson["port"].asInt());
 
-    if (mWebsocketPort.length() == 0)
+    if (websocketPort.length() == 0)
     {
         ELOG(ERROR, "Failed to parse websocket base.");
 
         setExitSignal(0);
     }
 
-    return mWebsocketPort;
+    return websocketPort;
 }
 
 
@@ -805,18 +801,18 @@ std::string BinanceUtilities::getWebsocketEndpointF()
  */
 std::string BinanceUtilities::getAPIBase()
 {
-    std::string mAPIBase = mAPIJson["base"].asString();
+    std::string apiBase = mAPIJson["base"].asString();
 
-    if (mAPIBase.length() == 0)
+    if (apiBase.length() == 0)
     {
         ELOG(ERROR, "Failed to parse API base.");
 
         setExitSignal(0);
     }
 
-    std::string mAPIBaseWithHttps = "https://" + mAPIBase;
+    std::string apiBaseWithHttps = "https://" + apiBase;
 
-    return mAPIBaseWithHttps;
+    return apiBaseWithHttps;
 }
 
 
@@ -827,16 +823,16 @@ std::string BinanceUtilities::getAPIBase()
  */
 std::string BinanceUtilities::getAPIKEY()
 {
-    std::string mAPIKey = mAPIJson["API_KEY"].asString();
+    std::string apiKey = mAPIJson["API_KEY"].asString();
 
-    if (mAPIKey.length() == 0)
+    if (apiKey.length() == 0)
     {
         ELOG(ERROR, "Failed to parse API_KEY.");
 
         setExitSignal(0);
     }
 
-    return mAPIKey;
+    return apiKey;
 }
 
 
@@ -847,15 +843,15 @@ std::string BinanceUtilities::getAPIKEY()
  */
 std::string BinanceUtilities::getAPISECRETKEY()
 {
-    std::string mAPISecretKey = mAPIJson["SECRET_KEY"].asString();
+    std::string apiSecretKey = mAPIJson["SECRET_KEY"].asString();
 
-    if (mAPISecretKey.length() == 0)
+    if (apiSecretKey.length() == 0)
     {
         ELOG(ERROR, "Failed to parse SECRET_KEY.");
 
         setExitSignal(0);
     }
-    return mAPISecretKey;
+    return apiSecretKey;
 }
 
 
@@ -897,8 +893,8 @@ std::string BinanceUtilities::encryptWithHMAC(const char* key, const char* data)
  */
 std::string BinanceUtilities::getSignature(std::string query) 
 {
-    std::string mSecretKey  = getAPISECRETKEY();
-	std::string signature   = encryptWithHMAC(mSecretKey.c_str(), query.c_str());
+    std::string secretKey   = getAPISECRETKEY();
+	std::string signature   = encryptWithHMAC(secretKey.c_str(), query.c_str());
 
     // ELOG(INFO, "Generated a signature: %s.", signature.c_str());
 

@@ -36,16 +36,46 @@
 #include <map>
 #include <iterator>
 
-// Namespaces
-namespace   beast           = boost::beast;         // from <boost/beast.hpp>
-namespace   http            = beast::http;           // from <boost/beast/http.hpp>
-namespace   net             = boost::asio;            // from <boost/asio.hpp>
-using       tcp             = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+// Using && Namespaces
+namespace   beast               = boost::beast;         // from <boost/beast.hpp>
+namespace   http                = beast::http;           // from <boost/beast/http.hpp>
+namespace   net                 = boost::asio;            // from <boost/asio.hpp>
+using       tcp                 = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-using       SoldOrdersMap   = std::multimap<int, std::map<std::string, std::string>>;
+using       OrderMap            = std::map<std::string, std::string>;
+using       AllOrdersMap        = std::map<int, OrderMap>;
+using       SoldOrdersMap       = std::multimap<int, OrderMap>;
+using       MapIterator         = std::map<int, OrderMap>::iterator;
 
 namespace html_page
 {
+    inline std::string buyOrderTable()
+    {
+        Opel *iOpel = Opel::instance();
+
+        AllOrdersMap *mBuyOrders = iOpel->getBuyOrdersMap();
+
+        std::string table = "";
+
+        if (mBuyOrders->size() > 0)
+        {
+            table = "<h2>Buy Orders</h2><table><tr><th>Order ID</th><th>Symbol</th><th>Quantity</th><th>Buy Price</th></tr><tr>";
+        
+            for (MapIterator i = (*mBuyOrders).begin(); i != (*mBuyOrders).end(); ++i)
+            {
+                table = table + "<td>" + std::to_string(i->first) + "</td>";
+                table = table + "<td>" + i->second["Symbol"] + "</td>";
+                table = table + "<td>" + i->second["Quantity"] + "</td>";
+                table = table + "<td>" + i->second["Price"] + "</td>";
+
+                table = table + "</tr>";
+            }
+            table = table + "</table>\n";
+        }
+
+        return table;
+    }
+    
     inline std::string soldOrderTable()
     {
         Opel *iOpel = Opel::instance();
@@ -67,7 +97,7 @@ namespace html_page
                 table = table + "<td>" + i->second["SoldPrice"] + "</td>";
                 table = table + "<td>" + i->second["Timestamp"] + "</td>";
 
-                table = table + "</tr><tr>";
+                table = table + "</tr>";
             }
             table = table + "</table>\n";
         }

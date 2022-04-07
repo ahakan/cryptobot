@@ -30,6 +30,7 @@ Client::Client(std::shared_ptr<BinanceUtilities> pBu)
 
     Opel *iOpel             = Opel::instance();
 
+    iOpel->setBuyOrdersMap(&mBuyOrders);
     iOpel->setBoughtOrdersMap(&mBoughtOrders);
     iOpel->setSellOrdersMap(&mSellOrders);
     iOpel->setSoldOrdersMap(&mSoldOrders);
@@ -576,8 +577,8 @@ void BinanceClient::init()
 
             if (getSymbolTickSize && getFollowTickSize)
             {
-                bool getTradeSymbolCandles     = getCandlesticksData(mTradeSymbol, mInterval, pBu.get()->getOldTimestamp());
-                bool getFollowSymbolCandles    = getCandlesticksData(mFollowSymbol, mInterval, pBu.get()->getOldTimestamp());
+                bool getTradeSymbolCandles     = getCandlesticksData(mTradeSymbol, mInterval, pBu.get()->getRSITimestamp(mRSIPeriod, mInterval));
+                bool getFollowSymbolCandles    = getCandlesticksData(mFollowSymbol, mInterval, pBu.get()->getRSITimestamp(mRSIPeriod, mInterval));
 
                 if (getTradeSymbolCandles && getFollowSymbolCandles)
                 {
@@ -663,22 +664,44 @@ void BinanceClient::binance()
     }
 
     // Cancel buy orders
-    if (mBuyOrders.size() > 0)
+    while (mBuyOrders.size() > 0)
     {
         for (MapIterator i = mBuyOrders.begin(); i != mBuyOrders.end(); ++i)
         {
             cancelOrder(i->second["Symbol"], i->first);
         }
+
+        // Remove canceled orders
+        for (MapIterator i = mBuyOrders.begin(); i != mBuyOrders.end(); ++i)
+        {
+            if (i->second["Status"] == "CANCELED")
+            {
+                ELOG(INFO, "Removed Canceled Buy Order. Order id: %d, Status: %s.", i->first, i->second["Status"].c_str());
+
+                mBuyOrders.erase(i);
+            }
+        }
     }
 
     // Cancel sell orders
-    if (mSellOrders.size() > 0)
-    {
-        for (MapIterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
-        {
-            cancelOrder(i->second["Symbol"], i->first);
-        }
-    }
+    // while (mSellOrders.size() > 0)
+    // {
+    //     for (MapIterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+    //     {
+    //         cancelOrder(i->second["Symbol"], i->first);
+    //     }
+
+    //     // Remove canceled orders
+    //     for (MapIterator i = mSellOrders.begin(); i != mSellOrders.end(); ++i)
+    //     {
+    //         if (i->second["Status"] == "CANCELED")
+    //         {
+    //             ELOG(INFO, "Removed Canceled Sell Order. Order id: %d, Status: %s.", i->first, i->second["Status"].c_str());
+
+    //             mSellOrders.erase(i);
+    //         }
+    //     }
+    // }
 }
 
 
@@ -1690,6 +1713,39 @@ bool BinanceClient::cancelOrder(std::string symbol, int orderId)
     {
         ELOG(ERROR, "Failed to Cancel the Order. Order id: %d.", rOrderId);
         return false;
+    }
+
+    if (rSide == mBuySide)
+    {
+        MapIterator findOrder = mBuyOrders.find(rOrderId);
+
+        if (findOrder != mBuyOrders.end())
+        {
+            OrderMap newOrder;
+
+            newOrder.emplace("Status", rStatus);
+
+            // Update order
+            findOrder->second = newOrder;
+
+            ELOG(INFO, "Canceled Order. Order id: %d, Status: %s, Side: %s.", rOrderId, rStatus.c_str(), rSide.c_str());
+        }
+    }
+    else
+    {
+        MapIterator findOrder = mSellOrders.find(rOrderId);
+
+        if (findOrder != mSellOrders.end())
+        {
+            OrderMap newOrder;
+
+            newOrder.emplace("Status", rStatus);
+
+            // Update order
+            findOrder->second = newOrder;
+
+            ELOG(INFO, "Canceled Order. Order id: %d, Status: %s, Side: %s.", rOrderId, rStatus.c_str(), rSide.c_str());
+        }
     }
     
     return true;

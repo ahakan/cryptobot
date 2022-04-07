@@ -51,7 +51,7 @@ class Utilities
         void                    setExitSignal(bool signal);
 
         std::string             getTimestamp();
-        std::string             getOldTimestamp();
+        std::string             getRSITimestamp(int rsiPeriod, std::string interval);
         std::string             getCoinSymbol();
         std::string             getTradeSymbol();
         std::string             getFollowSymbol();

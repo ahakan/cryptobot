@@ -28,8 +28,8 @@
         },
         "api": {
             "base": "api.binance.com",
-            "API_KEY": "1",
-            "SECRET_KEY": "1"
+            "API_KEY": "YOUR_API_KEY",
+            "SECRET_KEY": "YOUR_SECRET_KEY"
         }
     },
     "server": {

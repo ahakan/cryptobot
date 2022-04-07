@@ -113,6 +113,7 @@ void Server::createResponse()
             <<  "</head>\n"
             <<  "<body>\n"
             <<   "<h1>Cryptobot</h1>\n"
+            <<   html_page::buyOrderTable()
             <<   html_page::soldOrderTable()
             <<  "</body>\n"
             << "</html>\n";

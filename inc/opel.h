@@ -55,6 +55,7 @@ class Opel
         std::string                 mTradeSymbol;
         std::string                 mFollowSymbol;
 
+        AllOrdersMap                *mBuyOrdersMap;
         AllOrdersMap                *mBoughtOrdersMap;
         AllOrdersMap                *mSellOrdersMap;
         SoldOrdersMap               *mSoldOrdersMap;
@@ -86,6 +87,9 @@ class Opel
 
         void                        setFollowSymbol(std::string symbol);
         std::string                 getFollowSymbol();
+
+        void                        setBuyOrdersMap(AllOrdersMap *orders);
+        AllOrdersMap                *getBuyOrdersMap();
 
         void                        setBoughtOrdersMap(AllOrdersMap *orders);
         AllOrdersMap                *getBoughtOrdersMap();
