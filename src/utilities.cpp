@@ -257,6 +257,26 @@ std::string Utilities::getQuantity()
 
 
 /**
+ * @brief Get type
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getType()
+{
+    std::string type = mTradeJson["type"].asString();
+
+    if (type.length() == 0)
+    {
+        ELOG(ERROR, "Failed to parse type.");
+
+        setExitSignal(0);
+    }
+
+    return type;
+}
+
+
+/**
  * @brief Get balance symbol
  * 
  * @return std::string 

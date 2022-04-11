@@ -1,5 +1,4 @@
 #include "test_utilities.h"
-#include "gtest/gtest.h"
 
 
 BinanceUtilities *TestUtilities::pBu = NULL; 

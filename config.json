@@ -4,6 +4,7 @@
         "symbol"  : "SOLBUSD",
         "interval": "4h",
         "quantity": "2.00",
+        "type"    : "LIMIT",
         "balance": {
             "symbol": "BUSD",
             "amount": "400"

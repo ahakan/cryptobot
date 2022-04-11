@@ -53,6 +53,7 @@ class Client
         
         std::string             mInterval;
         std::string             mQuantity;
+        std::string             mOrderType;
         std::string             mCoinSymbol;
         std::string             mCoinQuantity;
         std::string             mTradeSymbol;
@@ -77,7 +78,6 @@ class Client
 
         std::string             mBuySide    = "BUY";
         std::string             mSellSide   = "SELL";
-        std::string             mOrderType  = "LIMIT";
         std::string             mRecvWindow = "10000";
 
 

@@ -15,6 +15,7 @@ Client::Client(std::shared_ptr<BinanceUtilities> pBu)
 
     mInterval               = pBu.get()->getInterval();
     mQuantity               = pBu.get()->getQuantity();
+    mOrderType              = pBu.get()->getType();
     mCoinSymbol             = pBu.get()->getCoinSymbol(); 
     mTradeSymbol            = pBu.get()->getTradeSymbol();
     mFollowSymbol           = pBu.get()->getFollowSymbol();

@@ -57,6 +57,7 @@ class Utilities
         std::string             getFollowSymbol();
         std::string             getInterval();
         std::string             getQuantity();
+        std::string             getType();
         std::string             getBalanceSymbol();
         std::string             getBalanceAmount();
         std::string             getAverageAmount();
