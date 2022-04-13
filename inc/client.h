@@ -138,7 +138,9 @@ class Client
 
 
         std::string             calcNewSellPrice(std::string boughtPrice);
+        std::string             calcNewSellStopPrice(std::string boughtPrice);
         std::string             calcNewBuyPrice();
+        std::string             calcNewBuyStopPrice();
 
         bool                    calcNewBalanceAmount(std::string side, std::string price, std::string quantity);
         bool                    calcOrderPriceAverage();
@@ -182,7 +184,8 @@ class BinanceClient : public Client
         bool                    getDailyVolume(std::string symbol);
 
         // Spot Account/Trade
-        bool                    createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price);
+        bool                    createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price);    
+        bool                    createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price, std::string stop);
         bool                    cancelOrder(std::string symbol, int orderId);
         bool                    cancelAllOpenOrders(std::string symbol);
         bool                    queryOrder(std::string symbol, int orderId);

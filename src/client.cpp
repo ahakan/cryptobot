@@ -722,21 +722,45 @@ bool BinanceClient::newBuyOrder()
 
         if (walletBalanceAmount)
         {
-            // calculate new buy price
-            std::string newPrice        = calcNewBuyPrice();
-
-            // calculate new bur order
-            bool isCalcNewBuyOrder      = calcNewBuyOrder(newPrice);
-
-            if (isCalcNewBuyOrder)
+            if (mOrderType == "LIMIT")
             {
-                bool isCreated          = createNewOrder(mTradeSymbol, mBuySide, mOrderType, mQuantity, newPrice);
+                // calculate new buy price
+                std::string buyPrice        = calcNewBuyPrice();
 
-                if (isCreated)
+                // calculate new buy order
+                bool isCalcNewBuyOrder      = calcNewBuyOrder(buyPrice);
+
+                if (isCalcNewBuyOrder)
                 {
-                    ELOG(INFO, "Created a New BUY Order. User balance amount is sufficient. Price: %s. ", newPrice.c_str());
+                    bool isCreated          = createNewOrder(mTradeSymbol, mBuySide, mOrderType, mQuantity, buyPrice);
 
-                    return true;
+                    if (isCreated)
+                    {
+                        ELOG(INFO, "Created a New Limit BUY Order. User balance amount is sufficient. Price: %s. ", buyPrice.c_str());
+
+                        return true;
+                    }
+                }
+            }
+
+            if (mOrderType == "STOP_LOSS_LIMIT")
+            {
+                // calculate new buy price
+                std::string stopPrice       = calcNewBuyPrice();
+
+                // calculate new buy order
+                bool isCalcNewBuyOrder      = calcNewBuyOrder(stopPrice);
+
+                if (isCalcNewBuyOrder)
+                {
+                    bool isCreated          = createNewOrder(mTradeSymbol, mBuySide, mOrderType, mQuantity, stopPrice);
+
+                    if (isCreated)
+                    {
+                        ELOG(INFO, "Created a New Stop Loss BUY Order. User balance amount is sufficient. Price: %s. ", stopPrice.c_str());
+
+                        return true;
+                    }
                 }
             }
         }
@@ -761,6 +785,7 @@ bool BinanceClient::newSellOrder()
 
         if (isCalcNewSellOrder)
         {
+            // calculate new sell price
             std::string newPrice    = calcNewSellPrice(mBoughtOrders.begin()->second["BoughtPrice"]);
 
             bool isCreated          = createNewOrder(mTradeSymbol, mSellSide, mOrderType, mBoughtOrders.begin()->second["Quantity"], newPrice);
@@ -1564,6 +1589,161 @@ bool BinanceClient::createNewOrder(std::string symbol, std::string side, std::st
     std::string rStatus         = parsedResponse["status"].asString();
     std::string rSymbol         = parsedResponse["symbol"].asString();
     std::string rPrice          = parsedResponse["price"].asString();
+    std::string rQuantity       = parsedResponse["origQty"].asString();
+    std::string rExecutedQty    = parsedResponse["executedQty"].asString();
+    std::string rTransactTime   = parsedResponse["transactTime"].asString();
+
+    std::string rError          = parsedResponse["Error"].asString();
+
+    if (rError.size() == 0)
+    {
+        OrderMap newOrder;
+
+        if (rStatus == "NEW")
+        {
+            if (rSide == "BUY")
+            {
+                newOrder.emplace("Symbol", rSymbol);
+                newOrder.emplace("Price", rPrice);
+                newOrder.emplace("Quantity", rQuantity);
+                newOrder.emplace("TransactTime", rTransactTime);
+
+                mBuyOrders.emplace(rOrderId, newOrder);
+
+                ELOG(INFO, "Created a New Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", rOrderId, rSymbol.c_str(), rPrice.c_str(), rQuantity.c_str(), rTransactTime.c_str());
+
+                return true;
+            }
+            else if (rSide == "SELL")
+            {
+                newOrder.emplace("Symbol", rSymbol);
+                newOrder.emplace("Price", rPrice);
+                newOrder.emplace("BoughtPrice", mBoughtOrders.begin()->second["BoughtPrice"]);
+                newOrder.emplace("Quantity", rQuantity);
+                newOrder.emplace("BoughtTime", mBoughtOrders.begin()->second["BoughtTime"]);
+                newOrder.emplace("TransactTime", rTransactTime);
+
+                mSellOrders.emplace(rOrderId, newOrder);
+
+                mBoughtOrders.erase(mBoughtOrders.begin());
+
+                ELOG(INFO, "Created a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", rOrderId, rSymbol.c_str(), rPrice.c_str(), rQuantity.c_str(), rTransactTime.c_str());
+
+                return true;
+            }
+        }
+        else if (rStatus == "FILLED")
+        {
+            // check filled commission
+            Json::Value mAPIFills   = parsedResponse["fills"][0];
+            std::string mCommission = mAPIFills["commission"].asString();
+
+            rQuantity               = pBu.get()->subTwoStrings(rQuantity, mCommission);
+
+            ELOG(INFO, "Paid a commission. Commission: %s, Last quantity: %s.", mCommission.c_str(), rQuantity.c_str());
+
+            if (rSide == "BUY")
+            {
+                newOrder.emplace("Symbol", rSymbol);
+                newOrder.emplace("BoughtPrice", rPrice);
+                newOrder.emplace("Quantity", rQuantity);
+                newOrder.emplace("BoughtTime", rTransactTime);
+
+                mBoughtOrders.emplace(rOrderId, newOrder);
+
+                ELOG(INFO, "Created and Filled a New Buy Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", rOrderId, rSymbol.c_str(), rPrice.c_str(), rQuantity.c_str(), rTransactTime.c_str());
+            }
+            else if (rSide == "SELL")
+            {
+                newOrder.emplace("Symbol", rSymbol);
+                newOrder.emplace("Price", rPrice);
+                newOrder.emplace("BoughtPrice", mBoughtOrders.begin()->second["BoughtPrice"]);
+                newOrder.emplace("Quantity", rQuantity);
+                newOrder.emplace("BoughtTime", mBoughtOrders.begin()->second["BoughtTime"]);
+                newOrder.emplace("SoldTime", rTransactTime);
+
+                mSoldOrders.emplace(rOrderId, newOrder);
+
+                mBoughtOrders.erase(mBoughtOrders.begin());
+
+                ELOG(INFO, "Created and Filled  a New Sell Order. OrderId: %d, Symbol: %s, BoughtPrice: %s, Quantity: %s, SoldTime: %s.", rOrderId, rSymbol.c_str(), rPrice.c_str(), rQuantity.c_str(), rTransactTime.c_str());
+            }
+
+            // calculate new balance amount
+            calcNewBalanceAmount(rSide, rPrice, rQuantity);
+
+            return true;
+        }
+    }
+    
+    ELOG(ERROR, "Failed to Create a New Order.");
+
+    return false;
+}
+
+
+/**
+ * @brief Create a new order
+ * 
+ * @param symbol 
+ * @param side 
+ * @param type 
+ * @param quantity 
+ * @param price 
+ * @param stop 
+ * @return true 
+ * @return false 
+ */
+bool BinanceClient::createNewOrder(std::string symbol, std::string side, std::string type, std::string quantity, std::string price, std::string stop)
+{
+    std::string reqTimestamp            = pBu.get()->getTimestamp();
+
+    std::string reqEndpoint             = "/api/v3/order";
+
+    std::string roundedQuantity        = pBu.get()->roundString(quantity, mSymbolTickSize);
+
+
+    std::string reqParams               = "symbol="+symbol+"&side="+side;
+                reqParams               += "&type="+type+"&timeInForce=GTC";
+                reqParams               += "&quantity="+roundedQuantity+"&price="+price+"&stopPrice="+stop;
+                reqParams               += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
+
+    std::string reqSignature            = pBu.get()->getSignature(reqParams);
+
+    httplib::Params reqParamsWithSign   = {{ "signature", reqSignature }};
+
+
+    httplib::Headers reqHeaders         = {{"content-type", "application/json"}, {"X-MBX-APIKEY", mAPI_KEY}};
+
+
+    ELOG(INFO, "Create New Order Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
+
+    std::string responseBody            = postRequest(reqEndpoint, reqParams, reqParamsWithSign, reqHeaders);
+
+    ELOG(INFO, "Create New Order Response Body: %s.", responseBody.c_str());
+
+    Json::Value  parsedResponse;
+    Json::Reader parserReader;
+    bool         parsingSuccessful      = parserReader.parse(responseBody.c_str(), parsedResponse);
+
+    if (!parsingSuccessful)
+    {
+        ELOG(ERROR, "Failed to JSON parse.");
+        return false;
+    }
+
+    if (!parsedResponse.isObject())
+    {
+        ELOG(ERROR, "JSON is not object.");
+        return false;
+    }
+
+    int rOrderId                = parsedResponse["orderId"].asInt();
+    std::string rSide           = parsedResponse["side"].asString();
+    std::string rStatus         = parsedResponse["status"].asString();
+    std::string rSymbol         = parsedResponse["symbol"].asString();
+    std::string rPrice          = parsedResponse["price"].asString();
+    // std::string rStopPrice      = parsedResponse["stopPrice"].asString();
     std::string rQuantity       = parsedResponse["origQty"].asString();
     std::string rExecutedQty    = parsedResponse["executedQty"].asString();
     std::string rTransactTime   = parsedResponse["transactTime"].asString();
