@@ -83,6 +83,78 @@ Utilities::~Utilities()
 
 
 /**
+ * @brief Calculates RSI
+ * 
+ * @param vector 
+ * @return std::string 
+ */
+std::string Utilities::RSI(std::vector<std::string> vector)
+{
+    if (vector.empty())
+    {
+        ELOG(ERROR, "RSI Vector is empty.");
+        
+        setExitSignal(0);
+    }
+
+    int size            = vector.size();
+    float sumGain       = 0;
+    float sumLoss       = 0;
+
+    for (int i=size-1; i>0; i--)
+    {
+        float difference = std::stof(vector[i]) - std::stof(vector[i-1]);
+
+        if (difference >= 0)
+        {
+            sumGain += difference;
+        }
+        else
+        {
+            sumLoss -= difference;
+        }
+    }
+
+    if (sumGain == 0) return "0";
+
+    float relativeStrength = sumGain / sumLoss;
+
+    std::string RSI = std::to_string(100.0 - (100.0 / (1 + relativeStrength)));
+
+    return RSI;
+}
+
+
+/**
+ * @brief Calculates average
+ * 
+ * @param vector 
+ * @return std::string 
+ */
+std::string Utilities::Average(std::vector<std::string> vector)
+{
+    if (vector.empty())
+    {
+        ELOG(ERROR, "Average Vector is empty.");
+        
+        setExitSignal(0);
+    }
+
+    int size        = vector.size();
+    float average   = 0;
+
+    for (int i=0; i<size; i++)
+    {
+        average += std::stof(vector[i]);
+    }
+
+    average = average / size;
+
+    return std::to_string(average);
+}
+
+
+/**
  * @brief Set exit signal
  * 
  * @param signal 
@@ -458,79 +530,6 @@ unsigned short Utilities::getWebserverPort()
 
 
 /**
- * @brief Calculate average
- * 
- * @param vector 
- * @return std::string 
- */
-std::string Utilities::calculateAverage(std::vector<std::string> vector)
-{
-    if (vector.empty())
-    {
-        ELOG(ERROR, "Average Vector is empty.");
-        
-        setExitSignal(0);
-    }
-
-    int size        = vector.size();
-    float average   = 0;
-
-    for (int i=0; i<size; i++)
-    {
-        average += std::stof(vector[i]);
-    }
-
-    average = average / size;
-
-    return std::to_string(average);
-}
-
-
-/**
- * @brief Calculate RSI
- * 
- * @param vector 
- * @param period 
- * @return std::string 
- */
-std::string Utilities::calculateRSI(std::vector<std::string> vector)
-{
-    if (vector.empty())
-    {
-        ELOG(ERROR, "RSI Vector is empty.");
-        
-        setExitSignal(0);
-    }
-
-    int size            = vector.size();
-    float sumGain       = 0;
-    float sumLoss       = 0;
-
-    for (int i=size-1; i>0; i--)
-    {
-        float difference = std::stof(vector[i]) - std::stof(vector[i-1]);
-
-        if (difference >= 0)
-        {
-            sumGain += difference;
-        }
-        else
-        {
-            sumLoss -= difference;
-        }
-    }
-
-    if (sumGain == 0) return "0";
-
-    float relativeStrength = sumGain / sumLoss;
-
-    std::string RSI = std::to_string(100.0 - (100.0 / (1 + relativeStrength)));
-
-    return RSI;
-}
-
-
-/**
  * @brief Upper to lower
  * 
  * @param data 
@@ -603,7 +602,9 @@ std::string Utilities::addTwoStrings(std::string number1, std::string number2)
         return std::to_string(num1+num2);
     }
 
-    ELOG(ERROR, "Add two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", number1.c_str(), number2.c_str());
+    ELOG(ERROR, "Add two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", 
+                    number1.c_str(), 
+                    number2.c_str());
     
     return "ERROR";
 }
@@ -626,7 +627,9 @@ std::string Utilities::subTwoStrings(std::string number1, std::string number2)
         return (num1 >= num2) ? std::to_string(num1-num2) : std::to_string(num2-num1);
     }
     
-    ELOG(ERROR, "Subs two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", number1.c_str(), number2.c_str());
+    ELOG(ERROR, "Subs two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", 
+                    number1.c_str(),
+                    number2.c_str());
     
     return "ERROR";
 }
@@ -654,7 +657,9 @@ std::string Utilities::multiplyTwoStrings(std::string number1, std::string numbe
         return  std::to_string(total);
     }
     
-    ELOG(ERROR, "Multiply two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", number1.c_str(), number2.c_str());
+    ELOG(ERROR, "Multiply two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", 
+                    number1.c_str(), 
+                    number2.c_str());
     
     return "ERROR";
 }
@@ -679,7 +684,9 @@ bool Utilities::compareTwoStrings(std::string firstPrice, std::string secondPric
         return (first >= second) ? true : false;
     }
     
-    ELOG(ERROR, "Some parameters is empty. First Price: %S, Second Price: %s.", firstPrice.c_str(), secondPrice.c_str());
+    ELOG(ERROR, "Some parameters is empty. First Price: %S, Second Price: %s.", 
+                    firstPrice.c_str(), 
+                    secondPrice.c_str());
 
     return false;
 }
@@ -712,6 +719,402 @@ int Utilities::getTickSize(std::string data)
     }
 
     return size;
+}
+
+
+/**
+ * @brief Get trade symbol new candle data
+ * 
+ * @param candles 
+ * @return true 
+ * @return false 
+ */
+bool Utilities::getTradeSymbolCandle(struct Candlesticks& candles)
+{
+    struct candle_data *pTradeCandleData = Opel::getTradeCandleStruct();
+
+    pTradeCandleData->lock();
+
+    if (pTradeCandleData->isUpdated)
+    {
+        candles.lock();
+
+        candles.openPrices.push_back(pTradeCandleData->openPrice);
+        candles.openPrices.erase(candles.openPrices.begin());
+
+        candles.closePrices.push_back(pTradeCandleData->closePrice);
+        candles.closePrices.erase(candles.closePrices.begin());
+
+        candles.highPrices.push_back(pTradeCandleData->highPrice);
+        candles.highPrices.erase(candles.highPrices.begin());
+
+        candles.lowPrices.push_back(pTradeCandleData->lowPrice);
+        candles.lowPrices.erase(candles.lowPrices.begin());
+
+        ELOG(INFO, "Candle -> %s. OP: %s, CP: %s, HP: %s, LP: %s, CPS: %d.", 
+                pTradeCandleData->openPrice,
+                pTradeCandleData->closePrice,
+                pTradeCandleData->highPrice,
+                pTradeCandleData->lowPrice,
+                candles.closePrices.size());
+    
+        candles.unlock();
+
+        if (pTradeCandleData->isClosed)
+        {
+            bool mCalculateSymbolRSI            = calculateRSI(candles);
+            bool mCalculateOrderPriceAverage    = calculateAverage(candles);
+
+            if (mCalculateSymbolRSI && mCalculateOrderPriceAverage)
+            {
+                ELOG(INFO, "Closed Candle -> %s, RSI: %s, Average: %s.", 
+                        candles.symbol,
+                        candles.closeRSI,
+                        candles.closePricesAverage);
+            }
+        }
+
+        pTradeCandleData->isUpdated = false;
+    }
+
+    pTradeCandleData->unlock();
+
+    return true;
+}
+
+
+/**
+ * @brief Get follow symbol new candle data
+ * 
+ * @param candles 
+ * @return true 
+ * @return false 
+ */
+bool Utilities::getFollowSymbolCandle(struct Candlesticks& candles)
+{
+    struct candle_data *pFollowCandleData = Opel::getFollowCandleStruct();
+
+    pFollowCandleData->lock();
+
+    if (pFollowCandleData->isUpdated)
+    {
+        candles.lock();
+
+        candles.openPrices.push_back(pFollowCandleData->openPrice);
+        candles.openPrices.erase(candles.openPrices.begin());
+
+        candles.closePrices.push_back(pFollowCandleData->closePrice);
+        candles.closePrices.erase(candles.closePrices.begin());
+
+        candles.highPrices.push_back(pFollowCandleData->highPrice);
+        candles.highPrices.erase(candles.highPrices.begin());
+
+        candles.lowPrices.push_back(pFollowCandleData->lowPrice);
+        candles.lowPrices.erase(candles.lowPrices.begin());
+
+        ELOG(INFO, "Candle -> %s. OP: %s, CP: %s, HP: %s, LP: %s, CPS: %d.", 
+                pFollowCandleData->openPrice,
+                pFollowCandleData->closePrice,
+                pFollowCandleData->highPrice,
+                pFollowCandleData->lowPrice,
+                candles.closePrices.size());
+    
+        candles.unlock();
+
+        if (pFollowCandleData->isClosed)
+        {
+            bool mCalculateSymbolRSI            = calculateRSI(candles);
+            bool mCalculateOrderPriceAverage    = calculateAverage(candles);
+
+            if (mCalculateSymbolRSI && mCalculateOrderPriceAverage)
+            {
+                ELOG(INFO, "Closed Candle -> %s, RSI: %s, Average: %s.", 
+                        candles.symbol,
+                        candles.closeRSI,
+                        candles.closePricesAverage);
+            }
+        }
+
+        pFollowCandleData->isUpdated = false;
+    }
+
+    pFollowCandleData->unlock();
+
+    return true;
+}
+
+
+/**
+ * @brief Calculates RSI
+ * 
+ * @param candles 
+ * @return true 
+ * @return false 
+ */
+bool Utilities::calculateRSI(struct Candlesticks& candles)
+{
+    candles.lock();
+
+    if (!candles.closePrices.empty())
+    {
+        // add new rsi and old rsi
+        candles.oldCloseRSI     = candles.closeRSI.length() > 0 ? candles.closeRSI : "00.00";
+        candles.closeRSI        = RSI(candles.closePrices);
+
+        // ignore to first calculation for cancel order
+        candles.newBuyRSI       = candles.oldCloseRSI == "00.00" ? false : true;
+
+        // ignore to first calculation for cancel order
+        candles.newSellRSI      = candles.oldCloseRSI == "00.00" ? false : true;
+
+        ELOG(INFO, "RSI -> %s. New Close RSI: %s, Old Close RSI: %s.",
+                            candles.symbol.c_str(),
+                            candles.closeRSI.c_str(), 
+                            candles.oldCloseRSI.c_str());
+
+        candles.unlock();
+
+        return true;
+    }
+
+    candles.unlock();
+
+    ELOG(ERROR, "Close prices vector is empty.");
+
+    return false;
+}
+
+
+/**
+ * @brief Calculates Average
+ * 
+ * @param candles 
+ * @return true 
+ * @return false 
+ */
+bool Utilities::calculateAverage(struct Candlesticks& candles)
+{
+    candles.lock();
+
+    if (!candles.closePrices.empty())
+    {
+        std::string openPricesAverage   = Average(candles.openPrices);
+        std::string highPricesAverage   = Average(candles.highPrices);
+        std::string lowPricesAverage    = Average(candles.lowPrices);
+        std::string closePricesAverage  = Average(candles.closePrices);
+
+        candles.openPricesAverage       = roundString(openPricesAverage, candles.tickSize);
+        candles.highPricesAverage       = roundString(highPricesAverage, candles.tickSize);
+        candles.lowPricesAverage        = roundString(lowPricesAverage, candles.tickSize);
+        candles.closePricesAverage      = roundString(closePricesAverage, candles.tickSize);
+
+        ELOG(INFO, "Averages -> %s. TOA: %s, THA: %s, TLA: %s, TCA: %s",
+                        candles.symbol.c_str(),
+                        candles.openPricesAverage.c_str(), 
+                        candles.highPricesAverage.c_str(), 
+                        candles.lowPricesAverage.c_str(), 
+                        candles.closePricesAverage.c_str());
+                    
+        candles.unlock();
+
+        return true;
+    }
+
+    candles.unlock();
+
+    ELOG(ERROR, "Failed to Calculate Symbol Averages.");
+    
+    return false;
+}
+
+
+/**
+ * @brief Calculates new buy order price
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Utilities::calcNewBuyPrice(struct Order& order, 
+                                    struct Coin& coin,
+                                    struct Candlesticks& candles)
+{
+    bool isBuyAverageCalculated    = calcNewOrderAverage(order, candles);
+
+    if (!isBuyAverageCalculated)
+    {
+        ELOG(ERROR, "Failed to calculate new buy price average.");
+
+        return false;
+    }
+
+    coin.lock();
+
+    std::string calculatedPrice = subTwoStrings(coin.price, order.expectedAverage);
+
+    ELOG(INFO, "Calculate New Buy Price. Live Price: %s, Calculated Average: %s, Buy Price: %s.", 
+                    coin.price.c_str(), 
+                    order.expectedAverage.c_str(), 
+                    calculatedPrice.c_str());
+
+    order.expectedPrice = roundString(calculatedPrice, coin.tickSize);
+
+    coin.unlock();
+
+    if (order.expectedPrice.length() == 0)
+    {
+        ELOG(ERROR, "Failed to calculate new buy price.");
+
+        return false;
+    }
+
+    return true;
+}
+
+
+/**
+ * @brief Calculates new sell order price
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Utilities::calcNewSellPrice(struct Order& order, 
+                                    struct Coin& coin,
+                                    struct Candlesticks& candles)
+{
+    bool isSellAverageCalculated    = calcNewOrderAverage(order, candles);
+
+    if (!isSellAverageCalculated)
+    {
+        ELOG(ERROR, "Failed to calculate new sell price average.");
+
+        return false;
+    }
+
+    coin.lock();
+
+    // if return true live price is high, return false bought price is high
+    bool compareLiveAndBoughtPrice  = compareTwoStrings(coin.price, order.boughtPrice);     
+    
+    if (compareLiveAndBoughtPrice)
+    {
+        order.expectedPrice = addTwoStrings(coin.price, order.expectedAverage);
+
+        ELOG(INFO, "Calculated new sell price. Live Price: %s, Bought Price: %s, Sell Price: %s.", 
+                        coin.price.c_str(), 
+                        order.boughtPrice.c_str(), 
+                        order.expectedPrice.c_str());
+
+        coin.unlock();
+        
+        return true;
+    }
+
+    order.expectedPrice     = addTwoStrings(order.boughtPrice, order.expectedAverage);
+
+    ELOG(INFO, "Calculated new sell price. Live Price: %s, Bought Price: %s, Sell Price: %s.", 
+                    coin.price.c_str(), 
+                    order.boughtPrice.c_str(), 
+                    order.expectedPrice.c_str());
+
+    coin.unlock();
+
+    return true;
+}
+
+
+/**
+ * @brief Calculates new order price average
+ * 
+ * @param order 
+ * @param candles 
+ * @return true 
+ * @return false 
+ */
+bool Utilities::calcNewOrderAverage(struct Order& order, 
+                                        struct Candlesticks& candles)
+{
+    if (getAverageAutoCalculate())
+    {
+        candles.lock();
+
+        if ( !candles.highPrices.empty() && !candles.lowPrices.empty())
+        {
+            float highestPrice          = std::stof(*std::max_element(candles.highPrices.begin(), 
+                                                candles.highPrices.end()));
+
+            float lowestPrice           = std::stof(*std::min_element(candles.lowPrices.begin(), 
+                                                    candles.lowPrices.end()));
+
+            float calculatedAverage     = (highestPrice-lowestPrice)/getRSIPeriod();
+
+            order.expectedAverage      = roundString(std::to_string(calculatedAverage), candles.tickSize); 
+
+            ELOG(INFO, "Calculated New Trade Average. New Average: %s.", order.expectedAverage.c_str());
+            
+            candles.unlock();
+
+            return true;
+        }
+
+        ELOG(ERROR, "High prices and Low prices vector are empty.");
+
+        candles.unlock();
+    }
+
+    if (!getAverageAutoCalculate())
+    {
+        order.expectedAverage = getAverageAmount();
+
+        ELOG(INFO, "Average Auto Calculated Disable. Average: %s.", order.expectedAverage.c_str());
+
+        return true;
+    }
+
+    ELOG(ERROR, "Failed to Calculate New Trade Average.");
+
+    return false;
+}
+
+
+/**
+ * @brief Calculate new balance amount
+ * 
+ * @param order 
+ * @param coin 
+ * @return true 
+ * @return false 
+ */
+bool Utilities::calcNewBalanceAmount(struct Order& order, 
+                                        struct Coin& balance,
+                                        struct Coin& coin)
+{
+    std::string totalOrderPrice     = multiplyTwoStrings(order.price, order.executedQty);
+    std::string roundedTotalPrice   = roundString(totalOrderPrice, coin.tickSize);
+
+    if (order.side == mBuySide)
+    {
+        balance.coinQuantity    = subTwoStrings(balance.coinQuantity, roundedTotalPrice);
+
+        balance.coinQuantity    = roundString(balance.coinQuantity, coin.tickSize);
+
+        ELOG(INFO, "Balance -> Sub. New Amount: %s, Order Price: %s.", balance.coinQuantity.c_str(), roundedTotalPrice.c_str());
+
+        return true;
+    }
+    else if (order.side == mSellSide)
+    {
+        balance.coinQuantity    = addTwoStrings(balance.coinQuantity, roundedTotalPrice);
+
+        balance.coinQuantity    = roundString(balance.coinQuantity, coin.tickSize);
+
+        ELOG(INFO, "Balance -> Add. New Amount: %s, Order Price: %s.", balance.coinQuantity.c_str(), roundedTotalPrice.c_str());
+
+        return true;
+    }
+
+    ELOG(INFO, "Failed to Calculate New Balance Amount.");
+
+    return false;
 }
 
 
@@ -889,7 +1292,8 @@ std::string BinanceUtilities::encryptWithHMAC(const char* key, const char* data)
     static char     res_hexstring[64];
     std::string     signature;
 
-    result = HMAC(EVP_sha256(), key, strlen((char *)key), const_cast<unsigned char *>(reinterpret_cast<const unsigned char*>(data)), strlen((char *)data), NULL, NULL);
+    result = HMAC(EVP_sha256(), key, strlen((char *)key), const_cast<unsigned char *>
+                (reinterpret_cast<const unsigned char*>(data)), strlen((char *)data), NULL, NULL);
   	
     for (int i = 0; i < result_len; i++) 
     {

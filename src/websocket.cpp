@@ -364,5 +364,5 @@ void BinanceWebsocket::init()
 
     wsF->close();
     
-    ELOG(INFO, "Thread Websocket detached.");
+    ELOG(INFO, "Websocket -> detached.");
 }

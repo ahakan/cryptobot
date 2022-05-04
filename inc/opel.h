@@ -22,9 +22,7 @@
 #include <map>
 
 // Namespaces
-using OrderMap          = std::map<std::string, std::string>;
-using AllOrdersMap      = std::map<int, OrderMap>;
-using SoldOrdersMap     = std::multimap<int, OrderMap>;
+
 
 // Structs
 struct socket_error : public std::mutex
@@ -55,20 +53,17 @@ class Opel
         std::string                 mTradeSymbol;
         std::string                 mFollowSymbol;
 
-        AllOrdersMap                *mBuyOrdersMap;
-        AllOrdersMap                *mBoughtOrdersMap;
-        AllOrdersMap                *mSellOrdersMap;
-        SoldOrdersMap               *mSoldOrdersMap;
-        
-
     protected:
 
                                     Opel();
                                     ~Opel();
 
     public:
-                                    Opel(const Opel&)               = delete;       // Singletons should not be cloneable.
-                                    Opel& operator=(const Opel&)    = delete;       // Singletons should not be assignable.
+                                    // Singletons should not be cloneable.
+                                    Opel(const Opel&)               = delete;
+
+                                    // Singletons should not be assignable.    
+                                    Opel& operator=(const Opel&)    = delete;
                                     
         static Opel                 *instance();
 
@@ -88,18 +83,8 @@ class Opel
         void                        setFollowSymbol(std::string symbol);
         std::string                 getFollowSymbol();
 
-        void                        setBuyOrdersMap(AllOrdersMap *orders);
-        AllOrdersMap                *getBuyOrdersMap();
-
-        void                        setBoughtOrdersMap(AllOrdersMap *orders);
-        AllOrdersMap                *getBoughtOrdersMap();
-
-        void                        setSellOrdersMap(AllOrdersMap *orders);
-        AllOrdersMap                *getSellOrdersMap();
-
-        void                        setSoldOrdersMap(SoldOrdersMap *orders);
-        SoldOrdersMap               *getSoldOrdersMap();
-
+        // void                        setBuyOrdersMap(AllOrdersMap *orders);
+        // AllOrdersMap                *getBuyOrdersMap();
 };
 
 #endif

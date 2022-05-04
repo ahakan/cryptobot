@@ -9,6 +9,7 @@ set(SOURCES
   ${SOURCE_DIR}/websocket.cpp
   ${SOURCE_DIR}/server.cpp
   ${SOURCE_DIR}/client.cpp
+  ${SOURCE_DIR}/trade.cpp
   ${SOURCE_DIR}/main.cpp
 )
 

@@ -27,9 +27,6 @@
 
 // Namespaces
 using Record            = std::vector<std::pair<std::string, std::string>>;
-using OrderMap          = std::map<std::string, std::string>;
-using AllOrdersMap      = std::map<int, OrderMap>;
-using MapIterator       = std::map<int, OrderMap>::iterator;
 
 class Sql
 {
