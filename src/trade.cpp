@@ -77,47 +77,32 @@ void Trade::calculates()
 
     while (pOpel->getExitSignal())
     {
-        // Add start time to candlesticks structs for candlesticks info
-        mTradeCandlesticks.startTime    = pBu.get()->getRSITimestamp(mTradeCandlesticks.RSIPeriod, 
-                                                                        mTradeCandlesticks.interval);
+        pReq.get()->getDailyVolume(mTradeSymbolInfo);
+        pReq.get()->getDailyVolume(mFollowSymbolInfo);
 
-        mFollowCandlesticks.startTime   = pBu.get()->getRSITimestamp(mFollowCandlesticks.RSIPeriod, 
-                                                                        mFollowCandlesticks.interval);
+        bool getTradeSymbolCandle   = pBu.get()->getTradeSymbolCandle(mTradeCandlesticks);
+        bool getFollowSymbolCandle  = pBu.get()->getFollowSymbolCandle(mFollowCandlesticks);
 
-        bool getTradeSymbolCandles      = pReq.get()->getCandlesticksData(mTradeCandlesticks);
-        bool getFollowSymbolCandles     = pReq.get()->getCandlesticksData(mFollowCandlesticks);
-
-        if (getTradeSymbolCandles && getFollowSymbolCandles)
+        if (getTradeSymbolCandle && getFollowSymbolCandle)
         {
-            bool calculateSymbolRSI     = pBu.get()->calculateRSI(mTradeCandlesticks);
-            bool calculateFollowRSI     = pBu.get()->calculateRSI(mFollowCandlesticks);
+            pBu.get()->calculateRSI(mTradeCandlesticks);
+            pBu.get()->calculateRSI(mFollowCandlesticks);
 
-            if (calculateSymbolRSI && calculateFollowRSI)
-            {
-                bool getTradeDailyVolume    = pReq.get()->getDailyVolume(mTradeSymbolInfo);
-                bool getFollowDailyVolume   = pReq.get()->getDailyVolume(mFollowSymbolInfo);
-
-                if (getTradeDailyVolume && getFollowDailyVolume) 
-                {
-
-                    pBu.get()->calculateAverage(mTradeCandlesticks);
-
-                    ELOG(INFO, "%s - %s - %s - %s", mTradeCandlesticks.symbol.c_str(), 
-                                                    mTradeCandlesticks.interval.c_str(),
-                                                    mTradeCandlesticks.closeRSI.c_str(),
-                                                    mTradeCandlesticks.closePricesAverage.c_str());
-
-                    // break;
-                }
-            }
-        
+            pBu.get()->calculateAverage(mTradeCandlesticks);
+            pBu.get()->calculateAverage(mFollowCandlesticks);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // ELOG(INFO, "%s - %s - %s - %s", mTradeCandlesticks.symbol.c_str(), 
+        //                                 mTradeCandlesticks.interval.c_str(),
+        //                                 mTradeCandlesticks.closeRSI.c_str(),
+        //                                 mTradeCandlesticks.closePricesAverage.c_str());
+
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    ELOG(INFO, "Calculates -> detached.");
 
+    ELOG(INFO, "Calculates -> detached.");
 }
 
 
@@ -156,7 +141,7 @@ void BinanceTrade::init()
     {
         while (!mAccountStatus && pOpel->getExitSignal())
         {
-            mAccountStatus         = pReq.get()->getAccountStatus();
+            mAccountStatus          = pReq.get()->getAccountStatus();
 
             if (!mAccountStatus)
             {
@@ -165,7 +150,7 @@ void BinanceTrade::init()
 
             if (mAccountStatus)
             {
-                mAPIKeyPermission      = pReq.get()->getAPIKeyPermission();
+                mAPIKeyPermission   = pReq.get()->getAPIKeyPermission();
 
                 if (!mAPIKeyPermission)
                 {
@@ -180,15 +165,6 @@ void BinanceTrade::init()
             std::this_thread::sleep_for(std::chrono::milliseconds(3000));
         }
 
-        if (!mAccountStatus || !mAPIKeyPermission)
-        {
-            Opel *iOpel = Opel::instance();
-
-            iOpel->setExitSignal(0);
-
-            break;
-        }
-
         if (pOpel->getExitSignal())
         {
             bool  getSymbolTickSize = pReq.get()->getTickSize(mTradeSymbolInfo);
@@ -199,12 +175,28 @@ void BinanceTrade::init()
                 // Add tick size to candlesticks structs
                 mTradeCandlesticks.tickSize     = mTradeSymbolInfo.tickSize;
                 mFollowCandlesticks.tickSize    = mFollowSymbolInfo.tickSize;
+                mBalanceSymbolInfo.tickSize     = mTradeSymbolInfo.tickSize;
 
                 bool getWalletBalance           = pReq.get()->getCoinBalance(mBalanceSymbolInfo);
 
                 if (getWalletBalance)
                 {
-                    break;
+                    // Add start time to candlesticks structs for candlesticks info
+                    mTradeCandlesticks.startTime    = pBu.get()->getRSITimestamp(mTradeCandlesticks.RSIPeriod, 
+                                                                                    mTradeCandlesticks.interval);
+
+                    mFollowCandlesticks.startTime   = pBu.get()->getRSITimestamp(mFollowCandlesticks.RSIPeriod, 
+                                                                                    mFollowCandlesticks.interval);
+
+                    bool getTradeSymbolCandles      = pReq.get()->getCandlesticksData(mTradeCandlesticks);
+                    bool getFollowSymbolCandles     = pReq.get()->getCandlesticksData(mFollowCandlesticks);
+
+                    if (getTradeSymbolCandles && getFollowSymbolCandles)
+                    {
+                        ELOG(INFO, "Quantity -> %s: %s.", mBalanceSymbolInfo.coinName.c_str(), mBalanceSymbolInfo.coinQuantity.c_str());
+
+                        break;
+                    }
                 }
             }
         }
@@ -212,12 +204,15 @@ void BinanceTrade::init()
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
+    ELOG(INFO, "Trade -> inialized.");
+    ELOG(INFO, "Trade -> starting...");
 
     std::thread tradeTh1    = std::thread(&BinanceTrade::calculates, this);
     std::thread tradeTh2    = std::thread(&BinanceTrade::requests, this);
 
     tradeTh1.join();
     tradeTh2.join();
+
 
     ELOG(INFO, "Trade -> detached.");
 }
@@ -231,8 +226,15 @@ void BinanceTrade::requests()
 
     while (pOpel->getExitSignal())
     {
+        while(pOpel->getIsActive())
+        {
+            // ELOG(INFO, "Live Price -> %s.", mTradeSymbolInfo.price.c_str());
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
     ELOG(INFO, "Requests -> detached.");

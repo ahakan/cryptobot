@@ -40,7 +40,6 @@ using OrdersMapIterator = std::map<uint32_t, struct Order>::iterator;
 using AverageVector     = std::vector<std::string>;
 
 
-
 // Class
 class Trade
 {
@@ -65,9 +64,12 @@ class Trade
         std::string             mSellSide               = "SELL";
         std::string             mRecvWindow             = "10000";
 
-        struct Coin             mTradeSymbolInfo;
-        struct Coin             mFollowSymbolInfo; 
-        struct Coin             mBalanceSymbolInfo; 
+        struct Order            mBuyOrders;
+        struct Order            mSellOrders;
+
+        struct Symbol           mTradeSymbolInfo;
+        struct Symbol           mFollowSymbolInfo; 
+        struct Symbol           mBalanceSymbolInfo; 
 
         struct Candlesticks     mTradeCandlesticks;
         struct Candlesticks     mFollowCandlesticks;
@@ -75,11 +77,12 @@ class Trade
         void                    calculates();
 
     public:
-                            Trade(std::shared_ptr<BinanceUtilities> pU, 
-                                    std::shared_ptr<BinanceClient> pR);
-        virtual             ~Trade();
+                                Trade(std::shared_ptr<BinanceUtilities> pU, 
+                                        std::shared_ptr<BinanceClient> pR);
+        virtual                 ~Trade();
 
 };
+
 
 class BinanceTrade : public Trade
 {
@@ -87,12 +90,12 @@ class BinanceTrade : public Trade
         std::shared_ptr<BinanceClient> pReq             = NULL;
 
     public:
-                            BinanceTrade(std::shared_ptr<BinanceUtilities> pU, 
-                                            std::shared_ptr<BinanceClient> pR);
-                            ~BinanceTrade();
+                                BinanceTrade(std::shared_ptr<BinanceUtilities> pU, 
+                                                std::shared_ptr<BinanceClient> pR);
+                                ~BinanceTrade();
 
-    void                    init();
-    void                    requests();
+    void                        init();
+    void                        requests();
 };
 
 #endif

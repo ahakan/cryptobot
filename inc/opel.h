@@ -33,14 +33,14 @@ struct socket_error : public std::mutex
 
 struct candle_data  : public std::mutex
 {
-    bool                isUpdated = false;
+    bool                isClosed;
+
     std::string         symbol;
     std::string         timestamp;
     std::string         openPrice;
     std::string         closePrice;
     std::string         highPrice;
     std::string         lowPrice;
-    bool                isClosed;
 };
 
 

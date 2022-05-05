@@ -192,13 +192,15 @@ void Websocket::read(beast::error_code ec, std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
 
+    Opel *iOpel = Opel::instance();
+
     if (ec)
     {
         ELOG(ERROR, "Received a Socket Error. Error: %s", ec.message().c_str());
+
+        iOpel->setExitSignal(0);
     }
     
-    Opel *iOpel = Opel::instance();
-
     if (!iOpel->getExitSignal())
     {
         mWs.next_layer().next_layer().release_socket();
@@ -234,23 +236,23 @@ void Websocket::read(beast::error_code ec, std::size_t bytes_transferred)
             std::string rHighPrice          = rKData["h"].asString();
             std::string rLowPrice           = rKData["l"].asString();
 
-            ELOG(INFO, "WS Read. Symbol: %s, Price: %s, Buffer size: %dKB.", rSymbol.c_str(), rClosePrice.c_str(), mBuffer.size());
+            ELOG(INFO, "WS -> %s: %s.", rSymbol.c_str(), rClosePrice.c_str(), mBuffer.size());
 
-            Opel *iOpel = Opel::instance();
-            
             if (rSymbol == iOpel->getTradeSymbol())
             {
                 struct candle_data *pTradeCandleData    = Opel::getTradeCandleStruct();
 
                 pTradeCandleData->lock();
-                pTradeCandleData->isUpdated             = true;
+
+                pTradeCandleData->isClosed              = rIsClosed;
+
                 pTradeCandleData->symbol                = rSymbol;
                 pTradeCandleData->timestamp             = rTimestamp;
                 pTradeCandleData->openPrice             = rOpenPrice;
                 pTradeCandleData->closePrice            = rClosePrice;
                 pTradeCandleData->highPrice             = rHighPrice;
                 pTradeCandleData->lowPrice              = rLowPrice;
-                pTradeCandleData->isClosed              = rIsClosed;
+
                 pTradeCandleData->unlock();
             }
             else
@@ -258,14 +260,16 @@ void Websocket::read(beast::error_code ec, std::size_t bytes_transferred)
                 struct candle_data *pFollowCandleData = Opel::getFollowCandleStruct();
 
                 pFollowCandleData->lock();
-                pFollowCandleData->isUpdated            = true;
+
+                pFollowCandleData->isClosed             = rIsClosed;
+
                 pFollowCandleData->symbol               = rSymbol;
                 pFollowCandleData->timestamp            = rTimestamp;
                 pFollowCandleData->openPrice            = rOpenPrice;
                 pFollowCandleData->closePrice           = rClosePrice;
                 pFollowCandleData->highPrice            = rHighPrice;
                 pFollowCandleData->lowPrice             = rLowPrice;
-                pFollowCandleData->isClosed             = rIsClosed;
+
                 pFollowCandleData->unlock();
             }
             

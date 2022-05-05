@@ -300,7 +300,7 @@ bool BinanceClient::getAPIKeyPermission()
  * @return true 
  * @return false 
  */
-bool BinanceClient::getCoinBalance(struct Coin& coin)
+bool BinanceClient::getCoinBalance(struct Symbol& coin)
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
@@ -339,30 +339,44 @@ bool BinanceClient::getCoinBalance(struct Coin& coin)
         return false;
     }
 
-    for (int i=0; i< static_cast<int>(parsedResponse.size()); i++)
+    if (parsedResponse.size() > 0)
     {
-        if (parsedResponse[i]["coin"] == coin.coinName)
+        for (unsigned int i=0; i<parsedResponse.size(); i++)
         {
-            std::string walletBalanceAmount = parsedResponse[i]["free"].asString();
+            coin.lock();
 
-            bool isQuantityEnough = pBu.get()->compareTwoStrings(walletBalanceAmount, coin.coinQuantity);
-
-            if (!isQuantityEnough)
+            if (parsedResponse[i]["coin"] == coin.coinName)
             {
-                ELOG(WARNING, "Coin Quantity is Greater Than Wallet Coin Quantity. Coin Quantity: %s, "
-                                "Wallet Coin Quantity: %s.", 
-                                    coin.coinQuantity.c_str(), 
-                                    walletBalanceAmount.c_str());
-                
-                return false;
+                std::string walletBalanceAmount = parsedResponse[i]["free"].asString();
+
+                bool isQuantityEnough = pBu.get()->compareTwoStrings(walletBalanceAmount, coin.coinQuantity);
+
+                if (!isQuantityEnough)
+                {
+                    ELOG(WARNING, "Coin Quantity is Greater Than Wallet Coin Quantity. Coin Quantity: %s, "
+                                    "Wallet Coin Quantity: %s.", 
+                                        coin.coinQuantity.c_str(), 
+                                        walletBalanceAmount.c_str());
+                    
+                    coin.unlock();
+
+                    return false;
+                }
+
+                ELOG(INFO, "Sufficient coin quantity. Quantity: %s.", walletBalanceAmount.c_str());
+
+                coin.coinQuantity   = pBu.get()->roundString(walletBalanceAmount, coin.tickSize);
+
+                coin.unlock();
+
+                return true;
             }
 
-            ELOG(INFO, "Sufficient coin quantity. Quantity: %s.", walletBalanceAmount.c_str());
-
+            coin.unlock();
         }
     }
 
-    return true;
+    return false;
 }
 
 
@@ -375,6 +389,8 @@ bool BinanceClient::getCoinBalance(struct Coin& coin)
  */
 bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
 {
+    candlestick.lock();
+
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
     std::string reqEndpoint         = "/api/v3/klines";
@@ -391,6 +407,8 @@ bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
                     reqTimestamp.c_str(), 
                     reqEndpoint.c_str(), 
                     candlestick.startTime.c_str());
+
+    candlestick.unlock();
 
     std::string responseBody        = getRequest(reqEndpoint, reqParams, reqHeaders);
 
@@ -412,6 +430,8 @@ bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
         return false;
     }
 
+    candlestick.lock();
+
     int candlesSize = static_cast<int>(parsedResponse.size());
 
     ELOG(INFO, "Got Candlesticks Data. Symbol: %s, Candles size: %d.", candlestick.symbol.c_str(), candlesSize);
@@ -425,6 +445,8 @@ bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
         candlestick.lowPrices.push_back(parsedResponse[i][3].asString());
         candlestick.closePrices.push_back(parsedResponse[i][4].asString());
     }
+
+    candlestick.unlock();
     
     return true;
 }
@@ -437,8 +459,10 @@ bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
  * @return true 
  * @return false 
  */
-bool BinanceClient::getTickSize (struct Coin& coin)
+bool BinanceClient::getTickSize (struct Symbol& coin)
 {
+    coin.lock();
+
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
     std::string reqEndpoint         = "/api/v3/exchangeInfo";
@@ -451,6 +475,8 @@ bool BinanceClient::getTickSize (struct Coin& coin)
 
 
     ELOG(INFO, "Get Tick Size Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
+
+    coin.unlock();
 
     std::string responseBody        = getRequest(reqEndpoint, reqParams, reqHeaders);
 
@@ -478,11 +504,15 @@ bool BinanceClient::getTickSize (struct Coin& coin)
     {
         if (filtersJson[i]["filterType"] == "PRICE_FILTER")
         {
+            coin.lock();
+
             coin.tickSize = pBu.get()->getTickSize(filtersJson[i]["tickSize"].toStyledString());
 
             ELOG(INFO, "%s -> Tick Size: %d.", 
                             coin.symbol.c_str(), 
                             coin.tickSize);
+
+            coin.unlock();
 
             return true;
         }
@@ -499,8 +529,10 @@ bool BinanceClient::getTickSize (struct Coin& coin)
  * @return true 
  * @return false 
  */
-bool BinanceClient::getDailyVolume(struct Coin& coin)
+bool BinanceClient::getDailyVolume(struct Symbol& coin)
 {
+    coin.lock();
+
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
     std::string reqEndpoint         = "/api/v3/ticker/24hr";
@@ -513,6 +545,8 @@ bool BinanceClient::getDailyVolume(struct Coin& coin)
 
 
     ELOG(INFO, "Get Daily Volume Size Request Timestamp: %s, Endpoint: %s", reqTimestamp.c_str(), reqEndpoint.c_str());
+
+    coin.unlock();
 
     std::string responseBody        = getRequest(reqEndpoint, reqParams, reqHeaders);
 
@@ -539,9 +573,11 @@ bool BinanceClient::getDailyVolume(struct Coin& coin)
     std::string rVolume         = parsedResponse["volume"].asString();
     std::string rQuoteVolume    = parsedResponse["quoteVolume"].asString();
 
+    coin.lock();
     coin.price                  = rPrice;
     coin.volume                 = rVolume;
     coin.quoteVolume            = rQuoteVolume;
+    coin.unlock();
 
     ELOG(INFO, "%s -> Price: %s, Volume Size: %s, Quote Volume Size: %s.", 
                     rSymbol.c_str(), 
@@ -561,13 +597,13 @@ bool BinanceClient::getDailyVolume(struct Coin& coin)
  * @return true 
  * @return false 
  */
-bool BinanceClient::createNewOrder(struct Order& order, struct Coin& coin)
+bool BinanceClient::createNewOrder(struct Order& order, struct Symbol& coin)
 {
     std::string reqTimestamp            = pBu.get()->getTimestamp();
 
     std::string reqEndpoint             = "/api/v3/order";
 
-    std::string roundedQuantity        = pBu.get()->roundString(order.quantity, coin.tickSize);
+    std::string roundedQuantity         = pBu.get()->roundString(order.quantity, coin.tickSize);
 
 
     std::string reqParams               = "symbol="+order.symbol+"&side="+order.side;
@@ -697,6 +733,10 @@ bool BinanceClient::cancelOrder(struct Order& order)
         ELOG(ERROR, "Failed to Cancel the Order. Order id: %d.", order.orderId);
         return false;
     }
+
+    order.orderId       = rOrderId;
+    order.side          = rSide;
+    order.status        = rStatus;
 
 
     ELOG(INFO, "Canceled Order. Order id: %d, Status: %s, Side: %s.", 
@@ -856,9 +896,6 @@ bool BinanceClient::queryOrder(struct Order& order)
             {
                 order.soldPrice   = rPrice;
             }
-
-            // calculate new balance amount
-            // calcNewBalanceAmount(rSide, rPrice, rQuantity);
         }
 
         if (rStatus == "CANCELED")
@@ -883,9 +920,6 @@ bool BinanceClient::queryOrder(struct Order& order)
                 {
                     order.soldPrice   = rPrice;
                 }
-
-                // calculate new balance amount
-                // calcNewBalanceAmount(rSide, rPrice, rExecutedQty);
             }
         }
 

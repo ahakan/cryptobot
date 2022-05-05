@@ -21,6 +21,7 @@
 // Using && Namespaces
 using AverageVector     = std::vector<std::string>;
 
+// Structs
 
 // Order struct
 struct Order
@@ -44,14 +45,14 @@ struct Order
 };
 
 // Coin struct
-struct Coin : public std::mutex
+struct Symbol : public std::mutex
 {
+    std::string coinName;       // SOL
+    std::string coinQuantity;
+
     std::string symbol;         // SOLUSDT
 
     int         tickSize;
-
-    std::string coinName;       // SOL
-    std::string coinQuantity;
 
     std::string price;
     std::string volume;

@@ -77,15 +77,15 @@ class BinanceClient : public Client
         // Wallet Endpoints
         bool                    getAccountStatus();
         bool                    getAPIKeyPermission();
-        bool                    getCoinBalance(struct Coin& coin);
+        bool                    getCoinBalance(struct Symbol& coin);
 
         // Market Data Endpoints
         bool                    getCandlesticksData(struct Candlesticks& candlestick);
-        bool                    getTickSize(struct Coin& coin);
-        bool                    getDailyVolume(struct Coin& coin);
+        bool                    getTickSize(struct Symbol& coin);
+        bool                    getDailyVolume(struct Symbol& coin);
 
         // Spot Account/Trade
-        bool                    createNewOrder(struct Order& order, struct Coin& coin);    
+        bool                    createNewOrder(struct Order& order, struct Symbol& coin);    
         bool                    cancelOrder(struct Order& order);
         bool                    cancelAllOpenOrders(std::string symbol);
         bool                    queryOrder(struct Order& order);

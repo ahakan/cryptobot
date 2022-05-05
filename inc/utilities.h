@@ -97,16 +97,16 @@ class Utilities
         bool                    calculateAverage(struct Candlesticks& candles);
 
         bool                    calcNewBuyPrice(struct Order& order, 
-                                                    struct Coin& coin,
+                                                    struct Symbol& coin,
                                                     struct Candlesticks& candles);
         bool                    calcNewSellPrice(struct Order& order, 
-                                                    struct Coin& coin,
+                                                    struct Symbol& coin,
                                                     struct Candlesticks& candles);
         bool                    calcNewOrderAverage(struct Order& order, 
                                                         struct Candlesticks& candles);
         bool                    calcNewBalanceAmount(struct Order& order, 
-                                                        struct Coin& balance,
-                                                        struct Coin& coin);
+                                                        struct Symbol& balance,
+                                                        struct Symbol& coin);
 };
 
 

@@ -97,11 +97,11 @@ std::string Utilities::RSI(std::vector<std::string> vector)
         setExitSignal(0);
     }
 
-    int size            = vector.size();
+    size_t size         = vector.size();
     float sumGain       = 0;
     float sumLoss       = 0;
 
-    for (int i=size-1; i>0; i--)
+    for (size_t i=size-1; i>0; i--)
     {
         float difference = std::stof(vector[i]) - std::stof(vector[i-1]);
 
@@ -140,10 +140,10 @@ std::string Utilities::Average(std::vector<std::string> vector)
         setExitSignal(0);
     }
 
-    int size        = vector.size();
+    size_t size     = vector.size();
     float average   = 0;
 
-    for (int i=0; i<size; i++)
+    for (size_t i=0; i<size; i++)
     {
         average += std::stof(vector[i]);
     }
@@ -735,7 +735,7 @@ bool Utilities::getTradeSymbolCandle(struct Candlesticks& candles)
 
     pTradeCandleData->lock();
 
-    if (pTradeCandleData->isUpdated)
+    if (pTradeCandleData->isClosed)
     {
         candles.lock();
 
@@ -752,29 +752,14 @@ bool Utilities::getTradeSymbolCandle(struct Candlesticks& candles)
         candles.lowPrices.erase(candles.lowPrices.begin());
 
         ELOG(INFO, "Candle -> %s. OP: %s, CP: %s, HP: %s, LP: %s, CPS: %d.", 
-                pTradeCandleData->openPrice,
-                pTradeCandleData->closePrice,
-                pTradeCandleData->highPrice,
-                pTradeCandleData->lowPrice,
+                candles.symbol.c_str(),
+                pTradeCandleData->openPrice.c_str(),
+                pTradeCandleData->closePrice.c_str(),
+                pTradeCandleData->highPrice.c_str(),
+                pTradeCandleData->lowPrice.c_str(),
                 candles.closePrices.size());
     
         candles.unlock();
-
-        if (pTradeCandleData->isClosed)
-        {
-            bool mCalculateSymbolRSI            = calculateRSI(candles);
-            bool mCalculateOrderPriceAverage    = calculateAverage(candles);
-
-            if (mCalculateSymbolRSI && mCalculateOrderPriceAverage)
-            {
-                ELOG(INFO, "Closed Candle -> %s, RSI: %s, Average: %s.", 
-                        candles.symbol,
-                        candles.closeRSI,
-                        candles.closePricesAverage);
-            }
-        }
-
-        pTradeCandleData->isUpdated = false;
     }
 
     pTradeCandleData->unlock();
@@ -796,7 +781,7 @@ bool Utilities::getFollowSymbolCandle(struct Candlesticks& candles)
 
     pFollowCandleData->lock();
 
-    if (pFollowCandleData->isUpdated)
+    if (pFollowCandleData->isClosed)
     {
         candles.lock();
 
@@ -813,29 +798,14 @@ bool Utilities::getFollowSymbolCandle(struct Candlesticks& candles)
         candles.lowPrices.erase(candles.lowPrices.begin());
 
         ELOG(INFO, "Candle -> %s. OP: %s, CP: %s, HP: %s, LP: %s, CPS: %d.", 
-                pFollowCandleData->openPrice,
-                pFollowCandleData->closePrice,
-                pFollowCandleData->highPrice,
-                pFollowCandleData->lowPrice,
+                candles.symbol.c_str(),
+                pFollowCandleData->openPrice.c_str(),
+                pFollowCandleData->closePrice.c_str(),
+                pFollowCandleData->highPrice.c_str(),
+                pFollowCandleData->lowPrice.c_str(),
                 candles.closePrices.size());
     
         candles.unlock();
-
-        if (pFollowCandleData->isClosed)
-        {
-            bool mCalculateSymbolRSI            = calculateRSI(candles);
-            bool mCalculateOrderPriceAverage    = calculateAverage(candles);
-
-            if (mCalculateSymbolRSI && mCalculateOrderPriceAverage)
-            {
-                ELOG(INFO, "Closed Candle -> %s, RSI: %s, Average: %s.", 
-                        candles.symbol,
-                        candles.closeRSI,
-                        candles.closePricesAverage);
-            }
-        }
-
-        pFollowCandleData->isUpdated = false;
     }
 
     pFollowCandleData->unlock();
@@ -935,7 +905,7 @@ bool Utilities::calculateAverage(struct Candlesticks& candles)
  * @return false 
  */
 bool Utilities::calcNewBuyPrice(struct Order& order, 
-                                    struct Coin& coin,
+                                    struct Symbol& coin,
                                     struct Candlesticks& candles)
 {
     bool isBuyAverageCalculated    = calcNewOrderAverage(order, candles);
@@ -978,7 +948,7 @@ bool Utilities::calcNewBuyPrice(struct Order& order,
  * @return false 
  */
 bool Utilities::calcNewSellPrice(struct Order& order, 
-                                    struct Coin& coin,
+                                    struct Symbol& coin,
                                     struct Candlesticks& candles)
 {
     bool isSellAverageCalculated    = calcNewOrderAverage(order, candles);
@@ -1085,8 +1055,8 @@ bool Utilities::calcNewOrderAverage(struct Order& order,
  * @return false 
  */
 bool Utilities::calcNewBalanceAmount(struct Order& order, 
-                                        struct Coin& balance,
-                                        struct Coin& coin)
+                                        struct Symbol& balance,
+                                        struct Symbol& coin)
 {
     std::string totalOrderPrice     = multiplyTwoStrings(order.price, order.executedQty);
     std::string roundedTotalPrice   = roundString(totalOrderPrice, coin.tickSize);

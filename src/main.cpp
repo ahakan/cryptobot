@@ -42,6 +42,8 @@ void signalHandler(int signal)
 
     Opel *iOpel = Opel::instance();
 
+    iOpel->setIsActive(0);
+
     iOpel->setExitSignal(0);
 
     ELOG(INFO, "Sent exit signal.");
