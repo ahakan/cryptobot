@@ -1,4 +1,5 @@
 #include "../inc/trade.h"
+#include <string>
 
 
 /**
@@ -37,17 +38,35 @@ Trade::Trade(std::shared_ptr<BinanceUtilities> pU, std::shared_ptr<BinanceClient
     mBalanceSymbolInfo.coinQuantity = balanceAmount;
 
     // Candlesticks struct
-    mTradeCandlesticks.symbol           = tradeSymbol;
-    mTradeCandlesticks.interval         = interval;
-    mTradeCandlesticks.RSIPeriod        = RSIPeriod;
-    mTradeCandlesticks.RSIOversold      = RSIOversold;
-    mTradeCandlesticks.RSIOverbought    = RSIOverbought;
+    mTradeCandlesticks.symbol               = tradeSymbol;
+    mTradeCandlesticks.interval             = interval;
+    mTradeCandlesticks.RSIPeriod            = RSIPeriod;
+    mTradeCandlesticks.RSIOversold          = RSIOversold;
+    mTradeCandlesticks.RSIOverbought        = RSIOverbought;
+    mTradeCandlesticks.candleDuration       = std::to_string(pBu.get()->getCandlestickDuration(1, interval));
 
-    mFollowCandlesticks.symbol          = followSymbol;
-    mFollowCandlesticks.interval        = interval;
-    mFollowCandlesticks.RSIPeriod       = RSIPeriod;
-    mFollowCandlesticks.RSIOversold     = RSIOversold;
-    mFollowCandlesticks.RSIOverbought   = RSIOverbought;
+    mFollowCandlesticks.symbol              = followSymbol;
+    mFollowCandlesticks.interval            = interval;
+    mFollowCandlesticks.RSIPeriod           = RSIPeriod;
+    mFollowCandlesticks.RSIOversold         = RSIOversold;
+    mFollowCandlesticks.RSIOverbought       = RSIOverbought;
+    mFollowCandlesticks.candleDuration      = std::to_string(pBu.get()->getCandlestickDuration(1, interval));
+
+
+    // Algorithm candlesticks struct
+    mAlgorithmTradeCandlesticks.symbol                  = tradeSymbol;
+    mAlgorithmTradeCandlesticks.interval                = "4h";
+    mAlgorithmTradeCandlesticks.RSIPeriod               = RSIPeriod;
+    mAlgorithmTradeCandlesticks.RSIOversold             = RSIOversold;
+    mAlgorithmTradeCandlesticks.RSIOverbought           = RSIOverbought;
+    mAlgorithmTradeCandlesticks.candleDuration          = std::to_string(pBu.get()->getCandlestickDuration(1, "4h"));
+
+    mAlgorithmFollowCandlesticks.symbol                 = followSymbol;
+    mAlgorithmFollowCandlesticks.interval               = "4h";
+    mAlgorithmFollowCandlesticks.RSIPeriod              = RSIPeriod;
+    mAlgorithmFollowCandlesticks.RSIOversold            = RSIOversold;
+    mAlgorithmFollowCandlesticks.RSIOverbought          = RSIOverbought;
+    mAlgorithmFollowCandlesticks.candleDuration         = std::to_string(pBu.get()->getCandlestickDuration(1, "4h"));
 
 
     ELOG(INFO, "Trade constructor initialized. "
@@ -77,20 +96,30 @@ void Trade::calculates()
 
     while (pOpel->getExitSignal())
     {
-        pReq.get()->getDailyVolume(mTradeSymbolInfo);
-        pReq.get()->getDailyVolume(mFollowSymbolInfo);
+        // Get WS candlesticks
+        pBu.get()->getWSCandlesticks(mTradeCandlesticks, mTradeSymbolInfo);
+        pBu.get()->getWSCandlesticks(mFollowCandlesticks, mFollowSymbolInfo);
 
-        bool getTradeSymbolCandle   = pBu.get()->getTradeSymbolCandle(mTradeCandlesticks);
-        bool getFollowSymbolCandle  = pBu.get()->getFollowSymbolCandle(mFollowCandlesticks);
+        // Get algorithm candlesticks
+        bool getAlgorithTradeCandlesticks   = getCandlesticks(mAlgorithmTradeCandlesticks);
+        bool getAlgorithmFollowCandlesticks = getCandlesticks(mAlgorithmFollowCandlesticks);
 
-        if (getTradeSymbolCandle && getFollowSymbolCandle)
+        if (getAlgorithTradeCandlesticks && getAlgorithmFollowCandlesticks)
         {
-            pBu.get()->calculateRSI(mTradeCandlesticks);
-            pBu.get()->calculateRSI(mFollowCandlesticks);
+            ELOG(INFO, "Got new algorithm trade and follow symbol candlesticks.");
 
-            pBu.get()->calculateAverage(mTradeCandlesticks);
-            pBu.get()->calculateAverage(mFollowCandlesticks);
+            // Get daily volume
+            pReq.get()->getDailyVolume(mTradeSymbolInfo);
+            pReq.get()->getDailyVolume(mFollowSymbolInfo);
         }
+
+        // ELOG(INFO, "Algorithm -> %s - %s - %s - %s - %s.", 
+        //             mAlgorithmTradeCandlesticks.symbol.c_str(), 
+        //             mAlgorithmTradeCandlesticks.interval.c_str(),
+        //             mAlgorithmTradeCandlesticks.closeRSI.c_str(),
+        //             mAlgorithmTradeCandlesticks.closePricesAverage.c_str(),
+        //             mAlgorithmTradeCandlesticks.lastCandleTimestamp.c_str());
+
 
         // ELOG(INFO, "%s - %s - %s - %s", mTradeCandlesticks.symbol.c_str(), 
         //                                 mTradeCandlesticks.interval.c_str(),
@@ -103,6 +132,58 @@ void Trade::calculates()
 
 
     ELOG(INFO, "Calculates -> detached.");
+}
+
+
+/**
+ * @brief Get candlesticks data and calculate RSI and average
+ * 
+ * @param candlestick 
+ * @return true 
+ * @return false 
+ */
+bool Trade::getCandlesticks(struct Candlesticks &candlestick)
+{
+    candlestick.lock();
+
+    std::string timestamp           = pBu.get()->getTimestamp();
+
+    std::string nextCandleTimestamp = pBu.get()->atlts(candlestick.lastCandleTimestamp, 
+                                                        candlestick.candleDuration);
+
+    if (pBu.get()->ctscl(timestamp, nextCandleTimestamp))
+    {
+        // Add start time to candlesticks structs for candlesticks info
+        candlestick.startTime       = pBu.get()->getRSITimestamp(candlestick.RSIPeriod, 
+                                                                candlestick.interval);
+
+        bool getCandles             = pReq.get()->getCandlesticksData(candlestick);
+
+        ELOG(INFO, "Candlesticks -> %s, Interval: %s, Candle duration: %s, Timetamp: %s, Next: %s,  Last: %s.", 
+            candlestick.symbol.c_str(), 
+            candlestick.interval.c_str(), 
+            candlestick.candleDuration.c_str(),
+            timestamp.c_str(), 
+            nextCandleTimestamp.c_str(), 
+            candlestick.lastCandleTimestamp.c_str());
+
+        if (getCandles)
+        {
+            pBu.get()->calculateRSI(candlestick);
+
+            pBu.get()->calculateChange(candlestick);
+        
+            pBu.get()->calculateAverage(candlestick);
+
+            candlestick.unlock();
+
+            return true;
+        }
+    }
+        
+    candlestick.unlock();
+
+    return false;
 }
 
 
@@ -174,28 +255,34 @@ void BinanceTrade::init()
             {
                 // Add tick size to candlesticks structs
                 mTradeCandlesticks.tickSize     = mTradeSymbolInfo.tickSize;
-                mFollowCandlesticks.tickSize    = mFollowSymbolInfo.tickSize;
                 mBalanceSymbolInfo.tickSize     = mTradeSymbolInfo.tickSize;
+                mFollowCandlesticks.tickSize    = mFollowSymbolInfo.tickSize;
+                
+                mAlgorithmTradeCandlesticks.tickSize    = mTradeSymbolInfo.tickSize;
+                mAlgorithmFollowCandlesticks.tickSize   = mFollowSymbolInfo.tickSize;
 
                 bool getWalletBalance           = pReq.get()->getCoinBalance(mBalanceSymbolInfo);
 
                 if (getWalletBalance)
                 {
-                    // Add start time to candlesticks structs for candlesticks info
-                    mTradeCandlesticks.startTime    = pBu.get()->getRSITimestamp(mTradeCandlesticks.RSIPeriod, 
-                                                                                    mTradeCandlesticks.interval);
+                    ELOG(INFO, "Quantity -> %s: %s.", 
+                            mBalanceSymbolInfo.coinName.c_str(), 
+                            mBalanceSymbolInfo.coinQuantity.c_str());
 
-                    mFollowCandlesticks.startTime   = pBu.get()->getRSITimestamp(mFollowCandlesticks.RSIPeriod, 
-                                                                                    mFollowCandlesticks.interval);
+                    // Get algorithm candlesticks
+                    bool getTradeCandlesticks   = getCandlesticks(mTradeCandlesticks);
+                    bool getFollowCandlesticks  = getCandlesticks(mFollowCandlesticks);
 
-                    bool getTradeSymbolCandles      = pReq.get()->getCandlesticksData(mTradeCandlesticks);
-                    bool getFollowSymbolCandles     = pReq.get()->getCandlesticksData(mFollowCandlesticks);
-
-                    if (getTradeSymbolCandles && getFollowSymbolCandles)
+                    if (getTradeCandlesticks && getFollowCandlesticks)
                     {
-                        ELOG(INFO, "Quantity -> %s: %s.", mBalanceSymbolInfo.coinName.c_str(), mBalanceSymbolInfo.coinQuantity.c_str());
+                        // Get daily volume
+                        bool getTradeVolume     = pReq.get()->getDailyVolume(mTradeSymbolInfo);
+                        bool getFollowVolume    = pReq.get()->getDailyVolume(mFollowSymbolInfo);
 
-                        break;
+                        if (getTradeVolume && getFollowVolume)
+                        {
+                            break;
+                        }
                     }
                 }
             }

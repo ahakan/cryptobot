@@ -40,35 +40,17 @@ Opel* Opel::instance()
 
 
 /**
- * @brief Socket error struct
- * 
- * @return struct socket_error* 
- */
-struct socket_error* Opel::getSocketErrorStruct()
-{
-    static struct socket_error *pSocketErrorData;
-
-    if (pSocketErrorData == NULL)
-    {
-        pSocketErrorData = new socket_error;
-    }
-    
-    return pSocketErrorData;
-}
-
-
-/**
  * @brief Trade Candle data struct
  * 
- * @return struct candle_data* 
+ * @return struct Candle* 
  */
-struct candle_data* Opel::getTradeCandleStruct()
+struct Candle* Opel::getTradeCandleStruct()
 {
-    static struct candle_data *pTradeCandleData;
+    static struct Candle *pTradeCandleData;
 
     if (pTradeCandleData == NULL)
     {
-        pTradeCandleData = new candle_data;
+        pTradeCandleData = new Candle;
     }
     
     return pTradeCandleData;
@@ -78,15 +60,15 @@ struct candle_data* Opel::getTradeCandleStruct()
 /**
  * @brief Follow Candle data struct
  * 
- * @return struct candle_data* 
+ * @return struct Candle* 
  */
-struct candle_data* Opel::getFollowCandleStruct()
+struct Candle* Opel::getFollowCandleStruct()
 {
-    static struct candle_data *pFollowCandleData;
+    static struct Candle *pFollowCandleData;
 
     if (pFollowCandleData == NULL)
     {
-        pFollowCandleData = new candle_data;
+        pFollowCandleData = new Candle;
     }
     
     return pFollowCandleData;

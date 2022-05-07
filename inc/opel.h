@@ -25,15 +25,10 @@
 
 
 // Structs
-struct socket_error : public std::mutex
+struct Candle : public std::mutex
 {
-    std::string         message;
-    std::string         symbol;
-};
-
-struct candle_data  : public std::mutex
-{
-    bool                isClosed;
+    bool                isClosed    = false;
+    bool                isUpdated   = false;
 
     std::string         symbol;
     std::string         timestamp;
@@ -41,6 +36,7 @@ struct candle_data  : public std::mutex
     std::string         closePrice;
     std::string         highPrice;
     std::string         lowPrice;
+    std::string         qVolume;
 };
 
 
@@ -67,9 +63,8 @@ class Opel
                                     
         static Opel                 *instance();
 
-        static struct socket_error  *getSocketErrorStruct();
-        static struct candle_data   *getTradeCandleStruct();
-        static struct candle_data   *getFollowCandleStruct();
+        static struct Candle        *getTradeCandleStruct();
+        static struct Candle        *getFollowCandleStruct();
         
         void                        setExitSignal(bool signal);
         bool                        getExitSignal();

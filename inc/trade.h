@@ -37,7 +37,7 @@
 using OrdersMap         = std::map<uint32_t, struct Order>;
 using OrdersMapIterator = std::map<uint32_t, struct Order>::iterator;
 
-using AverageVector     = std::vector<std::string>;
+using CandleVector      = std::vector<std::string>;
 
 
 // Class
@@ -74,7 +74,12 @@ class Trade
         struct Candlesticks     mTradeCandlesticks;
         struct Candlesticks     mFollowCandlesticks;
 
+        struct Candlesticks     mAlgorithmTradeCandlesticks;
+        struct Candlesticks     mAlgorithmFollowCandlesticks;
+
         void                    calculates();
+
+        bool                    getCandlesticks(struct Candlesticks &candlestick);
 
     public:
                                 Trade(std::shared_ptr<BinanceUtilities> pU, 

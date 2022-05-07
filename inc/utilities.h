@@ -50,8 +50,8 @@ class Utilities
 
         std::string             mExchangeName;
 
-        std::string             RSI(std::vector<std::string> vector);
-        std::string             Average(std::vector<std::string> vector);
+        std::string             RSI(std::vector<std::string>& vector);
+        std::string             Average(std::vector<std::string>& vector);
 
     public:
                                 Utilities();
@@ -61,6 +61,9 @@ class Utilities
 
         std::string             getTimestamp();
         std::string             getRSITimestamp(int rsiPeriod, std::string interval);
+
+        long long int           getCandlestickDuration(int rsiPeriod, std::string interval);
+
         std::string             getCoinSymbol();
         std::string             getTradeSymbol();
         std::string             getFollowSymbol();
@@ -82,18 +85,25 @@ class Utilities
 
         std::string             upperToLower(std::string data);
         std::string             roundString(std::string price, int tickSize);
-        std::string             addTwoStrings(std::string number1, std::string number2);
-        std::string             subTwoStrings(std::string number1, std::string number2);
-        std::string             multiplyTwoStrings(std::string number1, std::string number2);
 
-        bool                    compareTwoStrings(std::string firstPrice, std::string secondPrice);
+        std::string             atfts(std::string number1, std::string number2);
+        std::string             stfts(std::string number1, std::string number2);
+        std::string             mtfts(std::string number1, std::string number2);
+
+        std::string             atlts(std::string number1, std::string number2);
+        std::string             stlts(std::string number1, std::string number2);
+        std::string             mtlts(std::string number1, std::string number2);
+
+        bool                    ctscf(std::string number1, std::string number2);
+        bool                    ctscl(std::string number1, std::string number2);
 
         int                     getTickSize(std::string data);
 
-        bool                    getTradeSymbolCandle(struct Candlesticks& candles);
-        bool                    getFollowSymbolCandle(struct Candlesticks& candles);
+        void                    getWSCandlesticks(struct Candlesticks& candles,
+                                                    struct Symbol& coin);
 
         bool                    calculateRSI(struct Candlesticks& candles);
+        bool                    calculateChange(struct Candlesticks& candles);
         bool                    calculateAverage(struct Candlesticks& candles);
 
         bool                    calcNewBuyPrice(struct Order& order, 

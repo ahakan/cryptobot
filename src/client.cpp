@@ -1,4 +1,5 @@
 #include "../inc/client.h"
+#include <string>
 
 
 /**
@@ -62,8 +63,8 @@ std::string BinanceClient::getRequest(std::string endpoint, std::string paramete
     httplib::Client cli(mBase);
 
     cli.set_connection_timeout(1, 500000);  // 1500 milliseconds
-    cli.set_read_timeout(2, 500000);        // 2500 milliseconds
-    cli.set_write_timeout(2, 500000);       // 2500 milliseconds
+    cli.set_read_timeout(2, 0);        // 2500 milliseconds
+    cli.set_write_timeout(2, 0);       // 2500 milliseconds
 
     std::string endpointWithParameters = endpoint + "?" + parameters;
 
@@ -104,8 +105,8 @@ std::string BinanceClient::postRequest(std::string endpoint, std::string paramet
     httplib::Client cli(mBase);
 
     cli.set_connection_timeout(1, 500000);  // 1500 milliseconds
-    cli.set_read_timeout(2, 500000);        // 2500 milliseconds
-    cli.set_write_timeout(2, 500000);       // 2500 milliseconds
+    cli.set_read_timeout(2, 0);        // 2500 milliseconds
+    cli.set_write_timeout(2, 0);       // 2500 milliseconds
 
     std::string endpointWithParameters = endpoint + "?" + parameters;
 
@@ -146,8 +147,8 @@ std::string BinanceClient::deleteRequest(std::string endpoint, std::string param
     httplib::Client cli(mBase);
 
     cli.set_connection_timeout(1, 500000);  // 1500 milliseconds
-    cli.set_read_timeout(2, 500000);        // 2500 milliseconds
-    cli.set_write_timeout(2, 500000);       // 2500 milliseconds
+    cli.set_read_timeout(2, 0);        // 2500 milliseconds
+    cli.set_write_timeout(2, 0);       // 2500 milliseconds
 
     std::string endpointWithParameters = endpoint + "?" + parameters;
 
@@ -349,7 +350,7 @@ bool BinanceClient::getCoinBalance(struct Symbol& coin)
             {
                 std::string walletBalanceAmount = parsedResponse[i]["free"].asString();
 
-                bool isQuantityEnough = pBu.get()->compareTwoStrings(walletBalanceAmount, coin.coinQuantity);
+                bool isQuantityEnough = pBu.get()->ctscf(walletBalanceAmount, coin.coinQuantity);
 
                 if (!isQuantityEnough)
                 {
@@ -389,8 +390,6 @@ bool BinanceClient::getCoinBalance(struct Symbol& coin)
  */
 bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
 {
-    candlestick.lock();
-
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
     std::string reqEndpoint         = "/api/v3/klines";
@@ -407,8 +406,6 @@ bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
                     reqTimestamp.c_str(), 
                     reqEndpoint.c_str(), 
                     candlestick.startTime.c_str());
-
-    candlestick.unlock();
 
     std::string responseBody        = getRequest(reqEndpoint, reqParams, reqHeaders);
 
@@ -430,11 +427,9 @@ bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
         return false;
     }
 
-    candlestick.lock();
-
     int candlesSize = static_cast<int>(parsedResponse.size());
 
-    ELOG(INFO, "Got Candlesticks Data. Symbol: %s, Candles size: %d.", candlestick.symbol.c_str(), candlesSize);
+    ELOG(INFO, "Got Candlesticks Data. Symbol: %s, Candles size: %d, Interval: %s.", candlestick.symbol.c_str(), candlesSize, candlestick.interval.c_str());
 
     for (int i = 0; i < candlesSize; i++)
     {
@@ -444,10 +439,11 @@ bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
         candlestick.highPrices.push_back(parsedResponse[i][2].asString());
         candlestick.lowPrices.push_back(parsedResponse[i][3].asString());
         candlestick.closePrices.push_back(parsedResponse[i][4].asString());
+        candlestick.quoteVolumes.push_back(parsedResponse[i][5].asString());
+
+        candlestick.lastCandleTimestamp = std::to_string(parsedResponse[i][6].asLargestInt());
     }
 
-    candlestick.unlock();
-    
     return true;
 }
 
@@ -459,7 +455,7 @@ bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
  * @return true 
  * @return false 
  */
-bool BinanceClient::getTickSize (struct Symbol& coin)
+bool BinanceClient::getTickSize(struct Symbol& coin)
 {
     coin.lock();
 
@@ -574,15 +570,13 @@ bool BinanceClient::getDailyVolume(struct Symbol& coin)
     std::string rQuoteVolume    = parsedResponse["quoteVolume"].asString();
 
     coin.lock();
-    coin.price                  = rPrice;
     coin.volume                 = rVolume;
     coin.quoteVolume            = rQuoteVolume;
     coin.unlock();
 
-    ELOG(INFO, "%s -> Price: %s, Volume Size: %s, Quote Volume Size: %s.", 
+    ELOG(INFO, "Volume -> %s, Daily Volume: %s, Quote Volume: %s.", 
                     rSymbol.c_str(), 
-                    rPrice.c_str(), 
-                    rVolume.c_str(), 
+                    rVolume.c_str(),
                     rQuoteVolume.c_str());
 
     return true;
@@ -901,10 +895,10 @@ bool BinanceClient::queryOrder(struct Order& order)
         if (rStatus == "CANCELED")
         {
             // if return false
-            bool isHigherThanZero       = pBu.get()->compareTwoStrings("00.00", rExecutedQty);
+            bool isHigherThanZero       = pBu.get()->ctscf("00.00", rExecutedQty);
 
             // if return false    
-            bool isLowerThanQuantity    = pBu.get()->compareTwoStrings(rExecutedQty, rQuantity);    
+            bool isLowerThanQuantity    = pBu.get()->ctscf(rExecutedQty, rQuantity);    
 
             // that means partially filled                                                                
             if (!isHigherThanZero && !isLowerThanQuantity)

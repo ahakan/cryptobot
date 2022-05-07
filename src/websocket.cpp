@@ -235,40 +235,45 @@ void Websocket::read(beast::error_code ec, std::size_t bytes_transferred)
             std::string rClosePrice         = rKData["c"].asString();
             std::string rHighPrice          = rKData["h"].asString();
             std::string rLowPrice           = rKData["l"].asString();
+            std::string rQVolume            = rKData["q"].asString();
 
-            ELOG(INFO, "WS -> %s: %s.", rSymbol.c_str(), rClosePrice.c_str(), mBuffer.size());
+            ELOG(INFO, "WS -> %s: %s, Volume: %s.", rSymbol.c_str(), rClosePrice.c_str(), rQVolume.c_str());
 
             if (rSymbol == iOpel->getTradeSymbol())
             {
-                struct candle_data *pTradeCandleData    = Opel::getTradeCandleStruct();
+                struct Candle *pTradeCandleData    = Opel::getTradeCandleStruct();
 
                 pTradeCandleData->lock();
 
-                pTradeCandleData->isClosed              = rIsClosed;
+                pTradeCandleData->isClosed      = rIsClosed;
+                pTradeCandleData->isUpdated     = true;
 
-                pTradeCandleData->symbol                = rSymbol;
-                pTradeCandleData->timestamp             = rTimestamp;
-                pTradeCandleData->openPrice             = rOpenPrice;
-                pTradeCandleData->closePrice            = rClosePrice;
-                pTradeCandleData->highPrice             = rHighPrice;
-                pTradeCandleData->lowPrice              = rLowPrice;
+                pTradeCandleData->symbol        = rSymbol;
+                pTradeCandleData->timestamp     = rTimestamp;
+                pTradeCandleData->openPrice     = rOpenPrice;
+                pTradeCandleData->closePrice    = rClosePrice;
+                pTradeCandleData->highPrice     = rHighPrice;
+                pTradeCandleData->lowPrice      = rLowPrice;
+                pTradeCandleData->qVolume       = rQVolume;
 
                 pTradeCandleData->unlock();
             }
             else
             {
-                struct candle_data *pFollowCandleData = Opel::getFollowCandleStruct();
+                struct Candle *pFollowCandleData = Opel::getFollowCandleStruct();
 
                 pFollowCandleData->lock();
 
-                pFollowCandleData->isClosed             = rIsClosed;
+                pFollowCandleData->isClosed     = rIsClosed;
+                pFollowCandleData->isUpdated    = true;
 
-                pFollowCandleData->symbol               = rSymbol;
-                pFollowCandleData->timestamp            = rTimestamp;
-                pFollowCandleData->openPrice            = rOpenPrice;
-                pFollowCandleData->closePrice           = rClosePrice;
-                pFollowCandleData->highPrice            = rHighPrice;
-                pFollowCandleData->lowPrice             = rLowPrice;
+                pFollowCandleData->symbol       = rSymbol;
+                pFollowCandleData->timestamp    = rTimestamp;
+                pFollowCandleData->openPrice    = rOpenPrice;
+                pFollowCandleData->closePrice   = rClosePrice;
+                pFollowCandleData->highPrice    = rHighPrice;
+                pFollowCandleData->lowPrice     = rLowPrice;
+                pFollowCandleData->qVolume      = rQVolume;
 
                 pFollowCandleData->unlock();
             }
@@ -322,8 +327,11 @@ BinanceWebsocket::BinanceWebsocket(std::shared_ptr<BinanceUtilities> pBu)
     iOpel->setFollowSymbol(mFollowSymbol);
 
 
-    ELOG(INFO, "Websocket constructor initialized. Host: %s, Port: %s, Trade Endpoint: %s, Follow Endpoint: %s.", 
-                mHost.c_str(), mPort.c_str(), mEndpointT.c_str(), mEndpointF.c_str());
+    ELOG(INFO, "Websocket constructor initialized. Host: %s, Port: %s, Trade Endp: %s, Follow Endp: %s.", 
+                mHost.c_str(),
+                mPort.c_str(), 
+                mEndpointT.c_str(), 
+                mEndpointF.c_str());
 }
 
 

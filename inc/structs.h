@@ -19,7 +19,7 @@
 
 
 // Using && Namespaces
-using AverageVector     = std::vector<std::string>;
+using CandleVector  = std::vector<std::string>;
 
 // Structs
 
@@ -47,10 +47,10 @@ struct Order
 // Coin struct
 struct Symbol : public std::mutex
 {
-    std::string coinName;       // SOL
+    std::string coinName;           // SOL
     std::string coinQuantity;
 
-    std::string symbol;         // SOLUSDT
+    std::string symbol;             // SOLUSDT
 
     int         tickSize;
 
@@ -62,9 +62,9 @@ struct Symbol : public std::mutex
 // Candlesticks struct
 struct Candlesticks : public std::mutex
 {
-    std::string     symbol;     // SOLUSDT
-    std::string     interval;   // 4h
-    std::string     startTime;
+    std::string     symbol;         // SOLUSDT
+    std::string     interval;       // 4h
+    std::string     candleDuration;
 
     int             tickSize;
 
@@ -72,21 +72,24 @@ struct Candlesticks : public std::mutex
     std::string     RSIOversold;
     std::string     RSIOverbought;
 
-    bool            newBuyRSI;
-    bool            newSellRSI;
+    std::string     startTime;
+    std::string     lastCandleTimestamp = "0";
 
     std::string     closeRSI;
     std::string     oldCloseRSI;
 
-    AverageVector   openPrices;
-    AverageVector   highPrices;
-    AverageVector   lowPrices;
-    AverageVector   closePrices;
+    CandleVector    openPrices;
+    CandleVector    highPrices;
+    CandleVector    lowPrices;
+    CandleVector    closePrices;
 
     std::string     openPricesAverage;
     std::string     highPricesAverage;
     std::string     lowPricesAverage;
     std::string     closePricesAverage;
+
+    CandleVector    quoteVolumes;
+    CandleVector    percentChange;
 };
 
 

@@ -61,7 +61,7 @@ TEST_F(TestUtilities, round_string_3)
 
 TEST_F(TestUtilities, add_two_strings)
 {
-    std::string result = TestUtilities::pBu->addTwoStrings("100.230000", "10.49750000");
+    std::string result = TestUtilities::pBu->atfts("100.230000", "10.49750000");
 
     std::string rounded = TestUtilities::pBu->roundString(result, 4);
 
@@ -71,7 +71,7 @@ TEST_F(TestUtilities, add_two_strings)
 
 TEST_F(TestUtilities, sub_two_strings)
 {
-    std::string result = TestUtilities::pBu->subTwoStrings("100.230000", "10.49750000");
+    std::string result = TestUtilities::pBu->stfts("100.230000", "10.49750000");
 
     std::string rounded = TestUtilities::pBu->roundString(result, 4);
 
@@ -81,7 +81,7 @@ TEST_F(TestUtilities, sub_two_strings)
 
 TEST_F(TestUtilities, multiply_two_strings)
 {
-    std::string result = TestUtilities::pBu->multiplyTwoStrings("10.490000", "2");
+    std::string result = TestUtilities::pBu->mtfts("10.490000", "2");
 
     std::string rounded = TestUtilities::pBu->roundString(result, 4);
 
@@ -91,7 +91,7 @@ TEST_F(TestUtilities, multiply_two_strings)
 
 TEST_F(TestUtilities, compare_two_strings)
 {
-    bool result = TestUtilities::pBu->compareTwoStrings("10.490000", "10.480000");
+    bool result = TestUtilities::pBu->ctscf("10.490000", "10.480000");
 
     EXPECT_TRUE(result);
 }
