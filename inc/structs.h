@@ -78,15 +78,18 @@ struct Candlesticks : public std::mutex
     std::string     closeRSI;
     std::string     oldCloseRSI;
 
-    CandleVector    openPrices;
-    CandleVector    highPrices;
-    CandleVector    lowPrices;
-    CandleVector    closePrices;
-
     std::string     openPricesAverage;
     std::string     highPricesAverage;
     std::string     lowPricesAverage;
     std::string     closePricesAverage;
+
+    std::string     lowestPrice;
+    std::string     highestPrice;
+
+    CandleVector    openPrices;
+    CandleVector    highPrices;
+    CandleVector    lowPrices;
+    CandleVector    closePrices;
 
     CandleVector    quoteVolumes;
     CandleVector    percentChange;

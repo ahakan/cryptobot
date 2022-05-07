@@ -36,7 +36,7 @@ struct Candle : public std::mutex
     std::string         closePrice;
     std::string         highPrice;
     std::string         lowPrice;
-    std::string         qVolume;
+    std::string         volume;
 };
 
 

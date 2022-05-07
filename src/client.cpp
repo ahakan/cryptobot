@@ -1,5 +1,4 @@
 #include "../inc/client.h"
-#include <string>
 
 
 /**
@@ -430,6 +429,18 @@ bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
     int candlesSize = static_cast<int>(parsedResponse.size());
 
     ELOG(INFO, "Got Candlesticks Data. Symbol: %s, Candles size: %d, Interval: %s.", candlestick.symbol.c_str(), candlesSize, candlestick.interval.c_str());
+
+    int priceSize = candlestick.openPrices.size();
+
+    if (priceSize > 0)
+    {
+        candlestick.openPrices.clear();
+        candlestick.highPrices.clear();
+        candlestick.lowPrices.clear();
+        candlestick.closePrices.clear();
+        candlestick.quoteVolumes.clear();
+        candlestick.percentChange.clear();
+    }
 
     for (int i = 0; i < candlesSize; i++)
     {

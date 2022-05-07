@@ -235,9 +235,9 @@ void Websocket::read(beast::error_code ec, std::size_t bytes_transferred)
             std::string rClosePrice         = rKData["c"].asString();
             std::string rHighPrice          = rKData["h"].asString();
             std::string rLowPrice           = rKData["l"].asString();
-            std::string rQVolume            = rKData["q"].asString();
+            std::string rVolume             = rKData["v"].asString();
 
-            ELOG(INFO, "WS -> %s: %s, Volume: %s.", rSymbol.c_str(), rClosePrice.c_str(), rQVolume.c_str());
+            ELOG(INFO, "WS -> %s: %s, Volume: %s.", rSymbol.c_str(), rClosePrice.c_str(), rVolume.c_str());
 
             if (rSymbol == iOpel->getTradeSymbol())
             {
@@ -254,7 +254,7 @@ void Websocket::read(beast::error_code ec, std::size_t bytes_transferred)
                 pTradeCandleData->closePrice    = rClosePrice;
                 pTradeCandleData->highPrice     = rHighPrice;
                 pTradeCandleData->lowPrice      = rLowPrice;
-                pTradeCandleData->qVolume       = rQVolume;
+                pTradeCandleData->volume       = rVolume;
 
                 pTradeCandleData->unlock();
             }
@@ -273,7 +273,7 @@ void Websocket::read(beast::error_code ec, std::size_t bytes_transferred)
                 pFollowCandleData->closePrice   = rClosePrice;
                 pFollowCandleData->highPrice    = rHighPrice;
                 pFollowCandleData->lowPrice     = rLowPrice;
-                pFollowCandleData->qVolume      = rQVolume;
+                pFollowCandleData->volume      = rVolume;
 
                 pFollowCandleData->unlock();
             }

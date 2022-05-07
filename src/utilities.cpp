@@ -1,6 +1,4 @@
 #include "../inc/utilities.h"
-#include "opel.h"
-#include <string>
 
 
 /**
@@ -153,6 +151,32 @@ std::string Utilities::Average(std::vector<std::string>& vector)
     average = average / size;
 
     return std::to_string(average);
+}
+
+
+/**
+ * @brief Get the lowest candlestick price
+ * 
+ * @param vector 
+ * @return std::string 
+ */
+std::string Utilities::getLowestPrice(std::vector<std::string>& vector)
+{
+    return *std::min_element(vector.begin(), 
+                                vector.end());
+}
+
+
+/**
+ * @brief Get the highest candlestick price
+ * 
+ * @param vector 
+ * @return std::string 
+ */
+std::string Utilities::getHighestPrice(std::vector<std::string>& vector)
+{
+    return *std::max_element(vector.begin(), 
+                                vector.end());
 }
 
 
@@ -865,7 +889,7 @@ void Utilities::getWSCandlesticks(struct Candlesticks& candles, struct Symbol& c
     std::string closePrice;
     std::string highPrice;
     std::string lowPrice;
-    std::string qVolume;
+    std::string volume;
 
     candles.lock();
 
@@ -882,7 +906,7 @@ void Utilities::getWSCandlesticks(struct Candlesticks& candles, struct Symbol& c
         closePrice  = pTradeCandleData->closePrice;
         highPrice   = pTradeCandleData->highPrice;
         lowPrice    = pTradeCandleData->lowPrice;
-        qVolume     = pTradeCandleData->qVolume;
+        volume      = pTradeCandleData->volume;
 
         pTradeCandleData->isUpdated = false;
 
@@ -901,7 +925,7 @@ void Utilities::getWSCandlesticks(struct Candlesticks& candles, struct Symbol& c
         closePrice  = pFollowCandleData->closePrice;
         highPrice   = pFollowCandleData->highPrice;
         lowPrice    = pFollowCandleData->lowPrice;
-        qVolume     = pFollowCandleData->qVolume;
+        volume      = pFollowCandleData->volume;
 
         pFollowCandleData->isUpdated = false;
 
@@ -912,7 +936,7 @@ void Utilities::getWSCandlesticks(struct Candlesticks& candles, struct Symbol& c
     {
         coin.lock();
 
-        coin.price          = closePrice;
+        coin.price  = closePrice;
 
         ELOG(INFO, "%s -> Price: %s.", 
                 coin.symbol.c_str(), 
@@ -935,17 +959,17 @@ void Utilities::getWSCandlesticks(struct Candlesticks& candles, struct Symbol& c
             candles.lowPrices.push_back(lowPrice);
             candles.lowPrices.erase(candles.lowPrices.begin());
 
-            candles.quoteVolumes.push_back(qVolume);
+            candles.quoteVolumes.push_back(volume);
             candles.quoteVolumes.erase(candles.quoteVolumes.begin());
 
-            ELOG(INFO, "Candlesticks -> %s. Interval:%s, OP: %s, CP: %s, HP: %s, LP: %s, qVolume: %s, CPS: %d.", 
+            ELOG(INFO, "Candlesticks -> %s(%s). OP: %s, CP: %s, HP: %s, LP: %s, qVolume: %s, CPS: %d.", 
                     candles.symbol.c_str(),
                     candles.interval.c_str(),
                     openPrice.c_str(),
                     closePrice.c_str(),
                     highPrice.c_str(),
                     lowPrice.c_str(),
-                    qVolume.c_str(),
+                    volume.c_str(),
                     candles.closePrices.size());
 
             calculateRSI(candles);
@@ -954,6 +978,7 @@ void Utilities::getWSCandlesticks(struct Candlesticks& candles, struct Symbol& c
             
             calculateAverage(candles);
 
+            getHighestLowestPrice(candles);
         }
     }
     
@@ -982,7 +1007,7 @@ bool Utilities::calculateRSI(struct Candlesticks& candles)
         // // ignore to first calculation for cancel order
         // candles.newSellRSI      = candles.oldCloseRSI == "00.00" ? false : true;
 
-        ELOG(INFO, "RSI -> %s. Interval: %s, New Close RSI: %s, Old Close RSI: %s.",
+        ELOG(INFO, "RSI -> %s(%s). New Close RSI: %s, Old Close RSI: %s.",
                             candles.symbol.c_str(),
                             candles.interval.c_str(),
                             candles.closeRSI.c_str(), 
@@ -1025,10 +1050,10 @@ bool Utilities::calculateChange(struct Candlesticks& candles)
             totalChange += percent;
         }
 
-        ELOG(INFO, "Change -> %s. %: %.2f, Interval: %s, RSI Period: %d",
+        ELOG(INFO, "Change -> %s(%s). Change%: %.2f, RSI Period: %d",
                         candles.symbol.c_str(),
-                        totalChange,
                         candles.interval.c_str(),
+                        totalChange,
                         candles.RSIPeriod);
                     
         return true;
@@ -1063,7 +1088,7 @@ bool Utilities::calculateAverage(struct Candlesticks& candles)
         candles.lowPricesAverage        = roundString(lowPricesAverage, candles.tickSize);
         candles.closePricesAverage      = roundString(closePricesAverage, candles.tickSize);
 
-        ELOG(INFO, "Averages -> %s. Interval: %s, OA: %s, HA: %s, LA: %s, CA: %s",
+        ELOG(INFO, "Averages -> %s(%s). OA: %s, HA: %s, LA: %s, CA: %s",
                         candles.symbol.c_str(),
                         candles.interval.c_str(),
                         candles.openPricesAverage.c_str(), 
@@ -1083,6 +1108,35 @@ bool Utilities::calculateAverage(struct Candlesticks& candles)
 
 
 /**
+ * @brief Get the lowest and the highest candlestick price
+ * 
+ * @param candles 
+ * @return true 
+ * @return false 
+ */
+bool Utilities::getHighestLowestPrice(struct Candlesticks& candles)
+{
+    if (!candles.lowPrices.empty() && !candles.highPrices.empty())
+    {
+        candles.lowestPrice     = getLowestPrice(candles.lowPrices);
+        candles.highestPrice    = getHighestPrice(candles.highPrices);
+
+        ELOG(INFO, "Highest/Lowest -> %s(%s). Lowest Price: %s, Highest Price: %s.",
+                            candles.symbol.c_str(), 
+                            candles.interval.c_str(),
+                            candles.lowestPrice.c_str(),
+                            candles.highestPrice.c_str());
+
+        return true;
+    }
+
+    ELOG(ERROR, "Low prices and high prices vector are empty.");
+
+    return false;
+}
+
+
+/**
  * @brief Calculates new buy order price
  * 
  * @return true 
@@ -1092,7 +1146,7 @@ bool Utilities::calcNewBuyPrice(struct Order& order,
                                     struct Symbol& coin,
                                     struct Candlesticks& candles)
 {
-    bool isBuyAverageCalculated    = calcNewOrderAverage(order, candles);
+    bool isBuyAverageCalculated = calcNewOrderAverage(order, candles);
 
     if (!isBuyAverageCalculated)
     {
@@ -1181,15 +1235,13 @@ bool Utilities::calcNewOrderAverage(struct Order& order,
     {
         if ( !candles.highPrices.empty() && !candles.lowPrices.empty())
         {
-            float highestPrice          = std::stof(*std::max_element(candles.highPrices.begin(), 
-                                                candles.highPrices.end()));
+            float highestPrice          = std::stof(candles.highestPrice);
 
-            float lowestPrice           = std::stof(*std::min_element(candles.lowPrices.begin(), 
-                                                    candles.lowPrices.end()));
+            float lowestPrice           = std::stof(candles.lowestPrice);
 
             float calculatedAverage     = (highestPrice-lowestPrice)/getRSIPeriod();
 
-            order.expectedAverage      = roundString(std::to_string(calculatedAverage), candles.tickSize); 
+            order.expectedAverage       = roundString(std::to_string(calculatedAverage), candles.tickSize); 
 
             ELOG(INFO, "Calculated New Trade Average. New Average: %s.", order.expectedAverage.c_str());
             

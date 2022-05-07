@@ -53,6 +53,9 @@ class Utilities
         std::string             RSI(std::vector<std::string>& vector);
         std::string             Average(std::vector<std::string>& vector);
 
+        std::string             getLowestPrice(std::vector<std::string>& vector);
+        std::string             getHighestPrice(std::vector<std::string>& vector);
+
     public:
                                 Utilities();
         virtual                 ~Utilities();
@@ -105,6 +108,7 @@ class Utilities
         bool                    calculateRSI(struct Candlesticks& candles);
         bool                    calculateChange(struct Candlesticks& candles);
         bool                    calculateAverage(struct Candlesticks& candles);
+        bool                    getHighestLowestPrice(struct Candlesticks& candles);
 
         bool                    calcNewBuyPrice(struct Order& order, 
                                                     struct Symbol& coin,

@@ -52,21 +52,22 @@ Trade::Trade(std::shared_ptr<BinanceUtilities> pU, std::shared_ptr<BinanceClient
     mFollowCandlesticks.RSIOverbought       = RSIOverbought;
     mFollowCandlesticks.candleDuration      = std::to_string(pBu.get()->getCandlestickDuration(1, interval));
 
+    std::string algorithmInterval           = "4h";
 
     // Algorithm candlesticks struct
-    mAlgorithmTradeCandlesticks.symbol                  = tradeSymbol;
-    mAlgorithmTradeCandlesticks.interval                = "4h";
-    mAlgorithmTradeCandlesticks.RSIPeriod               = RSIPeriod;
-    mAlgorithmTradeCandlesticks.RSIOversold             = RSIOversold;
-    mAlgorithmTradeCandlesticks.RSIOverbought           = RSIOverbought;
-    mAlgorithmTradeCandlesticks.candleDuration          = std::to_string(pBu.get()->getCandlestickDuration(1, "4h"));
+    mAlgorithmTradeCandlesticks.symbol          = tradeSymbol;
+    mAlgorithmTradeCandlesticks.interval        = algorithmInterval;
+    mAlgorithmTradeCandlesticks.RSIPeriod       = RSIPeriod;
+    mAlgorithmTradeCandlesticks.RSIOversold     = RSIOversold;
+    mAlgorithmTradeCandlesticks.RSIOverbought   = RSIOverbought;
+    mAlgorithmTradeCandlesticks.candleDuration  = std::to_string(pBu.get()->getCandlestickDuration(1, algorithmInterval));
 
-    mAlgorithmFollowCandlesticks.symbol                 = followSymbol;
-    mAlgorithmFollowCandlesticks.interval               = "4h";
-    mAlgorithmFollowCandlesticks.RSIPeriod              = RSIPeriod;
-    mAlgorithmFollowCandlesticks.RSIOversold            = RSIOversold;
-    mAlgorithmFollowCandlesticks.RSIOverbought          = RSIOverbought;
-    mAlgorithmFollowCandlesticks.candleDuration         = std::to_string(pBu.get()->getCandlestickDuration(1, "4h"));
+    mAlgorithmFollowCandlesticks.symbol         = followSymbol;
+    mAlgorithmFollowCandlesticks.interval       = algorithmInterval;
+    mAlgorithmFollowCandlesticks.RSIPeriod      = RSIPeriod;
+    mAlgorithmFollowCandlesticks.RSIOversold    = RSIOversold;
+    mAlgorithmFollowCandlesticks.RSIOverbought  = RSIOverbought;
+    mAlgorithmFollowCandlesticks.candleDuration = std::to_string(pBu.get()->getCandlestickDuration(1, algorithmInterval));
 
 
     ELOG(INFO, "Trade constructor initialized. "
@@ -159,7 +160,7 @@ bool Trade::getCandlesticks(struct Candlesticks &candlestick)
 
         bool getCandles             = pReq.get()->getCandlesticksData(candlestick);
 
-        ELOG(INFO, "Candlesticks -> %s, Interval: %s, Candle duration: %s, Timetamp: %s, Next: %s,  Last: %s.", 
+        ELOG(INFO, "Candlesticks -> %s(%s). Candle duration: %s, Timestamp: %s, Next: %s, Last: %s.", 
             candlestick.symbol.c_str(), 
             candlestick.interval.c_str(), 
             candlestick.candleDuration.c_str(),
@@ -174,6 +175,8 @@ bool Trade::getCandlesticks(struct Candlesticks &candlestick)
             pBu.get()->calculateChange(candlestick);
         
             pBu.get()->calculateAverage(candlestick);
+
+            pBu.get()->getHighestLowestPrice(candlestick);
 
             candlestick.unlock();
 
