@@ -35,22 +35,21 @@
 #include <mutex>
 
 // Using && Namespaces
-using OrdersMap         = std::map<uint32_t, struct Order>;
-using OrdersMapIterator = std::map<uint32_t, struct Order>::iterator;
+// using OrdersMap         = std::vector<std::unique_ptr<Order>>;
+// using OrdersMapIterator = std::vector<std::unique_ptr<Order>>::iterator;
 
 // Class
 class Client
 {
     protected:
-        std::shared_ptr<BinanceUtilities> pBu = NULL; 
+        std::shared_ptr
+            <BinanceUtilities>  pBu             = NULL; 
 
         std::string             mBase;
         std::string             mAPI_KEY;
         std::string             mSECRET_KEY;
 
-        std::string             mBuySide                = "BUY";
-        std::string             mSellSide               = "SELL";
-        std::string             mRecvWindow             = "10000";
+        std::string             mRecvWindow     = "10000";
 
     public:
                                 Client(std::shared_ptr<BinanceUtilities> pU);
@@ -85,10 +84,11 @@ class BinanceClient : public Client
         bool                    getDailyVolume(struct Symbol& coin);
 
         // Spot Account/Trade
-        bool                    createNewOrder(struct Order& order, struct Symbol& coin);    
-        bool                    cancelOrder(struct Order& order);
+        bool                    createNewOrder(std::shared_ptr<Order> order, 
+                                                struct Symbol& coin);    
+        bool                    cancelOrder(std::shared_ptr<Order> order);
         bool                    cancelAllOpenOrders(std::string symbol);
-        bool                    queryOrder(struct Order& order);
+        bool                    queryOrder(std::shared_ptr<Order> order);
         bool                    currentOpenOrders(std::string symbol);
 };
 

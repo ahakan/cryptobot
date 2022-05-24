@@ -34,8 +34,8 @@
 #include <mutex>
 
 // Using && Namespaces
-using OrdersMap         = std::map<uint32_t, struct Order>;
-using OrdersMapIterator = std::map<uint32_t, struct Order>::iterator;
+using OrdersMap         = std::map<uint32_t, std::shared_ptr<Order>>;
+using OrdersMapIterator = std::map<uint32_t, std::shared_ptr<Order>>::iterator;
 
 using CandleVector      = std::vector<std::string>;
 
@@ -44,8 +44,10 @@ using CandleVector      = std::vector<std::string>;
 class Trade
 {
     protected:
-        std::shared_ptr<BinanceUtilities> pBu           = NULL; 
-        std::shared_ptr<BinanceClient> pReq             = NULL;
+        std::shared_ptr
+            <BinanceUtilities>  pBu                 = NULL; 
+        std::shared_ptr
+            <BinanceClient>     pReq                = NULL;
 
       
         std::string             mOrderType;
@@ -57,15 +59,12 @@ class Trade
         int                     mSymbolTickSize;
         int                     mFollowSymbolTickSize;
 
-        bool                    mAccountStatus          = false;
-        bool                    mAPIKeyPermission       = false;
+        bool                    mAccountStatus      = false;
+        bool                    mAPIKeyPermission   = false;
 
-        std::string             mBuySide                = "BUY";
-        std::string             mSellSide               = "SELL";
-        std::string             mRecvWindow             = "10000";
-
-        struct Order            mBuyOrders;
-        struct Order            mSellOrders;
+        OrdersMap               mBuyOrders;
+        OrdersMap               mSellOrders;
+        OrdersMap               mStopLossOrders;
 
         struct Symbol           mTradeSymbolInfo;
         struct Symbol           mFollowSymbolInfo; 
@@ -86,13 +85,20 @@ class Trade
                                         std::shared_ptr<BinanceClient> pR);
         virtual                 ~Trade();
 
+    protected:
+        bool                    checkBuyOrder();
+        bool                    checkSellOrder();
+        bool                    createNewBuyOrder();
+        bool                    createNewSellOrder();
+
 };
 
 
 class BinanceTrade : public Trade
 {
     protected:
-        std::shared_ptr<BinanceClient> pReq             = NULL;
+        std::shared_ptr
+            <BinanceClient>     pReq                = NULL;
 
     public:
                                 BinanceTrade(std::shared_ptr<BinanceUtilities> pU, 

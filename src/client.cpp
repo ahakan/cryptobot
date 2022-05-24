@@ -428,7 +428,10 @@ bool BinanceClient::getCandlesticksData(struct Candlesticks& candlestick)
 
     int candlesSize = static_cast<int>(parsedResponse.size());
 
-    ELOG(INFO, "Got Candlesticks Data. Symbol: %s, Candles size: %d, Interval: %s.", candlestick.symbol.c_str(), candlesSize, candlestick.interval.c_str());
+    ELOG(INFO, "Got Candlesticks Data. Symbol: %s, Candles size: %d, Interval: %s.", 
+                    candlestick.symbol.c_str(), 
+                    candlesSize, 
+                    candlestick.interval.c_str());
 
     int priceSize = candlestick.openPrices.size();
 
@@ -602,20 +605,21 @@ bool BinanceClient::getDailyVolume(struct Symbol& coin)
  * @return true 
  * @return false 
  */
-bool BinanceClient::createNewOrder(struct Order& order, struct Symbol& coin)
+bool BinanceClient::createNewOrder(std::shared_ptr<Order> order, struct Symbol& coin)
 {
     std::string reqTimestamp            = pBu.get()->getTimestamp();
 
     std::string reqEndpoint             = "/api/v3/order";
 
-    std::string roundedQuantity         = pBu.get()->roundString(order.quantity, coin.tickSize);
+    std::string roundedQuantity         = pBu.get()->roundString(order.get()->quantity, coin.tickSize);
 
 
-    std::string reqParams               = "symbol="+order.symbol+"&side="+order.side;
-                reqParams               += "&type="+order.type+"&timeInForce=GTC";
-                reqParams               += "&quantity="+roundedQuantity+"&price="+order.price;
+    std::string reqParams               = "symbol="+order.get()->symbol+"&side="+order.get()->side;
+                reqParams               += "&type="+order.get()->type+"&timeInForce=GTC";
+                reqParams               += "&quantity="+roundedQuantity+"&price="+order.get()->expectedPrice;
 
-                if (order.type == "STOP_LOSS_LIMIT") reqParams += "&stopPrice="+order.stopPrice;
+                if (order.get()->type == "STOP_LOSS_LIMIT") 
+                reqParams               += "&stopPrice="+order.get()->stopPrice;
 
                 reqParams               += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
 
@@ -650,7 +654,7 @@ bool BinanceClient::createNewOrder(struct Order& order, struct Symbol& coin)
     }
 
     uint32_t rOrderId           = parsedResponse["orderId"].asLargestUInt();
-    uint32_t rTransactTime      = parsedResponse["transactTime"].asLargestUInt();
+    uint64_t rTransactTime      = parsedResponse["transactTime"].asUInt64();
     std::string rSide           = parsedResponse["side"].asString();
     std::string rStatus         = parsedResponse["status"].asString();
     std::string rType           = parsedResponse["type"].asString();
@@ -663,15 +667,17 @@ bool BinanceClient::createNewOrder(struct Order& order, struct Symbol& coin)
 
     if (rError.size() == 0)
     {
-        order.orderId           = rOrderId;
-        order.executedQty       = rExecutedQty;
-        order.transactTime      = rTransactTime;
+        order.get()->orderId        = rOrderId;
+        order.get()->price          = rPrice;
+        order.get()->status         = rStatus;
+        order.get()->executedQty    = rExecutedQty;
+        order.get()->transactTime   = rTransactTime;
 
-        ELOG(INFO, "Created a New Buy Order. OrderId: %d, Side: %s, " 
-                    "Status: %s, Symbol: %s, Price: %s, Quantity: %s, TransactTime: %d.", 
-                        rOrderId, rSide.c_str(), 
-                        rStatus.c_str(), rSymbol.c_str(), 
-                        rPrice.c_str(), rQuantity.c_str(), rTransactTime);
+        ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s, ExecutedQty: %s, TransactTime: %llu.", 
+                    rStatus.c_str(), rSide.c_str(), 
+                    rOrderId, rSymbol.c_str(), 
+                    rPrice.c_str(), rQuantity.c_str(), 
+                    rExecutedQty.c_str(), rTransactTime);
 
         return true;
     }
@@ -689,14 +695,14 @@ bool BinanceClient::createNewOrder(struct Order& order, struct Symbol& coin)
  * @return true 
  * @return false 
  */
-bool BinanceClient::cancelOrder(struct Order& order)
+bool BinanceClient::cancelOrder(std::shared_ptr<Order> order)
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
     std::string reqEndpoint         = "/api/v3/order";
 
 
-    std::string reqParams           = "symbol="+order.symbol+"&orderId="+std::to_string(order.orderId);
+    std::string reqParams           = "symbol="+order.get()->symbol+"&orderId="+std::to_string(order.get()->orderId);
                 reqParams           += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
 
     std::string reqSignature        = pBu.get()->getSignature(reqParams);
@@ -729,23 +735,29 @@ bool BinanceClient::cancelOrder(struct Order& order)
         return false;
     }
 
-    int rOrderId        = parsedResponse["orderId"].asInt();
-    std::string rSide   = parsedResponse["side"].asString();
-    std::string rStatus = parsedResponse["status"].asString();
+    int rOrderId                = parsedResponse["orderId"].asInt();
+    std::string rSide           = parsedResponse["side"].asString();
+    std::string rStatus         = parsedResponse["status"].asString();
+    std::string rSymbol         = parsedResponse["symbol"].asString();
+    std::string rPrice          = parsedResponse["price"].asString();
+    std::string rOrigQty        = parsedResponse["origQty"].asString();
+    std::string rExecutedQty    = parsedResponse["executedQty"].asString();
 
-    if (rStatus!="CANCELED")
+    if (rStatus!=BINANCE_CANCELED)
     {
-        ELOG(ERROR, "Failed to Cancel the Order. Order id: %d.", order.orderId);
+        ELOG(ERROR, "Failed to Cancel the Order. Order id: %d.", order.get()->orderId);
         return false;
     }
 
-    order.orderId       = rOrderId;
-    order.side          = rSide;
-    order.status        = rStatus;
+    order.get()->orderId    = rOrderId;
+    order.get()->side       = rSide;
+    order.get()->status     = rStatus;
 
-
-    ELOG(INFO, "Canceled Order. Order id: %d, Status: %s, Side: %s.", 
-                    rOrderId, rStatus.c_str(), rSide.c_str());
+    ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s, ExecutedQty: %s.", 
+                    rStatus.c_str(), rSide.c_str(), 
+                    rOrderId, rSymbol.c_str(), 
+                    rPrice.c_str(), rOrigQty.c_str(), 
+                    rExecutedQty.c_str());
 
     return true;
 }
@@ -804,7 +816,7 @@ bool BinanceClient::cancelAllOpenOrders(std::string symbol)
     for (int i = 0; i < responseSize; i++)
     {
         uint32_t rOrderId           = parsedResponse[i]["orderId"].asLargestUInt();
-        uint32_t rTransactTime      = parsedResponse["transactTime"].asLargestUInt();
+        uint64_t rTransactTime      = parsedResponse[i]["transactTime"].asUInt64();
         std::string rStatus         = parsedResponse[i]["status"].asString();
         std::string rSide           = parsedResponse[i]["side"].asString();
         std::string rSymbol         = parsedResponse[i]["symbol"].asString();
@@ -812,7 +824,7 @@ bool BinanceClient::cancelAllOpenOrders(std::string symbol)
         std::string rOrigQty        = parsedResponse[i]["origQty"].asString();
         std::string rExecutedQty    = parsedResponse[i]["executedQty"].asString();
 
-        ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s, ExecutedQty: %s, TransactTime: %d.", 
+        ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s, ExecutedQty: %s, TransactTime: %llu.", 
                     rStatus.c_str(), rSide.c_str(), 
                     rOrderId, rSymbol.c_str(), 
                     rPrice.c_str(), rOrigQty.c_str(), 
@@ -833,14 +845,14 @@ bool BinanceClient::cancelAllOpenOrders(std::string symbol)
  * @return true 
  * @return false 
  */
-bool BinanceClient::queryOrder(struct Order& order)
+bool BinanceClient::queryOrder(std::shared_ptr<Order> order)
 {
     std::string reqTimestamp        = pBu.get()->getTimestamp();
 
     std::string reqEndpoint         = "/api/v3/order";
 
 
-    std::string reqParams           = "symbol="+order.symbol+"&orderId="+std::to_string(order.orderId);
+    std::string reqParams           = "symbol="+order.get()->symbol+"&orderId="+std::to_string(order.get()->orderId);
                 reqParams           += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
 
     std::string reqSignature        = pBu.get()->getSignature(reqParams);
@@ -874,7 +886,7 @@ bool BinanceClient::queryOrder(struct Order& order)
     }
 
     uint32_t rOrderId           = parsedResponse["orderId"].asLargestUInt();
-    uint32_t rTransactTime      = parsedResponse["transactTime"].asLargestUInt();
+    uint64_t rTransactTime      = parsedResponse["updateTime"].asUInt64();
     std::string rSide           = parsedResponse["side"].asString();
     std::string rStatus         = parsedResponse["status"].asString();
     std::string rType           = parsedResponse["type"].asString();
@@ -887,48 +899,52 @@ bool BinanceClient::queryOrder(struct Order& order)
 
     if (rError.size() == 0)
     {
-        order.executedQty       = rExecutedQty;
-        order.transactTime      = rTransactTime;
+        order.get()->executedQty    = rExecutedQty;
+        order.get()->transactTime   = rTransactTime;
+        order.get()->status         = rStatus;
 
-        if (rStatus == "FILLED")
+
+        if (rStatus == BINANCE_FILLED)
         {
             // add bought or sold price
-            if (rSide == mBuySide)
+            if (rSide == BINANCE_BUY)
             {
-                order.boughtPrice   = rPrice;
+                order.get()->status         = rStatus;
+                order.get()->boughtPrice    = rPrice;
             }
             else
             {
-                order.soldPrice   = rPrice;
+                order.get()->status         = rStatus;
+                order.get()->soldPrice      = rPrice;
             }
         }
 
-        if (rStatus == "CANCELED")
+        if (rStatus == BINANCE_CANCELED)
         {
             // if return false
-            bool isHigherThanZero       = pBu.get()->ctscf("00.00", rExecutedQty);
+            bool isHigherThanZero           = pBu.get()->ctscf("00.00", rExecutedQty);
 
             // if return false    
-            bool isLowerThanQuantity    = pBu.get()->ctscf(rExecutedQty, rQuantity);    
+            bool isLowerThanQuantity        = pBu.get()->ctscf(rExecutedQty, rQuantity);    
 
             // that means partially filled                                                                
             if (!isHigherThanZero && !isLowerThanQuantity)
             {
-                order.status    = "CANCELED_PARTIALLY_FILLED";
+                order.get()->status         = "CANCELED_PARTIALLY_FILLED";
 
                 // add bought or sold price
-                if (rSide == mBuySide)
+                if (rSide == BINANCE_BUY)
                 {
-                    order.boughtPrice   = rPrice;
+                    order.get()->boughtPrice    = rPrice;
                 }
                 else
                 {
-                    order.soldPrice   = rPrice;
+                    order.get()->soldPrice      = rPrice;
                 }
             }
         }
 
-        ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s, ExecutedQty: %s, TransactTime: %d.", 
+        ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s, ExecutedQty: %s, TransactTime: %llu.", 
                 rStatus.c_str(), rSide.c_str(), 
                 rOrderId, rSymbol.c_str(), 
                 rPrice.c_str(), rQuantity.c_str(), 

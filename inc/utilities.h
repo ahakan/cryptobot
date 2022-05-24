@@ -36,10 +36,6 @@
  */
 class Utilities
 {
-    private:
-        std::string             mBuySide                = "BUY";
-        std::string             mSellSide               = "SELL";
-    
     protected:
         std::ifstream           mConfigFile;
 
@@ -67,12 +63,13 @@ class Utilities
 
         long long int           getCandlestickDuration(int rsiPeriod, std::string interval);
 
+        std::string             getType();
+        std::string             getQuantity();
         std::string             getCoinSymbol();
         std::string             getTradeSymbol();
         std::string             getFollowSymbol();
         std::string             getInterval();
-        std::string             getQuantity();
-        std::string             getType();
+        std::string             getFollowInterval();
         std::string             getBalanceSymbol();
         std::string             getBalanceAmount();
         std::string             getAverageAmount();
@@ -92,6 +89,7 @@ class Utilities
         std::string             atfts(std::string number1, std::string number2);
         std::string             stfts(std::string number1, std::string number2);
         std::string             mtfts(std::string number1, std::string number2);
+        std::string             dtfts(std::string number1, std::string number2);
 
         std::string             atlts(std::string number1, std::string number2);
         std::string             stlts(std::string number1, std::string number2);
@@ -110,15 +108,15 @@ class Utilities
         bool                    calculateAverage(struct Candlesticks& candles);
         bool                    getHighestLowestPrice(struct Candlesticks& candles);
 
-        bool                    calcNewBuyPrice(struct Order& order, 
+        bool                    calcNewBuyPrice(std::shared_ptr<Order> order, 
                                                     struct Symbol& coin,
                                                     struct Candlesticks& candles);
-        bool                    calcNewSellPrice(struct Order& order, 
+        bool                    calcNewSellPrice(std::shared_ptr<Order> order, 
                                                     struct Symbol& coin,
                                                     struct Candlesticks& candles);
-        bool                    calcNewOrderAverage(struct Order& order, 
-                                                        struct Candlesticks& candles);
-        bool                    calcNewBalanceAmount(struct Order& order, 
+        bool                    calcNewOrderAverage(std::shared_ptr<Order> order, 
+                                                    struct Candlesticks& candles);
+        bool                    calcNewBalanceAmount(std::shared_ptr<Order> order, 
                                                         struct Symbol& balance,
                                                         struct Symbol& coin);
 };

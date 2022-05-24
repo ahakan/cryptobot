@@ -121,7 +121,7 @@ std::string Utilities::RSI(std::vector<std::string>& vector)
 
     std::string RSI = std::to_string(100.0 - (100.0 / (1 + relativeStrength)));
 
-    return RSI;
+    return RSI;;
 }
 
 
@@ -265,6 +265,47 @@ long long int Utilities::getCandlestickDuration(int rsiPeriod, std::string inter
     return 0;
 }
 
+
+/**
+ * @brief Get type
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getType()
+{
+    std::string type = mTradeJson["type"].asString();
+
+    if (type.length() == 0)
+    {
+        ELOG(ERROR, "Failed to parse type.");
+
+        setExitSignal(0);
+    }
+
+    return type;
+}
+
+
+/**
+ * @brief Get quantity
+ * 
+ * @return std::string 
+ */
+std::string Utilities::getQuantity()
+{
+    std::string quantity = mTradeJson["quantity"].asString();
+
+    if (quantity.length() == 0)
+    {
+        ELOG(ERROR, "Failed to parse quantity.");
+
+        setExitSignal(0);
+    }
+
+    return quantity;
+}
+
+
 /**
  * @brief Get coin symbol
  * 
@@ -350,42 +391,22 @@ std::string Utilities::getInterval()
 
 
 /**
- * @brief Get quantity
+ * @brief Get follow interval
  * 
  * @return std::string 
  */
-std::string Utilities::getQuantity()
+std::string Utilities::getFollowInterval()
 {
-    std::string quantity = mTradeJson["quantity"].asString();
+    std::string followInterval = mTradeJson["follow"]["interval"].asString();
 
-    if (quantity.length() == 0)
+    if (followInterval.length() == 0)
     {
-        ELOG(ERROR, "Failed to parse quantity.");
+        ELOG(ERROR, "Failed to parse follow interval.");
 
         setExitSignal(0);
     }
 
-    return quantity;
-}
-
-
-/**
- * @brief Get type
- * 
- * @return std::string 
- */
-std::string Utilities::getType()
-{
-    std::string type = mTradeJson["type"].asString();
-
-    if (type.length() == 0)
-    {
-        ELOG(ERROR, "Failed to parse type.");
-
-        setExitSignal(0);
-    }
-
-    return type;
+    return followInterval;
 }
 
 
@@ -668,7 +689,7 @@ std::string Utilities::stfts(std::string number1, std::string number2)
         return (num1 >= num2) ? std::to_string(num1-num2) : std::to_string(num2-num1);
     }
     
-    ELOG(ERROR, "Subs two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", 
+    ELOG(ERROR, "Subs two strings. Some parameters is empty. Number 1: %s, Number 2: %s.", 
                     number1.c_str(),
                     number2.c_str());
     
@@ -699,6 +720,33 @@ std::string Utilities::mtfts(std::string number1, std::string number2)
     }
     
     ELOG(ERROR, "Multiply two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", 
+                    number1.c_str(), 
+                    number2.c_str());
+    
+    return "ERROR";
+}
+
+
+/**
+ * @brief Divide two float to convert strings
+ * 
+ * @param number1 
+ * @param number2 
+ * @return std::string 
+ */
+std::string Utilities::dtfts(std::string number1, std::string number2)
+{
+    if (number1.length() > 0 && number2.length() > 0)
+    {
+        float num1          = std::stof(number1);
+        float num2          = std::stof(number2);
+
+        float total         = num1 / num2;
+
+        return  std::to_string(total);
+    }
+    
+    ELOG(ERROR, "Divide two strings. Some parameters is empty. Number 1: %S, Number 2: %s.", 
                     number1.c_str(), 
                     number2.c_str());
     
@@ -997,9 +1045,12 @@ bool Utilities::calculateRSI(struct Candlesticks& candles)
 {
     if (!candles.closePrices.empty())
     {
+        std::string newRSI      = RSI(candles.closePrices);
+        std::string roundRSI    = roundString(newRSI, candles.tickSize);
+
         // add new rsi and old rsi
         candles.oldCloseRSI     = candles.closeRSI.length() > 0 ? candles.closeRSI : "00.00";
-        candles.closeRSI        = RSI(candles.closePrices);
+        candles.closeRSI        = roundRSI;
 
         // // ignore to first calculation for cancel order
         // candles.newBuyRSI       = candles.oldCloseRSI == "00.00" ? false : true;
@@ -1053,7 +1104,7 @@ bool Utilities::calculateChange(struct Candlesticks& candles)
         ELOG(INFO, "Change -> %s(%s). Change%: %.2f, RSI Period: %d",
                         candles.symbol.c_str(),
                         candles.interval.c_str(),
-                        totalChange,
+                        std::stof(candles.percentChange.back()),
                         candles.RSIPeriod);
                     
         return true;
@@ -1142,7 +1193,7 @@ bool Utilities::getHighestLowestPrice(struct Candlesticks& candles)
  * @return true 
  * @return false 
  */
-bool Utilities::calcNewBuyPrice(struct Order& order, 
+bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order, 
                                     struct Symbol& coin,
                                     struct Candlesticks& candles)
 {
@@ -1155,16 +1206,16 @@ bool Utilities::calcNewBuyPrice(struct Order& order,
         return false;
     }
 
-    std::string calculatedPrice = stfts(coin.price, order.expectedAverage);
+    std::string calculatedPrice = stfts(coin.price, order.get()->expectedAverage);
 
     ELOG(INFO, "Calculate New Buy Price. Live Price: %s, Calculated Average: %s, Buy Price: %s.", 
                     coin.price.c_str(), 
-                    order.expectedAverage.c_str(), 
+                    order.get()->expectedAverage.c_str(), 
                     calculatedPrice.c_str());
 
-    order.expectedPrice = roundString(calculatedPrice, coin.tickSize);
+    order.get()->expectedPrice = roundString(calculatedPrice, coin.tickSize);
 
-    if (order.expectedPrice.length() == 0)
+    if (order.get()->expectedPrice.length() == 0)
     {
         ELOG(ERROR, "Failed to calculate new buy price.");
 
@@ -1181,7 +1232,7 @@ bool Utilities::calcNewBuyPrice(struct Order& order,
  * @return true 
  * @return false 
  */
-bool Utilities::calcNewSellPrice(struct Order& order, 
+bool Utilities::calcNewSellPrice(std::shared_ptr<Order> order, 
                                     struct Symbol& coin,
                                     struct Candlesticks& candles)
 {
@@ -1195,26 +1246,26 @@ bool Utilities::calcNewSellPrice(struct Order& order,
     }
 
     // if return true live price is high, return false bought price is high
-    bool compareLiveAndBoughtPrice  = ctscf(coin.price, order.boughtPrice);     
+    bool compareLiveAndBoughtPrice  = ctscf(coin.price, order.get()->boughtPrice);     
     
     if (compareLiveAndBoughtPrice)
     {
-        order.expectedPrice = atfts(coin.price, order.expectedAverage);
+        order.get()->expectedPrice = atfts(coin.price, order.get()->expectedAverage);
 
         ELOG(INFO, "Calculated new sell price. Live Price: %s, Bought Price: %s, Sell Price: %s.", 
                         coin.price.c_str(), 
-                        order.boughtPrice.c_str(), 
-                        order.expectedPrice.c_str());
+                        order.get()->boughtPrice.c_str(), 
+                        order.get()->expectedPrice.c_str());
 
         return true;
     }
 
-    order.expectedPrice     = atfts(order.boughtPrice, order.expectedAverage);
+    order.get()->expectedPrice     = atfts(order.get()->boughtPrice, order.get()->expectedAverage);
 
     ELOG(INFO, "Calculated new sell price. Live Price: %s, Bought Price: %s, Sell Price: %s.", 
                     coin.price.c_str(), 
-                    order.boughtPrice.c_str(), 
-                    order.expectedPrice.c_str());
+                    order.get()->boughtPrice.c_str(), 
+                    order.get()->expectedPrice.c_str());
 
     return true;
 }
@@ -1228,22 +1279,62 @@ bool Utilities::calcNewSellPrice(struct Order& order,
  * @return true 
  * @return false 
  */
-bool Utilities::calcNewOrderAverage(struct Order& order, 
-                                        struct Candlesticks& candles)
+bool Utilities::calcNewOrderAverage(std::shared_ptr<Order> order, 
+                                    struct Candlesticks& candles)
 {
     if (getAverageAutoCalculate())
     {
         if ( !candles.highPrices.empty() && !candles.lowPrices.empty())
         {
-            float highestPrice          = std::stof(candles.highestPrice);
+            // float lowPricesAverage      = std::stof(candles.lowPricesAverage);
+            // float highPricesAverage     = std::stof(candles.highPricesAverage);
 
             float lowestPrice           = std::stof(candles.lowestPrice);
+            float highestPrice          = std::stof(candles.highestPrice);
+
+            std::string OversoldRSI     = getRSIOversold();
+            std::string OverboughtRSI   = getRSIOverbought();
+            std::string AverageSAndB    = dtfts(atlts(OversoldRSI, OverboughtRSI), "2");
 
             float calculatedAverage     = (highestPrice-lowestPrice)/getRSIPeriod();
 
-            order.expectedAverage       = roundString(std::to_string(calculatedAverage), candles.tickSize); 
+            float lastPercentChange     = std::stof(candles.percentChange.back());
 
-            ELOG(INFO, "Calculated New Trade Average. New Average: %s.", order.expectedAverage.c_str());
+
+            // if (lastPercentChange >= 10)
+            // {
+            //     calculatedAverage   = (highestPrice-lowestPrice)/getRSIPeriod();
+            // }
+            // else if (lastPercentChange >= 5)
+            // {
+            //     calculatedAverage   = (highestPrice-lowestPrice)/getRSIPeriod();
+
+            // }
+            // else if (lastPercentChange >= 0)
+            // {
+
+            //     calculatedAverage   = (highPricesAverage-lowPricesAverage)/getRSIPeriod();
+            // }
+            // else if (lastPercentChange >= -5)
+            // {
+            //     calculatedAverage   = (highestPrice-lowestPrice)/getRSIPeriod();
+
+            // }
+            // else if (lastPercentChange >= -10)
+            // {
+            //     calculatedAverage   = (highestPrice-lowestPrice)/getRSIPeriod();
+            // }
+            // else
+            // {
+            //     calculatedAverage   = (highestPrice-lowestPrice)/getRSIPeriod();
+            // }
+
+            order.get()->expectedAverage   = roundString(std::to_string(calculatedAverage), candles.tickSize); 
+
+            ELOG(INFO, "New Trade Average -> New Average: %s, Percent Change: %.2f, Average OSOB: %s",   
+                        order.get()->expectedAverage.c_str(),
+                        lastPercentChange,
+                        AverageSAndB.c_str());
             
             return true;
         }
@@ -1253,9 +1344,9 @@ bool Utilities::calcNewOrderAverage(struct Order& order,
 
     if (!getAverageAutoCalculate())
     {
-        order.expectedAverage = getAverageAmount();
+        order.get()->expectedAverage = getAverageAmount();
 
-        ELOG(INFO, "Average Auto Calculated Disable. Average: %s.", order.expectedAverage.c_str());
+        ELOG(INFO, "Average Auto Calculated Disable. Average: %s.", order.get()->expectedAverage.c_str());
 
         return true;
     }
@@ -1274,14 +1365,14 @@ bool Utilities::calcNewOrderAverage(struct Order& order,
  * @return true 
  * @return false 
  */
-bool Utilities::calcNewBalanceAmount(struct Order& order, 
+bool Utilities::calcNewBalanceAmount(std::shared_ptr<Order> order, 
                                         struct Symbol& balance,
                                         struct Symbol& coin)
 {
-    std::string totalOrderPrice     = mtfts(order.price, order.executedQty);
+    std::string totalOrderPrice     = mtfts(order.get()->price, order.get()->executedQty);
     std::string roundedTotalPrice   = roundString(totalOrderPrice, coin.tickSize);
 
-    if (order.side == mBuySide)
+    if (order.get()->side == BINANCE_BUY)
     {
         balance.coinQuantity    = stfts(balance.coinQuantity, roundedTotalPrice);
 
@@ -1291,7 +1382,7 @@ bool Utilities::calcNewBalanceAmount(struct Order& order,
 
         return true;
     }
-    else if (order.side == mSellSide)
+    else if (order.get()->side == BINANCE_BUY)
     {
         balance.coinQuantity    = atfts(balance.coinQuantity, roundedTotalPrice);
 

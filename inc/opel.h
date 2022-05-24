@@ -27,16 +27,16 @@
 // Structs
 struct Candle : public std::mutex
 {
-    bool                isClosed    = false;
-    bool                isUpdated   = false;
-
-    std::string         symbol;
-    std::string         timestamp;
-    std::string         openPrice;
-    std::string         closePrice;
-    std::string         highPrice;
-    std::string         lowPrice;
-    std::string         volume;
+    bool            isClosed    = false;
+    bool            isUpdated   = false;
+    
+    std::string     symbol;
+    std::string     timestamp;
+    std::string     openPrice;
+    std::string     closePrice;
+    std::string     highPrice;
+    std::string     lowPrice;
+    std::string     volume;
 };
 
 

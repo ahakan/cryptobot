@@ -23,6 +23,7 @@ Trade::Trade(std::shared_ptr<BinanceUtilities> pU, std::shared_ptr<BinanceClient
     std::string balanceSymbol       = pBu.get()->getBalanceSymbol();
     std::string balanceAmount       = pBu.get()->getBalanceAmount();
     std::string tradeCoinSymbol     = pBu.get()->getCoinSymbol(); 
+    std::string algorithmInterval   = pBu.get()->getFollowInterval();
 
     int RSIPeriod                   = pBu.get()->getRSIPeriod();
     std::string RSIOversold         = pBu.get()->getRSIOversold();
@@ -52,7 +53,6 @@ Trade::Trade(std::shared_ptr<BinanceUtilities> pU, std::shared_ptr<BinanceClient
     mFollowCandlesticks.RSIOverbought       = RSIOverbought;
     mFollowCandlesticks.candleDuration      = std::to_string(pBu.get()->getCandlestickDuration(1, interval));
 
-    std::string algorithmInterval           = "4h";
 
     // Algorithm candlesticks struct
     mAlgorithmTradeCandlesticks.symbol          = tradeSymbol;
@@ -91,6 +91,10 @@ Trade::~Trade()
 }
 
 
+/**
+ * @brief 
+ * 
+ */
 void Trade::calculates()
 {
     Opel *pOpel = Opel::instance();
@@ -114,19 +118,8 @@ void Trade::calculates()
             pReq.get()->getDailyVolume(mFollowSymbolInfo);
         }
 
-        // ELOG(INFO, "Algorithm -> %s - %s - %s - %s - %s.", 
-        //             mAlgorithmTradeCandlesticks.symbol.c_str(), 
-        //             mAlgorithmTradeCandlesticks.interval.c_str(),
-        //             mAlgorithmTradeCandlesticks.closeRSI.c_str(),
-        //             mAlgorithmTradeCandlesticks.closePricesAverage.c_str(),
-        //             mAlgorithmTradeCandlesticks.lastCandleTimestamp.c_str());
 
-
-        // ELOG(INFO, "%s - %s - %s - %s", mTradeCandlesticks.symbol.c_str(), 
-        //                                 mTradeCandlesticks.interval.c_str(),
-        //                                 mTradeCandlesticks.closeRSI.c_str(),
-        //                                 mTradeCandlesticks.closePricesAverage.c_str());
-
+        // pBu.get()->calcNewOrderAverage(mBuyOrder, mAlgorithmTradeCandlesticks);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
@@ -191,6 +184,122 @@ bool Trade::getCandlesticks(struct Candlesticks &candlestick)
 
 
 /**
+ * @brief Check buy orders
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Trade::checkBuyOrder()
+{
+    if (mBuyOrders.size() > 0)
+    {
+        // Erase canceled orders
+        for (OrdersMapIterator order = mBuyOrders.begin(); order != mBuyOrders.end(); ++order)
+        {
+            if (order->second.get()->status == BINANCE_CANCELED)
+            {
+                mBuyOrders.erase(order);
+
+                ELOG(INFO, "Erase -> %s/%s(%d). Status: %s, Price: %s, Quantity: %s.", 
+                                order->second.get()->side.c_str(),
+                                order->second.get()->type.c_str(),
+                                order->second.get()->orderId,
+                                order->second.get()->status.c_str(),
+                                order->second.get()->price.c_str(),
+                                order->second.get()->quantity.c_str());
+            }
+        }
+
+        // Check orders
+        for (OrdersMapIterator order = mBuyOrders.begin(); order != mBuyOrders.end(); ++order)
+        {
+            bool checkOrder = pReq.get()->queryOrder(order->second);
+
+            ELOG(INFO, "Check -> %s/%s(%d). Status: %s, Price: %s, Quantity: %s.", 
+                            order->second.get()->side.c_str(),
+                            order->second.get()->type.c_str(),
+                            order->second.get()->orderId,
+                            order->second.get()->status.c_str(),
+                            order->second.get()->price.c_str(),
+                            order->second.get()->quantity.c_str());
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+
+/**
+ * @brief Create a new buy order
+ * 
+ * @return true 
+ * @return false 
+ */
+bool Trade::createNewBuyOrder()
+{
+    if (mBuyOrders.size() < 1)
+    {
+        // check user wallet balance
+        bool walletBalanceAmount    = pReq.get()->getCoinBalance(mBalanceSymbolInfo);
+        
+        if (walletBalanceAmount)
+        {
+            std::shared_ptr<Order> newOrder(new Order());
+
+            newOrder->lock();
+
+            newOrder->side      = BINANCE_BUY;
+            newOrder->type      = mOrderType;
+            newOrder->symbol    = mTradeSymbolInfo.symbol;
+            newOrder->quantity  = mOrderQuantity;
+
+            // calculate new buy price
+            bool calcBuyPrice   = pBu.get()->calcNewBuyPrice(newOrder, 
+                                                            mTradeSymbolInfo, 
+                                                            mAlgorithmTradeCandlesticks);
+
+            newOrder->unlock();
+
+            if (calcBuyPrice)
+            {
+                newOrder->lock();
+
+                bool isCreated  = pReq.get()->createNewOrder(newOrder, mTradeSymbolInfo);
+
+                newOrder->unlock();
+
+                if (isCreated)
+                {
+                    newOrder->lock();
+
+                    mBuyOrders.emplace(newOrder->orderId, newOrder);
+
+                    ELOG(INFO, "New Order -> %s/%s(%d). Price: %s, Quantity: %s, Expected Average: %s.", 
+                                newOrder->side.c_str(),
+                                newOrder->type.c_str(),
+                                newOrder->orderId,
+                                newOrder->price.c_str(),
+                                newOrder->quantity.c_str(),
+                                newOrder->expectedAverage.c_str());
+
+                    newOrder->unlock();
+
+                    return true;
+                }
+            }
+
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+
+/**
  * @brief Construct a new BinanceTrade::BinanceTrade object
  * 
  * @param pU 
@@ -212,6 +321,7 @@ BinanceTrade::~BinanceTrade()
 {
     ELOG(INFO, "BinanceTrade destructor.");
 }
+
 
 /**
  * @brief Trade initializing
@@ -308,8 +418,10 @@ void BinanceTrade::init()
 }
 
 
-
-
+/**
+ * @brief 
+ * 
+ */
 void BinanceTrade::requests()
 {
     Opel *pOpel = Opel::instance();
@@ -318,14 +430,39 @@ void BinanceTrade::requests()
     {
         while(pOpel->getIsActive())
         {
-            // ELOG(INFO, "Live Price -> %s.", mTradeSymbolInfo.price.c_str());
+            if (mTradeSymbolInfo.price.size() > 0)
+            {
+                createNewBuyOrder();
+            }
 
+            checkBuyOrder();
+
+            // checkSellOrder();
+
+
+            // createNewSellOrder();
+
+            // std::shared_ptr<Order> o1(new Order());
+
+            // o1->lock();
+
+            // o1->side = "BUY";
+
+            // o1->unlock();
+
+            // uint32_t a = 123123;
+
+            // mBuyOrders.emplace(a, o1);
+
+            // ELOG(INFO, "Vector -> %s.", mBuyOrders.begin()->second->side.c_str());
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
+
+    pReq.get()->cancelAllOpenOrders(mTradeSymbolInfo.symbol);
 
     ELOG(INFO, "Requests -> detached.");
 }
