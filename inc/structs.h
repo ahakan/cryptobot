@@ -55,6 +55,7 @@ struct Order : public std::mutex
     std::string     boughtPrice;
 
     std::string     expectedPrice;
+    std::string     expectedStopPrice;
     std::string     expectedAverage;
     std::string     expectedQuantity;
 };

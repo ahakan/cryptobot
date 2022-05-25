@@ -365,7 +365,7 @@ bool BinanceClient::getCoinBalance(struct Symbol& coin)
 
                 ELOG(INFO, "Sufficient coin quantity. Quantity: %s.", walletBalanceAmount.c_str());
 
-                coin.coinQuantity   = pBu.get()->roundString(walletBalanceAmount, coin.tickSize);
+                // coin.coinQuantity   = pBu.get()->roundString(walletBalanceAmount, coin.tickSize);
 
                 coin.unlock();
 
@@ -618,8 +618,8 @@ bool BinanceClient::createNewOrder(std::shared_ptr<Order> order, struct Symbol& 
                 reqParams               += "&type="+order.get()->type+"&timeInForce=GTC";
                 reqParams               += "&quantity="+roundedQuantity+"&price="+order.get()->expectedPrice;
 
-                if (order.get()->type == "STOP_LOSS_LIMIT") 
-                reqParams               += "&stopPrice="+order.get()->stopPrice;
+                if (order.get()->type == BINANCE_STOP_LOSS_LIMIT) 
+                reqParams               += "&stopPrice="+order.get()->expectedStopPrice;
 
                 reqParams               += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
 
@@ -663,6 +663,11 @@ bool BinanceClient::createNewOrder(std::shared_ptr<Order> order, struct Symbol& 
     std::string rQuantity       = parsedResponse["origQty"].asString();
     std::string rExecutedQty    = parsedResponse["executedQty"].asString();
 
+    std::string rStopPrice;
+
+    if (order.get()->type == BINANCE_STOP_LOSS_LIMIT) 
+        rStopPrice              = parsedResponse["stopPrice"].asString();
+
     std::string rError          = parsedResponse["Error"].asString();
 
     if (rError.size() == 0)
@@ -673,11 +678,35 @@ bool BinanceClient::createNewOrder(std::shared_ptr<Order> order, struct Symbol& 
         order.get()->executedQty    = rExecutedQty;
         order.get()->transactTime   = rTransactTime;
 
-        ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s, ExecutedQty: %s, TransactTime: %llu.", 
-                    rStatus.c_str(), rSide.c_str(), 
-                    rOrderId, rSymbol.c_str(), 
-                    rPrice.c_str(), rQuantity.c_str(), 
-                    rExecutedQty.c_str(), rTransactTime);
+        if (order.get()->type == BINANCE_STOP_LOSS_LIMIT)
+        {
+            order.get()->stopPrice  = rStopPrice;
+
+            ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Stop Price: %s, Quantity: %s,"
+                        " ExecutedQty: %s, TransactTime: %llu.", 
+                        rStatus.c_str(), 
+                        rSide.c_str(), 
+                        rOrderId, 
+                        rSymbol.c_str(), 
+                        rPrice.c_str(), 
+                        rStopPrice.c_str(), 
+                        rQuantity.c_str(), 
+                        rExecutedQty.c_str(), 
+                        rTransactTime);
+
+            return true;
+        }
+
+        ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s," 
+                    " ExecutedQty: %s, TransactTime: %llu.", 
+                    rStatus.c_str(),
+                    rSide.c_str(), 
+                    rOrderId, 
+                    rSymbol.c_str(), 
+                    rPrice.c_str(), 
+                    rQuantity.c_str(), 
+                    rExecutedQty.c_str(), 
+                    rTransactTime);
 
         return true;
     }
@@ -930,7 +959,8 @@ bool BinanceClient::queryOrder(std::shared_ptr<Order> order)
             // that means partially filled                                                                
             if (!isHigherThanZero && !isLowerThanQuantity)
             {
-                order.get()->status         = "CANCELED_PARTIALLY_FILLED";
+                // partially filled
+                order.get()->status         = BINANCE_FILLED;
 
                 // add bought or sold price
                 if (rSide == BINANCE_BUY)

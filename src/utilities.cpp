@@ -1188,6 +1188,79 @@ bool Utilities::getHighestLowestPrice(struct Candlesticks& candles)
 
 
 /**
+ * @brief Check buy order price
+ * 
+ * @param order Order shared pointer struct
+ * @param coin Symbol struct
+ * @param candles Candlesticks struct
+ * @param algorithmCandles Algorithm Candlesticks struct
+ * @return true -> Order must be canceled
+ * @return false -> Order must not be canceled
+ */
+bool Utilities::checkBuyOrder(std::shared_ptr<Order> order, 
+                                struct Symbol& coin,
+                                struct Candlesticks& candles,
+                                struct Candlesticks& algorithmCandles)
+{
+    // Trade Lowest Price
+    bool isOrderPriceLow = ctscf(order.get()->price, candles.lowestPrice);
+
+    if (isOrderPriceLow)
+    {
+        ELOG(INFO, "Signal -> 0");
+
+        return false;
+    }
+
+    // Check order price with candlesticks highest price.
+    // if order price higher than candlesticks highest price order must be canceled.
+    bool isOrderPriceHigh = ctscf(order.get()->price, candles.highestPrice);
+
+    if (isOrderPriceHigh)
+    {
+        ELOG(INFO, "Signal -> 1");
+
+        return false;
+    }
+
+    // Trade RSI(1m)
+    bool isNewRSILow = ctscf(candles.oldCloseRSI, candles.closeRSI);
+
+    if (isNewRSILow)
+    {
+        ELOG(INFO, "Signal -> 2");
+
+        return false;
+    }
+
+    // Algorithm RSI(4h)
+    bool isNewAlgorithmRSILow = ctscf(algorithmCandles.oldCloseRSI, algorithmCandles.closeRSI);
+
+    if (isNewAlgorithmRSILow)
+    {
+        ELOG(INFO, "Signal -> 3");
+
+        return false;
+    }
+    
+    // Check order price with algorithm candlesticks highest price.
+    // if order price higher than algorithm candlesticks highest price order must be canceled.
+    bool isAlgorithmOrderPriceHigh = ctscf(order.get()->price, algorithmCandles.highestPrice);
+
+    if (isAlgorithmOrderPriceHigh)
+    {
+        ELOG(INFO, "Signal -> 4");
+
+        return false;
+    }
+
+
+
+    return true;
+}
+
+
+/**
  * @brief Calculates new buy order price
  * 
  * @return true 

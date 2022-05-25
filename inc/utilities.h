@@ -108,6 +108,15 @@ class Utilities
         bool                    calculateAverage(struct Candlesticks& candles);
         bool                    getHighestLowestPrice(struct Candlesticks& candles);
 
+        bool                    checkBuyOrder(std::shared_ptr<Order> order, 
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles,
+                                                struct Candlesticks& algorithmCandles);
+        bool                    checkSellOrder(std::shared_ptr<Order> order, 
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles,
+                                                struct Candlesticks& algorithmCandles);
+
         bool                    calcNewBuyPrice(std::shared_ptr<Order> order, 
                                                     struct Symbol& coin,
                                                     struct Candlesticks& candles);

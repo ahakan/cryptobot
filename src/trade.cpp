@@ -196,6 +196,8 @@ bool Trade::checkBuyOrder()
         // Erase canceled orders
         for (OrdersMapIterator order = mBuyOrders.begin(); order != mBuyOrders.end(); ++order)
         {
+            order->second->lock();
+
             if (order->second.get()->status == BINANCE_CANCELED)
             {
                 mBuyOrders.erase(order);
@@ -208,20 +210,54 @@ bool Trade::checkBuyOrder()
                                 order->second.get()->price.c_str(),
                                 order->second.get()->quantity.c_str());
             }
+
+            order->second->unlock();
         }
 
         // Check orders
         for (OrdersMapIterator order = mBuyOrders.begin(); order != mBuyOrders.end(); ++order)
         {
-            bool checkOrder = pReq.get()->queryOrder(order->second);
+            order->second->lock();
 
-            ELOG(INFO, "Check -> %s/%s(%d). Status: %s, Price: %s, Quantity: %s.", 
+            bool checkOrderQuery = pReq.get()->queryOrder(order->second);
+
+            if (checkOrderQuery)
+            {
+                ELOG(INFO, "Check -> %s/%s(%d). Status: %s, Price: %s, Quantity: %s.", 
                             order->second.get()->side.c_str(),
                             order->second.get()->type.c_str(),
                             order->second.get()->orderId,
                             order->second.get()->status.c_str(),
                             order->second.get()->price.c_str(),
                             order->second.get()->quantity.c_str());
+
+
+                if (order->second.get()->status != BINANCE_FILLED)
+                {
+                    bool checkOrderPrice = pBu.get()->checkBuyOrder(order->second,
+                                                                    mTradeSymbolInfo,
+                                                                    mTradeCandlesticks,
+                                                                    mAlgorithmTradeCandlesticks);
+                    
+                    if (!checkOrderPrice)
+                    {
+                        bool cancelOrder = pReq.get()->cancelOrder(order->second);
+
+                        if (cancelOrder)
+                        {
+                            ELOG(INFO, "Cancel -> %s/%s(%d). Status: %s, Price: %s, Quantity: %s.", 
+                                        order->second.get()->side.c_str(),
+                                        order->second.get()->type.c_str(),
+                                        order->second.get()->orderId,
+                                        order->second.get()->status.c_str(),
+                                        order->second.get()->price.c_str(),
+                                        order->second.get()->quantity.c_str());
+                        }
+                    }
+                }
+            }
+
+            order->second->unlock();
         }
 
         return true;
@@ -229,6 +265,13 @@ bool Trade::checkBuyOrder()
 
     return false;
 }
+
+
+bool Trade::checkSellOrder()
+{return true;}
+
+bool Trade::checkStopOrder()
+{return true;}
 
 
 /**
@@ -297,6 +340,16 @@ bool Trade::createNewBuyOrder()
 
     return false;
 }
+
+
+bool Trade::createNewSellOrder()
+{return true;}
+
+
+
+bool Trade::createNewStopOrder()
+{return true;}
+
 
 
 /**
@@ -442,19 +495,6 @@ void BinanceTrade::requests()
 
             // createNewSellOrder();
 
-            // std::shared_ptr<Order> o1(new Order());
-
-            // o1->lock();
-
-            // o1->side = "BUY";
-
-            // o1->unlock();
-
-            // uint32_t a = 123123;
-
-            // mBuyOrders.emplace(a, o1);
-
-            // ELOG(INFO, "Vector -> %s.", mBuyOrders.begin()->second->side.c_str());
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }

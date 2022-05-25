@@ -88,9 +88,11 @@ class Trade
     protected:
         bool                    checkBuyOrder();
         bool                    checkSellOrder();
+        bool                    checkStopOrder();
+
         bool                    createNewBuyOrder();
         bool                    createNewSellOrder();
-
+        bool                    createNewStopOrder();
 };
 
 
