@@ -91,8 +91,8 @@ class Trade
         bool                    checkStopOrder();
 
         bool                    createNewBuyOrder();
-        bool                    createNewSellOrder();
-        bool                    createNewStopOrder();
+        bool                    createNewSellOrder(std::shared_ptr<Order> order);
+        bool                    createNewStopOrder(std::shared_ptr<Order> order);
 };
 
 

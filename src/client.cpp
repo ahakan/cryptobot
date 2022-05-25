@@ -682,12 +682,12 @@ bool BinanceClient::createNewOrder(std::shared_ptr<Order> order, struct Symbol& 
         {
             order.get()->stopPrice  = rStopPrice;
 
-            ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Stop Price: %s, Quantity: %s,"
+            ELOG(INFO, "%s -> %s/%s(%d). Price: %s, Stop Price: %s, Quantity: %s,"
                         " ExecutedQty: %s, TransactTime: %llu.", 
-                        rStatus.c_str(), 
+                        rStatus.c_str(),
                         rSide.c_str(), 
-                        rOrderId, 
                         rSymbol.c_str(), 
+                        rOrderId, 
                         rPrice.c_str(), 
                         rStopPrice.c_str(), 
                         rQuantity.c_str(), 
@@ -697,12 +697,12 @@ bool BinanceClient::createNewOrder(std::shared_ptr<Order> order, struct Symbol& 
             return true;
         }
 
-        ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s," 
+        ELOG(INFO, "%s -> %s/%s(%d). Price: %s, Quantity: %s," 
                     " ExecutedQty: %s, TransactTime: %llu.", 
                     rStatus.c_str(),
                     rSide.c_str(), 
-                    rOrderId, 
                     rSymbol.c_str(), 
+                    rOrderId, 
                     rPrice.c_str(), 
                     rQuantity.c_str(), 
                     rExecutedQty.c_str(), 
@@ -928,10 +928,9 @@ bool BinanceClient::queryOrder(std::shared_ptr<Order> order)
 
     if (rError.size() == 0)
     {
+        order.get()->status         = rStatus;
         order.get()->executedQty    = rExecutedQty;
         order.get()->transactTime   = rTransactTime;
-        order.get()->status         = rStatus;
-
 
         if (rStatus == BINANCE_FILLED)
         {
@@ -959,26 +958,31 @@ bool BinanceClient::queryOrder(std::shared_ptr<Order> order)
             // that means partially filled                                                                
             if (!isHigherThanZero && !isLowerThanQuantity)
             {
-                // partially filled
-                order.get()->status         = BINANCE_FILLED;
-
                 // add bought or sold price
                 if (rSide == BINANCE_BUY)
                 {
+                    // partially filled
+                    order.get()->status         = BINANCE_FILLED;
                     order.get()->boughtPrice    = rPrice;
                 }
                 else
                 {
+                    order.get()->status         = "CANCELED_PARTIALLY_FILLED";
                     order.get()->soldPrice      = rPrice;
                 }
             }
         }
 
-        ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s, ExecutedQty: %s, TransactTime: %llu.", 
-                rStatus.c_str(), rSide.c_str(), 
-                rOrderId, rSymbol.c_str(), 
-                rPrice.c_str(), rQuantity.c_str(), 
-                rExecutedQty.c_str(), rTransactTime);
+        ELOG(INFO, "%s -> %s/%s(%d). Price: %s, Quantity: %s," 
+                    " ExecutedQty: %s, TransactTime: %llu.", 
+                    rStatus.c_str(), 
+                    rSide.c_str(), 
+                    rSymbol.c_str(), 
+                    rOrderId, 
+                    rPrice.c_str(), 
+                    rQuantity.c_str(), 
+                    rExecutedQty.c_str(), 
+                    rTransactTime);
         
         return true;
     }

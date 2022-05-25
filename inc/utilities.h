@@ -116,6 +116,10 @@ class Utilities
                                                 struct Symbol& coin,
                                                 struct Candlesticks& candles,
                                                 struct Candlesticks& algorithmCandles);
+        bool                    checkStopOrder(std::shared_ptr<Order> order, 
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles,
+                                                struct Candlesticks& algorithmCandles);
 
         bool                    calcNewBuyPrice(std::shared_ptr<Order> order, 
                                                     struct Symbol& coin,
@@ -123,6 +127,10 @@ class Utilities
         bool                    calcNewSellPrice(std::shared_ptr<Order> order, 
                                                     struct Symbol& coin,
                                                     struct Candlesticks& candles);
+        bool                    calcNewStopPrice(std::shared_ptr<Order> order, 
+                                                    struct Symbol& coin,
+                                                    struct Candlesticks& candles);
+
         bool                    calcNewOrderAverage(std::shared_ptr<Order> order, 
                                                     struct Candlesticks& candles);
         bool                    calcNewBalanceAmount(std::shared_ptr<Order> order, 

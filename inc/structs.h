@@ -18,14 +18,18 @@
 #include <vector>
 
 // Definitions
+
+// Sides
 #define BINANCE_BUY             "BUY"
 #define BINANCE_SELL            "SELL"
 
+// Statuses
 #define BINANCE_NEW             "NEW"
 #define BINANCE_PARTIALLY       "PARTIALLY_FILLED"
 #define BINANCE_FILLED          "FILLED"
 #define BINANCE_CANCELED        "CANCELED"
 
+// Types
 #define BINANCE_LIMIT           "LIMIT"
 #define BINANCE_MARKET          "MARKET"
 #define BINANCE_STOP_LOSS       "STOP_LOSS"
@@ -78,6 +82,8 @@ struct Symbol : public std::mutex
 // Candlesticks struct
 struct Candlesticks : public std::mutex
 {
+    bool            isUpdated;
+    
     std::string     symbol;         // SOLUSDT
     std::string     interval;       // 4h
     std::string     candleDuration;

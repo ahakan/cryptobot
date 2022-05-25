@@ -995,6 +995,8 @@ void Utilities::getWSCandlesticks(struct Candlesticks& candles, struct Symbol& c
 
         if (isClosed)
         {
+            candles.isUpdated = true;
+
             candles.openPrices.push_back(openPrice);
             candles.openPrices.erase(candles.openPrices.begin());
 
@@ -1223,24 +1225,36 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
         return false;
     }
 
-    // Trade RSI(1m)
-    bool isNewRSILow = ctscf(candles.oldCloseRSI, candles.closeRSI);
-
-    if (isNewRSILow)
+    // Check candles update
+    if (candles.isUpdated)
     {
-        ELOG(INFO, "Signal -> 2");
+        // Trade RSI(1m)
+        bool isNewRSILow = ctscf(candles.oldCloseRSI, candles.closeRSI);
 
-        return false;
+        if (isNewRSILow)
+        {
+            ELOG(INFO, "Signal -> 2");
+
+            candles.isUpdated = false;
+
+            return false;
+        }
     }
-
-    // Algorithm RSI(4h)
-    bool isNewAlgorithmRSILow = ctscf(algorithmCandles.oldCloseRSI, algorithmCandles.closeRSI);
-
-    if (isNewAlgorithmRSILow)
+    
+    // Check algorithm candles update
+    if (algorithmCandles.isUpdated)
     {
-        ELOG(INFO, "Signal -> 3");
+        // Algorithm RSI(4h)
+        bool isNewAlgorithmRSILow = ctscf(algorithmCandles.oldCloseRSI, algorithmCandles.closeRSI);
 
-        return false;
+        if (isNewAlgorithmRSILow)
+        {
+            ELOG(INFO, "Signal -> 3");
+
+            algorithmCandles.isUpdated = false;
+
+            return false;
+        }
     }
     
     // Check order price with algorithm candlesticks highest price.
@@ -1254,8 +1268,6 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
         return false;
     }
 
-
-
     return true;
 }
 
@@ -1263,8 +1275,11 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
 /**
  * @brief Calculates new buy order price
  * 
- * @return true 
- * @return false 
+ * @param order Order struct
+ * @param coin Coin struct
+ * @param candles Algorithm candlesticks struct
+ * @return true -> Able to create an order
+ * @return false -> Unable to create an order
  */
 bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order, 
                                     struct Symbol& coin,
@@ -1281,12 +1296,11 @@ bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order,
 
     std::string calculatedPrice = stfts(coin.price, order.get()->expectedAverage);
 
-    ELOG(INFO, "Calculate New Buy Price. Live Price: %s, Calculated Average: %s, Buy Price: %s.", 
-                    coin.price.c_str(), 
-                    order.get()->expectedAverage.c_str(), 
-                    calculatedPrice.c_str());
-
     order.get()->expectedPrice = roundString(calculatedPrice, coin.tickSize);
+
+    ELOG(INFO, "Calculated -> Buy Price: %s.. Live Price: %s.", 
+                        order.get()->expectedPrice.c_str(),
+                        coin.price.c_str());
 
     if (order.get()->expectedPrice.length() == 0)
     {
@@ -1302,8 +1316,11 @@ bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order,
 /**
  * @brief Calculates new sell order price
  * 
- * @return true 
- * @return false 
+ * @param order Order struct
+ * @param coin Coin struct
+ * @param candles Algorithm candlesticks struct
+ * @return true -> Able to create an order
+ * @return false -> Unable to create an order
  */
 bool Utilities::calcNewSellPrice(std::shared_ptr<Order> order, 
                                     struct Symbol& coin,
@@ -1325,20 +1342,68 @@ bool Utilities::calcNewSellPrice(std::shared_ptr<Order> order,
     {
         order.get()->expectedPrice = atfts(coin.price, order.get()->expectedAverage);
 
-        ELOG(INFO, "Calculated new sell price. Live Price: %s, Bought Price: %s, Sell Price: %s.", 
+        ELOG(INFO, "Calculated -> Sell Price: %s.. Live Price: %s, Bought Price: %s.", 
+                        order.get()->expectedPrice.c_str(),
                         coin.price.c_str(), 
-                        order.get()->boughtPrice.c_str(), 
-                        order.get()->expectedPrice.c_str());
+                        order.get()->boughtPrice.c_str());
 
         return true;
     }
 
     order.get()->expectedPrice     = atfts(order.get()->boughtPrice, order.get()->expectedAverage);
 
-    ELOG(INFO, "Calculated new sell price. Live Price: %s, Bought Price: %s, Sell Price: %s.", 
+    ELOG(INFO, "Calculated -> Sell Price: %s.. Live Price: %s, Bought Price: %s.", 
+                        order.get()->expectedPrice.c_str(),
+                        coin.price.c_str(), 
+                        order.get()->boughtPrice.c_str());
+
+    return true;
+}
+
+
+/**
+ * @brief Calculates new sell stop order price
+ * 
+ * @param order Order struct
+ * @param coin Coin struct
+ * @param candles Algorithm candlesticks struct
+ * @return true -> Able to create an order
+ * @return false -> Unable to create an order
+ */
+bool Utilities::calcNewStopPrice(std::shared_ptr<Order> order, 
+                                    struct Symbol& coin,
+                                    struct Candlesticks& candles)
+{
+    bool isBuyAverageCalculated = calcNewOrderAverage(order, candles);
+
+    if (!isBuyAverageCalculated)
+    {
+        ELOG(ERROR, "Failed to calculate new buy price average.");
+
+        return false;
+    }
+
+    // std::string quarterOfAverage    = dtfts(order.get()->expectedAverage, "4");
+
+    std::string calculatedStopPrice = stfts(order.get()->boughtPrice, order.get()->expectedAverage);
+
+    // std::string calculatedSellPrice = stfts(order.get()->boughtPrice, quarterOfAverage);
+
+    order.get()->expectedPrice      = roundString(calculatedStopPrice, coin.tickSize);
+    order.get()->expectedStopPrice  = roundString(calculatedStopPrice, coin.tickSize);
+
+    ELOG(INFO, "Calculated -> Stop Price: %s. Limit Price: %s, Live Price: %s, Bought Price: %s.", 
+                    order.get()->expectedStopPrice.c_str(),
+                    order.get()->expectedPrice.c_str(),
                     coin.price.c_str(), 
-                    order.get()->boughtPrice.c_str(), 
-                    order.get()->expectedPrice.c_str());
+                    order.get()->boughtPrice.c_str());
+
+    if (order.get()->expectedStopPrice.length() == 0)
+    {
+        ELOG(ERROR, "Failed to calculate new buy price.");
+
+        return false;
+    }
 
     return true;
 }
@@ -1347,10 +1412,10 @@ bool Utilities::calcNewSellPrice(std::shared_ptr<Order> order,
 /**
  * @brief Calculates new order price average
  * 
- * @param order 
- * @param candles 
- * @return true 
- * @return false 
+ * @param order Order struct
+ * @param candles Algorithm candlesticks struct
+ * @return true -> Able to create an order
+ * @return false -> Unable to create an order
  */
 bool Utilities::calcNewOrderAverage(std::shared_ptr<Order> order, 
                                     struct Candlesticks& candles)
@@ -1404,7 +1469,7 @@ bool Utilities::calcNewOrderAverage(std::shared_ptr<Order> order,
 
             order.get()->expectedAverage   = roundString(std::to_string(calculatedAverage), candles.tickSize); 
 
-            ELOG(INFO, "New Trade Average -> New Average: %s, Percent Change: %.2f, Average OSOB: %s",   
+            ELOG(INFO, "Calculated -> New Average: %s, Percent Change: %.2f, Average OSOB: %s",   
                         order.get()->expectedAverage.c_str(),
                         lastPercentChange,
                         AverageSAndB.c_str());

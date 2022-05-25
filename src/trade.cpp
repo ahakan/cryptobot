@@ -121,6 +121,10 @@ void Trade::calculates()
 
         // pBu.get()->calcNewOrderAverage(mBuyOrder, mAlgorithmTradeCandlesticks);
 
+        checkBuyOrder();
+
+        checkStopOrder();
+
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
@@ -163,6 +167,8 @@ bool Trade::getCandlesticks(struct Candlesticks &candlestick)
 
         if (getCandles)
         {
+            candlestick.isUpdated = true;
+
             pBu.get()->calculateRSI(candlestick);
 
             pBu.get()->calculateChange(candlestick);
@@ -196,7 +202,7 @@ bool Trade::checkBuyOrder()
         // Erase canceled orders
         for (OrdersMapIterator order = mBuyOrders.begin(); order != mBuyOrders.end(); ++order)
         {
-            order->second->lock();
+            // order->second->lock();
 
             if (order->second.get()->status == BINANCE_CANCELED)
             {
@@ -211,7 +217,22 @@ bool Trade::checkBuyOrder()
                                 order->second.get()->quantity.c_str());
             }
 
-            order->second->unlock();
+            // if create a stop loss order
+            // delete buy order
+            if (order->second.get()->type == BINANCE_STOP_LOSS_LIMIT)
+            {
+                mBuyOrders.erase(order);
+
+                ELOG(INFO, "Erase -> %s/%s(%d). Status: %s, Price: %s, Quantity: %s.", 
+                                order->second.get()->side.c_str(),
+                                order->second.get()->type.c_str(),
+                                order->second.get()->orderId,
+                                order->second.get()->status.c_str(),
+                                order->second.get()->price.c_str(),
+                                order->second.get()->quantity.c_str());
+            }
+
+            // order->second->unlock();
         }
 
         // Check orders
@@ -255,6 +276,13 @@ bool Trade::checkBuyOrder()
                         }
                     }
                 }
+
+                // if buy order filled
+                // we create a stop loss sell order
+                if (order->second.get()->status == BINANCE_FILLED)
+                {
+                    createNewStopOrder(order->second);
+                }
             }
 
             order->second->unlock();
@@ -270,8 +298,67 @@ bool Trade::checkBuyOrder()
 bool Trade::checkSellOrder()
 {return true;}
 
+
 bool Trade::checkStopOrder()
-{return true;}
+{
+    if (mStopLossOrders.size() > 0)
+    {
+        // Erase canceled orders
+        for (OrdersMapIterator order = mStopLossOrders.begin(); order != mStopLossOrders.end(); ++order)
+        {
+            if (order->second.get()->status == BINANCE_CANCELED)
+            {
+                mStopLossOrders.erase(order);
+
+                ELOG(INFO, "Erase -> %s/%s(%d). Status: %s, Price: %s, Stop Price: %s, Quantity: %s.", 
+                                order->second.get()->side.c_str(),
+                                order->second.get()->type.c_str(),
+                                order->second.get()->orderId,
+                                order->second.get()->status.c_str(),
+                                order->second.get()->price.c_str(),
+                                order->second.get()->stopPrice.c_str(),
+                                order->second.get()->quantity.c_str());
+            }
+
+            if (order->second.get()->status == BINANCE_FILLED)
+            {
+                mStopLossOrders.erase(order);
+
+                ELOG(INFO, "Erase -> %s/%s(%d). Status: %s, Price: %s, Stop Price: %s, Quantity: %s.", 
+                                order->second.get()->side.c_str(),
+                                order->second.get()->type.c_str(),
+                                order->second.get()->orderId,
+                                order->second.get()->status.c_str(),
+                                order->second.get()->price.c_str(),
+                                order->second.get()->stopPrice.c_str(),
+                                order->second.get()->quantity.c_str());
+            }
+        }
+
+        // Check orders
+        for (OrdersMapIterator order = mStopLossOrders.begin(); order != mStopLossOrders.end(); ++order)
+        {
+            order->second->lock();
+
+            bool checkOrderQuery = pReq.get()->queryOrder(order->second);
+
+            if (checkOrderQuery)
+            {
+                ELOG(INFO, "Check -> %s/%s(%d). Status: %s, Price: %s, Stop Price: %s, Quantity: %s.", 
+                            order->second.get()->side.c_str(),
+                            order->second.get()->type.c_str(),
+                            order->second.get()->orderId,
+                            order->second.get()->status.c_str(),
+                            order->second.get()->price.c_str(),
+                            order->second.get()->stopPrice.c_str(),
+                            order->second.get()->quantity.c_str());
+            }
+
+            order->second->unlock();
+        }
+    }
+    return true;
+}
 
 
 /**
@@ -291,8 +378,6 @@ bool Trade::createNewBuyOrder()
         {
             std::shared_ptr<Order> newOrder(new Order());
 
-            newOrder->lock();
-
             newOrder->side      = BINANCE_BUY;
             newOrder->type      = mOrderType;
             newOrder->symbol    = mTradeSymbolInfo.symbol;
@@ -303,20 +388,12 @@ bool Trade::createNewBuyOrder()
                                                             mTradeSymbolInfo, 
                                                             mAlgorithmTradeCandlesticks);
 
-            newOrder->unlock();
-
             if (calcBuyPrice)
             {
-                newOrder->lock();
-
                 bool isCreated  = pReq.get()->createNewOrder(newOrder, mTradeSymbolInfo);
-
-                newOrder->unlock();
 
                 if (isCreated)
                 {
-                    newOrder->lock();
-
                     mBuyOrders.emplace(newOrder->orderId, newOrder);
 
                     ELOG(INFO, "New Order -> %s/%s(%d). Price: %s, Quantity: %s, Expected Average: %s.", 
@@ -327,15 +404,13 @@ bool Trade::createNewBuyOrder()
                                 newOrder->quantity.c_str(),
                                 newOrder->expectedAverage.c_str());
 
-                    newOrder->unlock();
-
                     return true;
                 }
             }
 
         }
 
-        return true;
+        return false;
     }
 
     return false;
@@ -346,9 +421,61 @@ bool Trade::createNewSellOrder()
 {return true;}
 
 
+/**
+ * @brief Create a new sell stop order
+ * 
+ * @param order Buy Order struct
+ * @return true Order created
+ * @return false Order didn't create
+ */
+bool Trade::createNewStopOrder(std::shared_ptr<Order> order)
+{
+    // check user wallet balance
+    bool walletCoinAmount = pReq.get()->getCoinBalance(mTradeSymbolInfo);
 
-bool Trade::createNewStopOrder()
-{return true;}
+    if (walletCoinAmount)
+    {
+        std::shared_ptr<Order> newOrder(new Order());
+
+        newOrder->side          = BINANCE_SELL;
+        newOrder->type          = BINANCE_STOP_LOSS_LIMIT;
+        newOrder->symbol        = order.get()->symbol;
+        newOrder->quantity      = order.get()->executedQty;
+        newOrder->boughtPrice   = order.get()->boughtPrice;
+
+        // calculate new stop price
+        bool calcStopPrice      = pBu.get()->calcNewStopPrice(newOrder, 
+                                                            mTradeSymbolInfo, 
+                                                            mAlgorithmTradeCandlesticks);
+        
+        if (calcStopPrice)
+        {
+            bool isOrderCreated = pReq.get()->createNewOrder(newOrder, mTradeSymbolInfo);
+
+            if (isOrderCreated)
+            {
+                mStopLossOrders.emplace(newOrder->orderId, newOrder);
+
+                ELOG(INFO, "New Order -> %s/%s(%d). Price: %s, Quantity: %s, Expected Average: %s.", 
+                            newOrder->side.c_str(),
+                            newOrder->type.c_str(),
+                            newOrder->orderId,
+                            newOrder->price.c_str(),
+                            newOrder->quantity.c_str(),
+                            newOrder->expectedAverage.c_str());
+
+
+                order.get()->type = BINANCE_STOP_LOSS_LIMIT;
+
+                return true;
+            }
+        }
+    }
+
+    order.get()->type = BINANCE_STOP_LOSS_LIMIT;
+
+    return false;
+}
 
 
 
@@ -488,7 +615,6 @@ void BinanceTrade::requests()
                 createNewBuyOrder();
             }
 
-            checkBuyOrder();
 
             // checkSellOrder();
 
