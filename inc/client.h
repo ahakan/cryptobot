@@ -49,7 +49,7 @@ class Client
         std::string             mAPI_KEY;
         std::string             mSECRET_KEY;
 
-        std::string             mRecvWindow     = "10000";
+        std::string             mRecvWindow     = "30000";
 
     public:
                                 Client(std::shared_ptr<BinanceUtilities> pU);

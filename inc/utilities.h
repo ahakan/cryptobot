@@ -132,7 +132,7 @@ class Utilities
                                                     struct Candlesticks& candles);
 
         bool                    calcNewOrderAverage(std::shared_ptr<Order> order, 
-                                                    struct Candlesticks& candles);
+                                                        struct Candlesticks& candles);
         bool                    calcNewBalanceAmount(std::shared_ptr<Order> order, 
                                                         struct Symbol& balance,
                                                         struct Symbol& coin);

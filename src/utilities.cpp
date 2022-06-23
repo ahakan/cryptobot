@@ -1272,6 +1272,33 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
 }
 
 
+bool Utilities::checkSellOrder(std::shared_ptr<Order> order, 
+                                struct Symbol& coin,
+                                struct Candlesticks& candles,
+                                struct Candlesticks& algorithmCandles)
+{
+
+    return true;
+}
+
+
+bool Utilities::checkStopOrder(std::shared_ptr<Order> order, 
+                                struct Symbol& coin,
+                                struct Candlesticks& candles,
+                                struct Candlesticks& algorithmCandles)
+{
+    bool isBoughtPriceHigh = ctscf(coin.price, order.get()->boughtPrice);
+
+    if (isBoughtPriceHigh)
+    {
+
+        return true;
+    }
+
+    return false;
+}
+
+
 /**
  * @brief Calculates new buy order price
  * 
@@ -1285,6 +1312,9 @@ bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order,
                                     struct Symbol& coin,
                                     struct Candlesticks& candles)
 {
+
+    // TO-DO: Check oversold rsi
+
     bool isBuyAverageCalculated = calcNewOrderAverage(order, candles);
 
     if (!isBuyAverageCalculated)

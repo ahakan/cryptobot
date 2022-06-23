@@ -296,7 +296,9 @@ bool Trade::checkBuyOrder()
 
 
 bool Trade::checkSellOrder()
-{return true;}
+{
+    return true;
+}
 
 
 bool Trade::checkStopOrder()
@@ -344,14 +346,46 @@ bool Trade::checkStopOrder()
 
             if (checkOrderQuery)
             {
-                ELOG(INFO, "Check -> %s/%s(%d). Status: %s, Price: %s, Stop Price: %s, Quantity: %s.", 
+                ELOG(INFO, "Check -> %s/%s(%d). Status: %s, Price: %s, Stop Price: %s, "
+                            "Bought Price: %s, Quantity: %s.", 
                             order->second.get()->side.c_str(),
                             order->second.get()->type.c_str(),
                             order->second.get()->orderId,
                             order->second.get()->status.c_str(),
                             order->second.get()->price.c_str(),
                             order->second.get()->stopPrice.c_str(),
+                            order->second.get()->boughtPrice.c_str(),
                             order->second.get()->quantity.c_str());
+
+                if (order->second.get()->status != BINANCE_FILLED)
+                {
+                    // if order price is okay
+                    // we will cancel stop loss order
+                    // and we create sell order
+                    bool checkStopOrder = pBu.get()->checkStopOrder(order->second,
+                                                                    mTradeSymbolInfo,
+                                                                    mTradeCandlesticks,
+                                                                    mAlgorithmTradeCandlesticks);
+                    
+                    if (checkStopOrder)
+                    {
+                        bool cancelOrder = pReq.get()->cancelOrder(order->second);
+
+                        if (cancelOrder)
+                        {
+                            ELOG(INFO, "Cancel -> %s/%s(%d). Status: %s, Price: %s, Quantity: %s.", 
+                                        order->second.get()->side.c_str(),
+                                        order->second.get()->type.c_str(),
+                                        order->second.get()->orderId,
+                                        order->second.get()->status.c_str(),
+                                        order->second.get()->price.c_str(),
+                                        order->second.get()->quantity.c_str());
+
+                            createNewSellOrder(order->second);
+                        }
+                    }
+
+                }
             }
 
             order->second->unlock();
@@ -417,8 +451,11 @@ bool Trade::createNewBuyOrder()
 }
 
 
-bool Trade::createNewSellOrder()
-{return true;}
+bool Trade::createNewSellOrder(std::shared_ptr<Order> order)
+{
+
+    return true;
+}
 
 
 /**
@@ -613,14 +650,9 @@ void BinanceTrade::requests()
             if (mTradeSymbolInfo.price.size() > 0)
             {
                 createNewBuyOrder();
+
+                // createNewSellOrder();
             }
-
-
-            // checkSellOrder();
-
-
-            // createNewSellOrder();
-
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }

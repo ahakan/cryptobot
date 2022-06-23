@@ -782,10 +782,13 @@ bool BinanceClient::cancelOrder(std::shared_ptr<Order> order)
     order.get()->side       = rSide;
     order.get()->status     = rStatus;
 
-    ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s, ExecutedQty: %s.", 
-                    rStatus.c_str(), rSide.c_str(), 
-                    rOrderId, rSymbol.c_str(), 
-                    rPrice.c_str(), rOrigQty.c_str(), 
+    ELOG(INFO, "%s -> %s/%s(%d). Price: %s, Quantity: %s, ExecutedQty: %s.", 
+                    rStatus.c_str(),
+                    rSide.c_str(), 
+                    rSymbol.c_str(), 
+                    rOrderId, 
+                    rPrice.c_str(), 
+                    rOrigQty.c_str(), 
                     rExecutedQty.c_str());
 
     return true;
@@ -853,12 +856,15 @@ bool BinanceClient::cancelAllOpenOrders(std::string symbol)
         std::string rOrigQty        = parsedResponse[i]["origQty"].asString();
         std::string rExecutedQty    = parsedResponse[i]["executedQty"].asString();
 
-        ELOG(INFO, "%s -> %s / %d => Symbol: %s, Price: %s, Quantity: %s, ExecutedQty: %s, TransactTime: %llu.", 
-                    rStatus.c_str(), rSide.c_str(), 
-                    rOrderId, rSymbol.c_str(), 
-                    rPrice.c_str(), rOrigQty.c_str(), 
-                    rExecutedQty.c_str(), rTransactTime);
-        
+        ELOG(INFO, "%s -> %s/%s(%d). Price: %s, Quantity: %s, ExecutedQty: %s, TransactTime: %llu.", 
+                    rStatus.c_str(),
+                    rSide.c_str(), 
+                    rSymbol.c_str(), 
+                    rOrderId, 
+                    rPrice.c_str(), 
+                    rOrigQty.c_str(), 
+                    rExecutedQty.c_str(),
+                    rTransactTime);       
     }
 
     ELOG(INFO, "Canceled All Open Orders.");
