@@ -1088,7 +1088,7 @@ bool Utilities::calculateChange(struct Candlesticks& candles)
     {
         size_t size         = candles.closePrices.size();
         float percent       = 0;
-        float totalChange   = 0;
+        // float totalChange   = 0;
 
         for (size_t i=0; i<size; i++)
         {
@@ -1100,7 +1100,7 @@ bool Utilities::calculateChange(struct Candlesticks& candles)
 
             candles.percentChange.push_back(calculatedPercent);
 
-            totalChange += percent;
+            // totalChange += percent;
         }
 
         ELOG(INFO, "Change -> %s(%s). Change%: %.2f, RSI Period: %d",
@@ -1204,6 +1204,8 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
                                 struct Candlesticks& candles,
                                 struct Candlesticks& algorithmCandles)
 {
+    (void) coin;
+    
     // Trade Lowest Price
     bool isOrderPriceLow = ctscf(order.get()->price, candles.lowestPrice);
 
@@ -1277,6 +1279,10 @@ bool Utilities::checkSellOrder(std::shared_ptr<Order> order,
                                 struct Candlesticks& candles,
                                 struct Candlesticks& algorithmCandles)
 {
+    (void) order;
+    (void) coin;
+    (void) candles;
+    (void) algorithmCandles;
 
     return true;
 }
@@ -1326,7 +1332,7 @@ bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order,
 
     std::string calculatedPrice = stfts(coin.price, order.get()->expectedAverage);
 
-    order.get()->expectedPrice = roundString(calculatedPrice, coin.tickSize);
+    order.get()->expectedPrice  = roundString(calculatedPrice, coin.tickSize);
 
     ELOG(INFO, "Calculated -> Buy Price: %s.. Live Price: %s.", 
                         order.get()->expectedPrice.c_str(),
@@ -1370,7 +1376,7 @@ bool Utilities::calcNewSellPrice(std::shared_ptr<Order> order,
     
     if (compareLiveAndBoughtPrice)
     {
-        order.get()->expectedPrice = atfts(coin.price, order.get()->expectedAverage);
+        order.get()->expectedPrice  = atfts(coin.price, order.get()->expectedAverage);
 
         ELOG(INFO, "Calculated -> Sell Price: %s.. Live Price: %s, Bought Price: %s.", 
                         order.get()->expectedPrice.c_str(),
@@ -1380,7 +1386,7 @@ bool Utilities::calcNewSellPrice(std::shared_ptr<Order> order,
         return true;
     }
 
-    order.get()->expectedPrice     = atfts(order.get()->boughtPrice, order.get()->expectedAverage);
+    order.get()->expectedPrice      = atfts(order.get()->boughtPrice, order.get()->expectedAverage);
 
     ELOG(INFO, "Calculated -> Sell Price: %s.. Live Price: %s, Bought Price: %s.", 
                         order.get()->expectedPrice.c_str(),

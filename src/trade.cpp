@@ -295,12 +295,65 @@ bool Trade::checkBuyOrder()
 }
 
 
+/**
+ * @brief Check sell orders
+ * 
+ * @return true 
+ * @return false 
+ */
 bool Trade::checkSellOrder()
 {
+    if (mSellOrders.size() > 0)
+    {
+        // Check orders
+        for (OrdersMapIterator order = mSellOrders.begin(); order != mSellOrders.end(); ++order)
+        {
+            order->second->lock();
+
+            bool checkOrderQuery = pReq.get()->queryOrder(order->second);
+
+            if (checkOrderQuery)
+            {
+                ELOG(INFO, "Check -> %s/%s(%d). Status: %s, Price: %s, Stop Price: %s, "
+                            "Bought Price: %s, Quantity: %s.", 
+                            order->second.get()->side.c_str(),
+                            order->second.get()->type.c_str(),
+                            order->second.get()->orderId,
+                            order->second.get()->status.c_str(),
+                            order->second.get()->price.c_str(),
+                            order->second.get()->stopPrice.c_str(),
+                            order->second.get()->boughtPrice.c_str(),
+                            order->second.get()->quantity.c_str());
+
+
+                if (order->second.get()->status == BINANCE_FILLED)
+                {
+                    mSellOrders.erase(order);
+
+                    ELOG(INFO, "Erase -> %s/%s(%d). Status: %s, Price: %s, Stop Price: %s, Quantity: %s.", 
+                                    order->second.get()->side.c_str(),
+                                    order->second.get()->type.c_str(),
+                                    order->second.get()->orderId,
+                                    order->second.get()->status.c_str(),
+                                    order->second.get()->price.c_str(),
+                                    order->second.get()->stopPrice.c_str(),
+                                    order->second.get()->quantity.c_str());
+                }
+            }
+
+            order->second->unlock();
+        }
+    }
     return true;
 }
 
 
+/**
+ * @brief Check stop orders
+ * 
+ * @return true 
+ * @return false 
+ */
 bool Trade::checkStopOrder()
 {
     if (mStopLossOrders.size() > 0)
@@ -451,10 +504,61 @@ bool Trade::createNewBuyOrder()
 }
 
 
+/**
+ * @brief Create a new sell order
+ * 
+ * @param order 
+ * @return true Order created
+ * @return false Order didn't create
+ */
 bool Trade::createNewSellOrder(std::shared_ptr<Order> order)
 {
+    // check user wallet balance
+    bool walletCoinAmount = pReq.get()->getCoinBalance(mTradeSymbolInfo);
 
-    return true;
+    if (walletCoinAmount)
+    {
+        std::shared_ptr<Order> newOrder(new Order());
+
+        newOrder->side          = BINANCE_SELL;
+        newOrder->type          = BINANCE_LIMIT;
+        newOrder->symbol        = order.get()->symbol;
+        newOrder->quantity      = order.get()->executedQty;
+        newOrder->boughtPrice   = order.get()->boughtPrice;
+        newOrder->stopPrice     = order.get()->stopPrice;
+
+        // calculate new sell price
+        bool calcSellPrice      = pBu.get()->calcNewSellPrice(newOrder, 
+                                                            mTradeSymbolInfo, 
+                                                            mAlgorithmTradeCandlesticks);
+        
+        if (calcSellPrice)
+        {
+            bool isOrderCreated = pReq.get()->createNewOrder(newOrder, mTradeSymbolInfo);
+
+            if (isOrderCreated)
+            {
+                mSellOrders.emplace(newOrder->orderId, newOrder);
+
+                ELOG(INFO, "New Order -> %s/%s(%d). Price: %s, Quantity: %s, Expected Average: %s.", 
+                            newOrder->side.c_str(),
+                            newOrder->type.c_str(),
+                            newOrder->orderId,
+                            newOrder->price.c_str(),
+                            newOrder->quantity.c_str(),
+                            newOrder->expectedAverage.c_str());
+
+
+                order.get()->type = BINANCE_LIMIT;
+
+                return true;
+            }
+        }
+    }
+
+    order.get()->type = BINANCE_LIMIT;
+
+    return false;
 }
 
 

@@ -4,7 +4,7 @@ project(cryptobot VERSION 0.1.0)
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-format-security")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-format-security -Wno-deprecated-declarations")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 include(CheckIncludeFile)
