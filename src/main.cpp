@@ -57,6 +57,8 @@ void signalHandler(int signal)
  */
 int main()
 {
+    ELOG_OUTPUT(Elog::LogOutput::File);
+
     struct sigaction                    sigIntHandler;
 
     sigemptyset(&sigIntHandler.sa_mask);
