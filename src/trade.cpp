@@ -281,6 +281,8 @@ bool Trade::checkBuyOrder()
                 // we create a stop loss sell order
                 if (order->second.get()->status == BINANCE_FILLED)
                 {
+                    // TO-DO: ADD COIN QUANTITY
+
                     createNewStopOrder(order->second);
                 }
             }
@@ -431,7 +433,7 @@ bool Trade::checkStopOrder()
                                         order->second.get()->type.c_str(),
                                         order->second.get()->orderId,
                                         order->second.get()->status.c_str(),
-                                        order->second.get()->price.c_str(),
+                                        order->second.get()->stopPrice.c_str(),
                                         order->second.get()->quantity.c_str());
 
                             createNewSellOrder(order->second);
@@ -472,7 +474,8 @@ bool Trade::createNewBuyOrder()
 
             // calculate new buy price
             bool calcBuyPrice   = pBu.get()->calcNewBuyPrice(newOrder, 
-                                                            mTradeSymbolInfo, 
+                                                            mTradeSymbolInfo,
+                                                            mTradeCandlesticks, 
                                                             mAlgorithmTradeCandlesticks);
 
             if (calcBuyPrice)
@@ -514,16 +517,16 @@ bool Trade::createNewBuyOrder()
 bool Trade::createNewSellOrder(std::shared_ptr<Order> order)
 {
     // check user wallet balance
-    bool walletCoinAmount = pReq.get()->getCoinBalance(mTradeSymbolInfo);
+    // bool walletCoinAmount = pReq.get()->getCoinBalance(mTradeSymbolInfo);
 
-    if (walletCoinAmount)
-    {
+    // if (walletCoinAmount)
+    // {
         std::shared_ptr<Order> newOrder(new Order());
 
         newOrder->side          = BINANCE_SELL;
         newOrder->type          = BINANCE_LIMIT;
         newOrder->symbol        = order.get()->symbol;
-        newOrder->quantity      = order.get()->executedQty;
+        newOrder->quantity      = order.get()->quantity;
         newOrder->boughtPrice   = order.get()->boughtPrice;
         newOrder->stopPrice     = order.get()->stopPrice;
 
@@ -554,7 +557,7 @@ bool Trade::createNewSellOrder(std::shared_ptr<Order> order)
                 return true;
             }
         }
-    }
+    // }
 
     order.get()->type = BINANCE_LIMIT;
 
@@ -572,10 +575,10 @@ bool Trade::createNewSellOrder(std::shared_ptr<Order> order)
 bool Trade::createNewStopOrder(std::shared_ptr<Order> order)
 {
     // check user wallet balance
-    bool walletCoinAmount = pReq.get()->getCoinBalance(mTradeSymbolInfo);
+    // bool walletCoinAmount = pReq.get()->getCoinBalance(mTradeSymbolInfo);
 
-    if (walletCoinAmount)
-    {
+    // if (walletCoinAmount)
+    // {
         std::shared_ptr<Order> newOrder(new Order());
 
         newOrder->side          = BINANCE_SELL;
@@ -611,7 +614,7 @@ bool Trade::createNewStopOrder(std::shared_ptr<Order> order)
                 return true;
             }
         }
-    }
+    // }
 
     order.get()->type = BINANCE_STOP_LOSS_LIMIT;
 

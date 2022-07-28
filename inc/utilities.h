@@ -123,7 +123,9 @@ class Utilities
 
         bool                    calcNewBuyPrice(std::shared_ptr<Order> order, 
                                                     struct Symbol& coin,
-                                                    struct Candlesticks& candles);
+                                                    struct Candlesticks& candles,
+                                                    struct Candlesticks& algorithmCandles);
+                                                    
         bool                    calcNewSellPrice(std::shared_ptr<Order> order, 
                                                     struct Symbol& coin,
                                                     struct Candlesticks& candles);

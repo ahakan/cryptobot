@@ -58,6 +58,7 @@ void signalHandler(int signal)
 int main()
 {
     ELOG_OUTPUT(Elog::LogOutput::File);
+    ELOG_FUNCNAMECOLSIZE(Elog::Size::TwentyFive);
 
     struct sigaction                    sigIntHandler;
 

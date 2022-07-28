@@ -349,12 +349,16 @@ bool BinanceClient::getCoinBalance(struct Symbol& coin)
             {
                 std::string walletBalanceAmount = parsedResponse[i]["free"].asString();
 
+                ELOG(INFO, "Coin symbol -> %s, Free coin: %s.", 
+                            parsedResponse[i]["coin"].asCString(), 
+                            walletBalanceAmount.c_str());
+
                 bool isQuantityEnough = pBu.get()->ctscf(walletBalanceAmount, coin.coinQuantity);
 
                 if (!isQuantityEnough)
                 {
-                    ELOG(WARNING, "Coin Quantity is Greater Than Wallet Coin Quantity. Coin Quantity: %s, "
-                                    "Wallet Coin Quantity: %s.", 
+                    ELOG(WARNING, "Coin quantity is greater than wallet coin quantity. Coin quantity: %s, "
+                                    "Wallet coin quantity: %s.", 
                                         coin.coinQuantity.c_str(), 
                                         walletBalanceAmount.c_str());
                     
@@ -613,10 +617,13 @@ bool BinanceClient::createNewOrder(std::shared_ptr<Order> order, struct Symbol& 
 
     std::string roundedQuantity         = pBu.get()->roundString(order.get()->quantity, coin.tickSize);
 
+    std::string roundedExpectedPrice    = pBu.get()->roundString(order.get()->expectedPrice, coin.tickSize);
+
 
     std::string reqParams               = "symbol="+order.get()->symbol+"&side="+order.get()->side;
                 reqParams               += "&type="+order.get()->type+"&timeInForce=GTC";
-                reqParams               += "&quantity="+roundedQuantity+"&price="+order.get()->expectedPrice;
+                reqParams               += "&quantity="+roundedQuantity+"&price="+roundedExpectedPrice;
+                reqParams               += "&newOrderRespType=RESULT";
 
                 if (order.get()->type == BINANCE_STOP_LOSS_LIMIT) 
                 reqParams               += "&stopPrice="+order.get()->expectedStopPrice;

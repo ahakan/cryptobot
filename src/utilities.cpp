@@ -1231,9 +1231,11 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
     if (candles.isUpdated)
     {
         // Trade RSI(1m)
-        bool isNewRSILow = ctscf(candles.oldCloseRSI, candles.closeRSI);
+        bool isNewRSILow        = ctscf(candles.oldCloseRSI, candles.closeRSI);
 
-        if (isNewRSILow)
+        bool isChangedNegative  = ctscf(candles.percentChange.back(), "0.00");
+
+        if (isNewRSILow && !isChangedNegative)
         {
             ELOG(INFO, "Signal -> 2");
 
@@ -1247,9 +1249,11 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
     if (algorithmCandles.isUpdated)
     {
         // Algorithm RSI(4h)
-        bool isNewAlgorithmRSILow = ctscf(algorithmCandles.oldCloseRSI, algorithmCandles.closeRSI);
+        bool isNewAlgorithmRSILow   = ctscf(algorithmCandles.oldCloseRSI, algorithmCandles.closeRSI);
 
-        if (isNewAlgorithmRSILow)
+        bool isChangedNegative      = ctscf(algorithmCandles.percentChange.back(), "0.00");
+
+        if (isNewAlgorithmRSILow && !isChangedNegative)
         {
             ELOG(INFO, "Signal -> 3");
 
@@ -1293,7 +1297,12 @@ bool Utilities::checkStopOrder(std::shared_ptr<Order> order,
                                 struct Candlesticks& candles,
                                 struct Candlesticks& algorithmCandles)
 {
-    bool isBoughtPriceHigh = ctscf(coin.price, order.get()->boughtPrice);
+    (void) candles;
+    (void) algorithmCandles;
+
+    std::string expectedSellPrice   = atfts(order.get()->boughtPrice, order.get()->expectedAverage);
+
+    bool isBoughtPriceHigh          = ctscf(coin.price, expectedSellPrice);
 
     if (isBoughtPriceHigh)
     {
@@ -1310,18 +1319,20 @@ bool Utilities::checkStopOrder(std::shared_ptr<Order> order,
  * 
  * @param order Order struct
  * @param coin Coin struct
- * @param candles Algorithm candlesticks struct
+ * @param candles Candlesticks struct
+ * @param algorithmCandles Algorithm candlesticks struct
  * @return true -> Able to create an order
  * @return false -> Unable to create an order
  */
 bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order, 
                                     struct Symbol& coin,
-                                    struct Candlesticks& candles)
+                                    struct Candlesticks& candles,
+                                    struct Candlesticks& algorithmCandles)
 {
 
     // TO-DO: Check oversold rsi
 
-    bool isBuyAverageCalculated = calcNewOrderAverage(order, candles);
+    bool isBuyAverageCalculated = calcNewOrderAverage(order, algorithmCandles);
 
     if (!isBuyAverageCalculated)
     {
@@ -1341,6 +1352,18 @@ bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order,
     if (order.get()->expectedPrice.length() == 0)
     {
         ELOG(ERROR, "Failed to calculate new buy price.");
+
+        return false;
+    }
+
+    // Trade Lowest Price
+    bool isOrderPriceLow = ctscf(order.get()->expectedPrice, candles.lowestPrice);
+
+    if (isOrderPriceLow)
+    {
+        ELOG(INFO, "Signal -> Order price is low. Expected Price: %s, Lowes Price: %s.", 
+                    order.get()->expectedPrice.c_str(), 
+                    candles.lowestPrice.c_str());
 
         return false;
     }

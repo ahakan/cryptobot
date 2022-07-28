@@ -35,6 +35,11 @@
 #define BINANCE_STOP_LOSS       "STOP_LOSS"
 #define BINANCE_STOP_LOSS_LIMIT "STOP_LOSS_LIMIT"
 
+// ORDER RESPONSE TYPE
+#define ORDER_RESP_TYPE_ACK     "ACK"
+#define ORDER_RESP_TYPE_RESULT  "RESULT"
+#define ORDER_RESP_TYPE_FULL    "FULL"
+
 
 // Using && Namespaces
 using CandleVector  = std::vector<std::string>;
