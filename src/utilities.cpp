@@ -1208,15 +1208,19 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
 
     // Check lowest and highest price average with expected average
     std::string averageLowestHighest    = stfts(candles.highestPrice, candles.lowestPrice);
-    std::string doubleExpectedAverage   = mtfts(order.get()->expectedAverage, "2.00");
-    bool checkExpectedAverage           = ctscf(doubleExpectedAverage, averageLowestHighest);
+    std::string fourExpectedAverage     = mtfts(order.get()->expectedAverage, "4.00");
+    bool checkExpectedAverage           = ctscf(fourExpectedAverage, averageLowestHighest);
 
     // Trade Lowest Price
     bool isOrderPriceLow = ctscf(order.get()->price, candles.lowestPrice);
 
     if (isOrderPriceLow && !checkExpectedAverage)
     {
-        ELOG(INFO, "Signal -> 0");
+        ELOG(INFO, "Check/Signal -> Order price is low. P: %s, LwP: %s, 4ExA: %s, ALwHg: %s.",
+                    order.get()->price.c_str(), 
+                    candles.lowestPrice.c_str(),
+                    fourExpectedAverage.c_str(),
+                    averageLowestHighest.c_str());
 
         return false;
     }
@@ -1227,7 +1231,7 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
 
     if (isOrderPriceHigh)
     {
-        ELOG(INFO, "Signal -> 1");
+        ELOG(INFO, "Check/Signal -> 1");
 
         return false;
     }
@@ -1260,7 +1264,7 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
 
         if (isNewAlgorithmRSILow && !isChangedNegative)
         {
-            ELOG(INFO, "Signal -> 3");
+            ELOG(INFO, "Check/Signal -> 3");
 
             algorithmCandles.isUpdated = false;
 
@@ -1274,7 +1278,7 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
 
     if (isAlgorithmOrderPriceHigh)
     {
-        ELOG(INFO, "Signal -> 4");
+        ELOG(INFO, "Check/Signal -> 4");
 
         return false;
     }
@@ -1363,17 +1367,19 @@ bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order,
 
     // Check lowest and highest price average with expected average
     std::string averageLowestHighest    = stfts(candles.highestPrice, candles.lowestPrice);
-    std::string doubleExpectedAverage   = mtfts(order.get()->expectedAverage, "2.00");
-    bool checkExpectedAverage           = ctscf(doubleExpectedAverage, averageLowestHighest);
+    std::string fourExpectedAverage     = mtfts(order.get()->expectedAverage, "4.00");
+    bool checkExpectedAverage           = ctscf(fourExpectedAverage, averageLowestHighest);
 
     // Trade Lowest Price
     bool isOrderPriceLow = ctscf(order.get()->expectedPrice, candles.lowestPrice);
 
     if (isOrderPriceLow && !checkExpectedAverage)
     {
-        ELOG(INFO, "Signal -> Order price is low. Expected Price: %s, Lowes Price: %s.", 
+        ELOG(INFO, "Calc/Signal -> Order price is low. ExP: %s, LwP: %s, 4ExA: %s, ALwHg: %s.",
                     order.get()->expectedPrice.c_str(), 
-                    candles.lowestPrice.c_str());
+                    candles.lowestPrice.c_str(),
+                    fourExpectedAverage.c_str(),
+                    averageLowestHighest.c_str());
 
         return false;
     }

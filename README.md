@@ -37,7 +37,7 @@ Attention! Don't forget to edit the config file.
 - [CMake][cmake]
 - [Boost Libraries][boost]
 - [OpenSSL][openssl]
-- [Curl][curl]
+- [cURL][curl]
 - [SQLite][sqlite]
 
 You must install these dependencies for cryptobot to run.
