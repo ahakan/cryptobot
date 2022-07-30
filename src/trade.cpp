@@ -524,7 +524,7 @@ bool Trade::createNewSellOrder(std::shared_ptr<Order> order)
         std::shared_ptr<Order> newOrder(new Order());
 
         newOrder->side          = BINANCE_SELL;
-        newOrder->type          = BINANCE_LIMIT;
+        newOrder->type          = BINANCE_MARKET;
         newOrder->symbol        = order.get()->symbol;
         newOrder->quantity      = order.get()->quantity;
         newOrder->boughtPrice   = order.get()->boughtPrice;

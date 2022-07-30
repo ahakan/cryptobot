@@ -1205,11 +1205,16 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
                                 struct Candlesticks& algorithmCandles)
 {
     (void) coin;
-    
+
+    // Check lowest and highest price average with expected average
+    std::string averageLowestHighest    = stfts(candles.highestPrice, candles.lowestPrice);
+    std::string doubleExpectedAverage   = mtfts(order.get()->expectedAverage, "2.00");
+    bool checkExpectedAverage           = ctscf(doubleExpectedAverage, averageLowestHighest);
+
     // Trade Lowest Price
     bool isOrderPriceLow = ctscf(order.get()->price, candles.lowestPrice);
 
-    if (isOrderPriceLow)
+    if (isOrderPriceLow && !checkExpectedAverage)
     {
         ELOG(INFO, "Signal -> 0");
 
@@ -1356,10 +1361,15 @@ bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order,
         return false;
     }
 
+    // Check lowest and highest price average with expected average
+    std::string averageLowestHighest    = stfts(candles.highestPrice, candles.lowestPrice);
+    std::string doubleExpectedAverage   = mtfts(order.get()->expectedAverage, "2.00");
+    bool checkExpectedAverage           = ctscf(doubleExpectedAverage, averageLowestHighest);
+
     // Trade Lowest Price
     bool isOrderPriceLow = ctscf(order.get()->expectedPrice, candles.lowestPrice);
 
-    if (isOrderPriceLow)
+    if (isOrderPriceLow && !checkExpectedAverage)
     {
         ELOG(INFO, "Signal -> Order price is low. Expected Price: %s, Lowes Price: %s.", 
                     order.get()->expectedPrice.c_str(), 
@@ -1394,27 +1404,12 @@ bool Utilities::calcNewSellPrice(std::shared_ptr<Order> order,
         return false;
     }
 
-    // if return true live price is high, return false bought price is high
-    bool compareLiveAndBoughtPrice  = ctscf(coin.price, order.get()->boughtPrice);     
-    
-    if (compareLiveAndBoughtPrice)
-    {
-        order.get()->expectedPrice  = atfts(coin.price, order.get()->expectedAverage);
-
-        ELOG(INFO, "Calculated -> Sell Price: %s.. Live Price: %s, Bought Price: %s.", 
-                        order.get()->expectedPrice.c_str(),
-                        coin.price.c_str(), 
-                        order.get()->boughtPrice.c_str());
-
-        return true;
-    }
-
-    order.get()->expectedPrice      = atfts(order.get()->boughtPrice, order.get()->expectedAverage);
+    order.get()->expectedPrice  = coin.price;
 
     ELOG(INFO, "Calculated -> Sell Price: %s.. Live Price: %s, Bought Price: %s.", 
-                        order.get()->expectedPrice.c_str(),
-                        coin.price.c_str(), 
-                        order.get()->boughtPrice.c_str());
+                    order.get()->expectedPrice.c_str(),
+                    coin.price.c_str(), 
+                    order.get()->boughtPrice.c_str());
 
     return true;
 }
