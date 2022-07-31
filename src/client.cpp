@@ -620,22 +620,27 @@ bool BinanceClient::createNewOrder(std::shared_ptr<Order> order, struct Symbol& 
     std::string roundedExpectedPrice    = pBu.get()->roundString(order.get()->expectedPrice, coin.tickSize);
 
 
-    std::string reqParams               = "symbol="+order.get()->symbol+"&side="+order.get()->side;
-                reqParams               += "&type="+order.get()->type+"&newOrderRespType=RESULT";
+    std::string reqParams               = "symbol="+order.get()->symbol;
+                reqParams               += "&side="+order.get()->side;
+                reqParams               += "&type="+order.get()->type;
                 reqParams               += "&quantity="+roundedQuantity;
                 
-                if (order.get()->type == BINANCE_LIMIT)
-                {
-                    reqParams           += "&timeInForce=GTC"+"&price="+roundedExpectedPrice;
-                }
+    if (order.get()->type == BINANCE_LIMIT)
+    {
+                reqParams               += "&timeInForce=GTC";
+                reqParams               += "&price="+roundedExpectedPrice;
+    }
 
-                if (order.get()->type == BINANCE_STOP_LOSS_LIMIT)
-                {
-                    reqParams           += "&stopPrice="+order.get()->expectedStopPrice;
-                    reqParams           += "&timeInForce=GTC"+"&price="+roundedExpectedPrice;
-                }
+    if (order.get()->type == BINANCE_STOP_LOSS_LIMIT)
+    {
+                reqParams               += "&stopPrice="+order.get()->expectedStopPrice;
+                reqParams               += "&timeInForce=GTC";
+                reqParams               += "&price="+roundedExpectedPrice;
+    }
 
-                reqParams               += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
+                reqParams               += "&timestamp="+reqTimestamp;
+                reqParams               += "&recvWindow="+mRecvWindow;
+                reqParams               += "&newOrderRespType=RESULT";
 
     std::string reqSignature            = pBu.get()->getSignature(reqParams);
 
