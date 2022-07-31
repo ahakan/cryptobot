@@ -1204,8 +1204,6 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
                                 struct Candlesticks& candles,
                                 struct Candlesticks& algorithmCandles)
 {
-    (void) coin;
-
     // Check lowest and highest price average with expected average
     std::string averageLowestHighest    = stfts(candles.highestPrice, candles.lowestPrice);
     std::string fiveExpectedAverage     = mtfts(order.get()->expectedAverage, "5.00");
@@ -1279,6 +1277,17 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
     if (isAlgorithmOrderPriceHigh)
     {
         ELOG(INFO, "Check/Signal -> 4");
+
+        return false;
+    }
+
+    // Check coin live price
+    bool isLivePriceHighCandles     = ctscf(coin.price, candles.highestPrice);
+    bool isLivePriceHighAlgorithm   = ctscf(coin.price, algorithmCandles.highestPrice);
+
+    if (isLivePriceHighCandles || isLivePriceHighAlgorithm)
+    {
+        ELOG(INFO, "Check/Signal -> 5");
 
         return false;
     }

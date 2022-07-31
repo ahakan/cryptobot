@@ -460,25 +460,25 @@ bool Trade::createNewBuyOrder()
 {
     if (mBuyOrders.size() < 1)
     {
-        // check user wallet balance
-        bool walletBalanceAmount    = pReq.get()->getCoinBalance(mBalanceSymbolInfo);
-        
-        if (walletBalanceAmount)
+        std::shared_ptr<Order> newOrder(new Order());
+
+        newOrder->side      = BINANCE_BUY;
+        newOrder->type      = mOrderType;
+        newOrder->symbol    = mTradeSymbolInfo.symbol;
+        newOrder->quantity  = mOrderQuantity;
+
+        // calculate new buy price
+        bool calcBuyPrice   = pBu.get()->calcNewBuyPrice(newOrder, 
+                                                        mTradeSymbolInfo,
+                                                        mTradeCandlesticks, 
+                                                        mAlgorithmTradeCandlesticks);
+
+        if (calcBuyPrice)
         {
-            std::shared_ptr<Order> newOrder(new Order());
-
-            newOrder->side      = BINANCE_BUY;
-            newOrder->type      = mOrderType;
-            newOrder->symbol    = mTradeSymbolInfo.symbol;
-            newOrder->quantity  = mOrderQuantity;
-
-            // calculate new buy price
-            bool calcBuyPrice   = pBu.get()->calcNewBuyPrice(newOrder, 
-                                                            mTradeSymbolInfo,
-                                                            mTradeCandlesticks, 
-                                                            mAlgorithmTradeCandlesticks);
-
-            if (calcBuyPrice)
+            // check user wallet balance
+            bool walletBalanceAmount    = pReq.get()->getCoinBalance(mBalanceSymbolInfo);
+            
+            if (walletBalanceAmount)
             {
                 bool isCreated  = pReq.get()->createNewOrder(newOrder, mTradeSymbolInfo);
 
@@ -497,7 +497,6 @@ bool Trade::createNewBuyOrder()
                     return true;
                 }
             }
-
         }
 
         return false;
