@@ -1208,18 +1208,18 @@ bool Utilities::checkBuyOrder(std::shared_ptr<Order> order,
 
     // Check lowest and highest price average with expected average
     std::string averageLowestHighest    = stfts(candles.highestPrice, candles.lowestPrice);
-    std::string fourExpectedAverage     = mtfts(order.get()->expectedAverage, "4.00");
-    bool checkExpectedAverage           = ctscf(fourExpectedAverage, averageLowestHighest);
+    std::string fiveExpectedAverage     = mtfts(order.get()->expectedAverage, "5.00");
+    bool checkExpectedAverage           = ctscf(fiveExpectedAverage, averageLowestHighest);
 
     // Trade Lowest Price
     bool isOrderPriceLow = ctscf(order.get()->price, candles.lowestPrice);
 
     if (isOrderPriceLow && !checkExpectedAverage)
     {
-        ELOG(INFO, "Check/Signal -> Order price is low. P: %s, LwP: %s, 4ExA: %s, ALwHg: %s.",
+        ELOG(INFO, "Check/Signal -> Order price is low. P: %s, LwP: %s, 5ExA: %s, ALwHg: %s.",
                     order.get()->price.c_str(), 
                     candles.lowestPrice.c_str(),
-                    fourExpectedAverage.c_str(),
+                    fiveExpectedAverage.c_str(),
                     averageLowestHighest.c_str());
 
         return false;
@@ -1367,18 +1367,18 @@ bool Utilities::calcNewBuyPrice(std::shared_ptr<Order> order,
 
     // Check lowest and highest price average with expected average
     std::string averageLowestHighest    = stfts(candles.highestPrice, candles.lowestPrice);
-    std::string fourExpectedAverage     = mtfts(order.get()->expectedAverage, "4.00");
-    bool checkExpectedAverage           = ctscf(fourExpectedAverage, averageLowestHighest);
+    std::string fiveExpectedAverage     = mtfts(order.get()->expectedAverage, "5.00");
+    bool checkExpectedAverage           = ctscf(fiveExpectedAverage, averageLowestHighest);
 
     // Trade Lowest Price
     bool isOrderPriceLow = ctscf(order.get()->expectedPrice, candles.lowestPrice);
 
     if (isOrderPriceLow && !checkExpectedAverage)
     {
-        ELOG(INFO, "Calc/Signal -> Order price is low. ExP: %s, LwP: %s, 4ExA: %s, ALwHg: %s.",
+        ELOG(INFO, "Calc/Signal -> Order price is low. ExP: %s, LwP: %s, 5ExA: %s, ALwHg: %s.",
                     order.get()->expectedPrice.c_str(), 
                     candles.lowestPrice.c_str(),
-                    fourExpectedAverage.c_str(),
+                    fiveExpectedAverage.c_str(),
                     averageLowestHighest.c_str());
 
         return false;

@@ -621,12 +621,19 @@ bool BinanceClient::createNewOrder(std::shared_ptr<Order> order, struct Symbol& 
 
 
     std::string reqParams               = "symbol="+order.get()->symbol+"&side="+order.get()->side;
-                reqParams               += "&type="+order.get()->type+"&timeInForce=GTC";
-                reqParams               += "&quantity="+roundedQuantity+"&price="+roundedExpectedPrice;
-                reqParams               += "&newOrderRespType=RESULT";
+                reqParams               += "&type="+order.get()->type+"&newOrderRespType=RESULT";
+                reqParams               += "&quantity="+roundedQuantity;
+                
+                if (order.get()->type == BINANCE_LIMIT)
+                {
+                    reqParams           += "&timeInForce=GTC"+"&price="+roundedExpectedPrice;
+                }
 
-                if (order.get()->type == BINANCE_STOP_LOSS_LIMIT) 
-                reqParams               += "&stopPrice="+order.get()->expectedStopPrice;
+                if (order.get()->type == BINANCE_STOP_LOSS_LIMIT)
+                {
+                    reqParams           += "&stopPrice="+order.get()->expectedStopPrice;
+                    reqParams           += "&timeInForce=GTC"+"&price="+roundedExpectedPrice;
+                }
 
                 reqParams               += "&timestamp="+reqTimestamp+"&recvWindow="+mRecvWindow;
 
