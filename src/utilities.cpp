@@ -155,6 +155,33 @@ std::string Utilities::Average(std::vector<std::string>& vector)
 
 
 /**
+ * @brief Calculates total change
+ * 
+ * @param vector Changes vector
+ * @return std::string Total change
+ */
+std::string Utilities::Change(std::vector<std::string>& vector)
+{
+    if (vector.empty())
+    {
+        ELOG(ERROR, "Average Vector is empty.");
+        
+        setExitSignal(0);
+    }
+
+    size_t size     = vector.size();
+    float change    = 0;
+
+    for (size_t i=0; i<size; i++)
+    {
+        change += std::stof(vector[i]);
+    }
+
+    return std::to_string(change);
+}
+
+
+/**
  * @brief Get the lowest candlestick price
  * 
  * @param vector 
@@ -1099,13 +1126,14 @@ bool Utilities::calculateChange(struct Candlesticks& candles)
             std::string calculatedPercent   = roundString(std::to_string(percent), candles.tickSize);
 
             candles.percentChange.push_back(calculatedPercent);
-
-            // totalChange += percent;
         }
 
-        ELOG(INFO, "Change -> %s(%s). Change%: %.2f, RSI Period: %d",
+        candles.totalChanges = Change(candles.percentChange);
+
+        ELOG(INFO, "Change -> %s(%s). Total Change%: %.2f, Last Change%: %.2f, RSI Period: %d",
                         candles.symbol.c_str(),
                         candles.interval.c_str(),
+                        std::stof(candles.totalChanges.c_str()),
                         std::stof(candles.percentChange.back()),
                         candles.RSIPeriod);
                     

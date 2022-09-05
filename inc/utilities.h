@@ -48,6 +48,7 @@ class Utilities
 
         std::string             RSI(std::vector<std::string>& vector);
         std::string             Average(std::vector<std::string>& vector);
+        std::string             Change(std::vector<std::string>& vector);
 
         std::string             getLowestPrice(std::vector<std::string>& vector);
         std::string             getHighestPrice(std::vector<std::string>& vector);
@@ -112,32 +113,36 @@ class Utilities
                                                 struct Symbol& coin,
                                                 struct Candlesticks& candles,
                                                 struct Candlesticks& algorithmCandles);
+
         bool                    checkSellOrder(std::shared_ptr<Order> order, 
                                                 struct Symbol& coin,
                                                 struct Candlesticks& candles,
                                                 struct Candlesticks& algorithmCandles);
+
         bool                    checkStopOrder(std::shared_ptr<Order> order, 
                                                 struct Symbol& coin,
                                                 struct Candlesticks& candles,
                                                 struct Candlesticks& algorithmCandles);
 
         bool                    calcNewBuyPrice(std::shared_ptr<Order> order, 
-                                                    struct Symbol& coin,
-                                                    struct Candlesticks& candles,
-                                                    struct Candlesticks& algorithmCandles);
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles,
+                                                struct Candlesticks& algorithmCandles);
                                                     
         bool                    calcNewSellPrice(std::shared_ptr<Order> order, 
-                                                    struct Symbol& coin,
-                                                    struct Candlesticks& candles);
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles);
+
         bool                    calcNewStopPrice(std::shared_ptr<Order> order, 
-                                                    struct Symbol& coin,
-                                                    struct Candlesticks& candles);
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles);
 
         bool                    calcNewOrderAverage(std::shared_ptr<Order> order, 
-                                                        struct Candlesticks& candles);
+                                                    struct Candlesticks& candles);
+
         bool                    calcNewBalanceAmount(std::shared_ptr<Order> order, 
-                                                        struct Symbol& balance,
-                                                        struct Symbol& coin);
+                                                    struct Symbol& balance,
+                                                    struct Symbol& coin);
 };
 
 

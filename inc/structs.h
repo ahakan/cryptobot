@@ -112,6 +112,7 @@ struct Candlesticks : public std::mutex
 
     std::string     lowestPrice;
     std::string     highestPrice;
+    std::string     totalChanges;
 
     CandleVector    openPrices;
     CandleVector    highPrices;

@@ -736,6 +736,11 @@ void BinanceTrade::init()
     tradeTh1.join();
     tradeTh2.join();
 
+    Opel *iOpel = Opel::instance();
+
+    iOpel->setIsActive(0);
+
+    iOpel->setExitSignal(0);
 
     ELOG(INFO, "Trade -> detached.");
 }
