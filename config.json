@@ -10,7 +10,8 @@
             "amount": "400"
         },
         "follow": {
-            "symbol": "BTCBUSD"
+            "symbol": "BTCBUSD",
+            "interval": "4h"
         },
         "average": {
             "auto-calculate": 0,

@@ -14,6 +14,7 @@
 #include "../inc/websocket.h"
 #include "../inc/server.h"
 #include "../inc/client.h"
+#include "../inc/trade.h"
 #include "../inc/utilities.h"
 #include "../inc/sql.h"
 
@@ -41,6 +42,8 @@ void signalHandler(int signal)
 
     Opel *iOpel = Opel::instance();
 
+    iOpel->setIsActive(0);
+
     iOpel->setExitSignal(0);
 
     ELOG(INFO, "Sent exit signal.");
@@ -54,31 +57,34 @@ void signalHandler(int signal)
  */
 int main()
 {
+    ELOG_OUTPUT(Elog::LogOutput::File);
+    ELOG_FUNCNAMECOLSIZE(Elog::Size::TwentyFive);
+
     struct sigaction                    sigIntHandler;
-
-    std::shared_ptr<Sql>                pSql(new Sql);
-
-    std::shared_ptr<BinanceUtilities>   bUtil(new BinanceUtilities);
-    std::shared_ptr<BinanceWebsocket>   bSoc(new BinanceWebsocket(bUtil));
-    std::shared_ptr<BinanceClient>      bReq(new BinanceClient(bUtil));
-    std::shared_ptr<BinanceServer>      bWeb(new BinanceServer(bUtil));
-
 
     sigemptyset(&sigIntHandler.sa_mask);
 
     sigIntHandler.sa_handler    = signalHandler;
     sigIntHandler.sa_flags      = 0;
 
-    
+    sigaction(SIGINT, &sigIntHandler, NULL);
+
+
+    std::shared_ptr<Sql>                pSql(new Sql);
+
+    std::shared_ptr<BinanceUtilities>   bUtil(new BinanceUtilities);
+    std::shared_ptr<BinanceWebsocket>   bSoc(new BinanceWebsocket(bUtil));
+    std::shared_ptr<BinanceClient>      bReq(new BinanceClient(bUtil));
+    std::shared_ptr<BinanceTrade>       bTrd(new BinanceTrade(bUtil, bReq));
+    std::shared_ptr<BinanceServer>      bWeb(new BinanceServer(bUtil));
+
     std::thread sqlTh           = std::thread(&Sql::init, pSql);
-    std::thread reqTh           = std::thread(&BinanceClient::init, bReq);
+    std::thread trdTh           = std::thread(&BinanceTrade::init, bTrd);
     std::thread socTh           = std::thread(&BinanceWebsocket::init, bSoc);
     std::thread webTh           = std::thread(&BinanceServer::init, bWeb);
 
-    sigaction(SIGINT, &sigIntHandler, NULL);
-
     sqlTh.join();
-    reqTh.join();
+    trdTh.join();
     socTh.join();
     webTh.join();
     

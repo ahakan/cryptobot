@@ -17,11 +17,13 @@ fast, secure, lightweight and open source crypto trading bot
 [Usage](#usage) •
 [Configuration](#configuration) •
 [Licence](#licence) •
-[Contribution](#contribution) 
+[Contribution](#contribution)
 </div>
 
-This bot run on unix-like systems. You can use easily on your linux system. Just clone and build. That's all.
-Also if you want to use localhost you can use easily. When you run the crypto bot, localhost will open. 
+This bot run on unix-like systems. You can use easily on your linux system.
+Just clone and build. That's all.
+Also if you want to use localhost you can use easily.
+When you run the crypto bot, localhost will open.
 Attention! Don't forget to edit the config file.
 
 <p float="left">
@@ -30,11 +32,15 @@ Attention! Don't forget to edit the config file.
 
 ## Installation
 
-### *Installing Prerequisites: CMake and Boost*
+### *Dependencies*
 
-crytobot use CMake for building the app and Boost/Beast library for websocket. You must has CMake and Boost library.
+- [CMake][cmake]
+- [Boost Libraries][boost]
+- [OpenSSL][openssl]
+- [cURL][curl]
+- [SQLite][sqlite]
 
-Please install [CMake][cmake] and [Boost Libraries][boost].
+You must install these dependencies for cryptobot to run.
 
 ### *Step 1: Clone cryptobot*
 
@@ -45,6 +51,7 @@ git clone https://github.com/ahakan/cryptobot.git
 ```
 
 ### *Step 2.1: Build cryptobot with bash script*
+
 ```sh
 cd cryptobot
 chmod +x build.sh
@@ -52,16 +59,18 @@ chmod +x build.sh
 ```
 
 ### *Step 2.2: Build cryptobot with CMake*
+
 ```sh
 cd cryptobot
 mkdir build && cd build
 cmake .. 
 sudo make  
 ```
+
 If you don't want build some libraries with cmake you can use these configurations,
 
- -DBUILD_LIBCAP=FALSE 
- -DBUILD_SQLITE3=FALSE 
+ -DBUILD_LIBCAP=FALSE
+ -DBUILD_SQLITE3=FALSE
  -DBUILD_CURL=FALSE
 
 ## Usage
@@ -70,7 +79,9 @@ If you don't want build some libraries with cmake you can use these configuratio
 cd build           
 ./cryptobot        
 ```
+
 or
+
 ```sh
 ./cryptobot.sh      
 ```
@@ -124,7 +135,9 @@ When use the crypto bot, you have to make some configurations.
 ```
 
 - `user`
-  - If you fill in the Calculate average section with 1, the bot will automatically calculate the average with candlesticks data. 
+  - If you fill in the Calculate average section with 1,
+  the bot will automatically calculate the average with candlesticks data.
+
     | Configuration                         | Description                       |
     | ------------------------------------- | --------------------------------- |
     | `Exchange` <sub>(str)</sub>           | Exchange name (Binance)           |
@@ -142,6 +155,7 @@ When use the crypto bot, you have to make some configurations.
 
 - `binance`
   - You must fill in API Key and SECRET Key.
+
     | Configuration                         | Description                       |
     | ------------------------------------- | --------------------------------- |
     | `Websocket base` <sub>(str)</sub>     | Binance websocket address         |
@@ -152,19 +166,24 @@ When use the crypto bot, you have to make some configurations.
 
 - `server`
   - If you want to see orders with browser you can use the web server. (New feature)
+
     | Configuration                         | Description                       |
     | ------------------------------------- | --------------------------------- |
     | `Base` <sub>(str)</sub>               | Server address                 |
     | `Port` <sub>(int)</sub>               | Server port                    |
 
-
 ## Licence
+
 GNU General Public License v3.0
 
 ## Contribution
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome. For major changes, please open an issue first to
+discuss what you would like to change.
 
 [cryptobot]: https://github.com/ahakan/cryptobot.git
 [cmake]: https://cmake.org/
 [boost]: https://www.boost.org/
+[openssl]: https://www.openssl.org/
+[curl]: https://curl.se/
+[sqlite]: https://www.sqlite.org/index.html

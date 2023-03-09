@@ -22,27 +22,21 @@
 #include <map>
 
 // Namespaces
-using OrderMap          = std::map<std::string, std::string>;
-using AllOrdersMap      = std::map<int, OrderMap>;
-using SoldOrdersMap     = std::multimap<int, OrderMap>;
+
 
 // Structs
-struct socket_error : public std::mutex
+struct Candle : public std::mutex
 {
-    std::string         message;
-    std::string         symbol;
-};
-
-struct candle_data  : public std::mutex
-{
-    bool                isUpdated = false;
-    std::string         symbol;
-    std::string         timestamp;
-    std::string         openPrice;
-    std::string         closePrice;
-    std::string         highPrice;
-    std::string         lowPrice;
-    bool                isClosed;
+    bool            isClosed    = false;
+    bool            isUpdated   = false;
+    
+    std::string     symbol;
+    std::string     timestamp;
+    std::string     openPrice;
+    std::string     closePrice;
+    std::string     highPrice;
+    std::string     lowPrice;
+    std::string     volume;
 };
 
 
@@ -55,26 +49,22 @@ class Opel
         std::string                 mTradeSymbol;
         std::string                 mFollowSymbol;
 
-        AllOrdersMap                *mBuyOrdersMap;
-        AllOrdersMap                *mBoughtOrdersMap;
-        AllOrdersMap                *mSellOrdersMap;
-        SoldOrdersMap               *mSoldOrdersMap;
-        
-
     protected:
 
                                     Opel();
                                     ~Opel();
 
     public:
-                                    Opel(const Opel&)               = delete;       // Singletons should not be cloneable.
-                                    Opel& operator=(const Opel&)    = delete;       // Singletons should not be assignable.
+                                    // Singletons should not be cloneable.
+                                    Opel(const Opel&)               = delete;
+
+                                    // Singletons should not be assignable.    
+                                    Opel& operator=(const Opel&)    = delete;
                                     
         static Opel                 *instance();
 
-        static struct socket_error  *getSocketErrorStruct();
-        static struct candle_data   *getTradeCandleStruct();
-        static struct candle_data   *getFollowCandleStruct();
+        static struct Candle        *getTradeCandleStruct();
+        static struct Candle        *getFollowCandleStruct();
         
         void                        setExitSignal(bool signal);
         bool                        getExitSignal();
@@ -88,18 +78,8 @@ class Opel
         void                        setFollowSymbol(std::string symbol);
         std::string                 getFollowSymbol();
 
-        void                        setBuyOrdersMap(AllOrdersMap *orders);
-        AllOrdersMap                *getBuyOrdersMap();
-
-        void                        setBoughtOrdersMap(AllOrdersMap *orders);
-        AllOrdersMap                *getBoughtOrdersMap();
-
-        void                        setSellOrdersMap(AllOrdersMap *orders);
-        AllOrdersMap                *getSellOrdersMap();
-
-        void                        setSoldOrdersMap(SoldOrdersMap *orders);
-        SoldOrdersMap               *getSoldOrdersMap();
-
+        // void                        setBuyOrdersMap(AllOrdersMap *orders);
+        // AllOrdersMap                *getBuyOrdersMap();
 };
 
 #endif

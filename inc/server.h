@@ -37,73 +37,68 @@
 #include <iterator>
 
 // Using && Namespaces
-namespace   beast               = boost::beast;         // from <boost/beast.hpp>
-namespace   http                = beast::http;           // from <boost/beast/http.hpp>
-namespace   net                 = boost::asio;            // from <boost/asio.hpp>
-using       tcp                 = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-
-using       OrderMap            = std::map<std::string, std::string>;
-using       AllOrdersMap        = std::map<int, OrderMap>;
-using       SoldOrdersMap       = std::multimap<int, OrderMap>;
-using       MapIterator         = std::map<int, OrderMap>::iterator;
+namespace   beast               = boost::beast;             // from <boost/beast.hpp>
+namespace   http                = beast::http;              // from <boost/beast/http.hpp>
+namespace   net                 = boost::asio;              // from <boost/asio.hpp>
+using       tcp                 = boost::asio::ip::tcp;     // from <boost/asio/ip/tcp.hpp>
 
 namespace html_page
 {
-    inline std::string buyOrderTable()
-    {
-        Opel *iOpel = Opel::instance();
+    // inline std::string buyOrderTable()
+    // {
+    //     Opel *iOpel = Opel::instance();
 
-        AllOrdersMap *mBuyOrders = iOpel->getBuyOrdersMap();
+    //     AllOrdersMap *mBuyOrders = iOpel->getBuyOrdersMap();
 
-        std::string table = "";
+    //     std::string table = "";
 
-        if (mBuyOrders->size() > 0)
-        {
-            table = "<h2>Buy Orders</h2><table><tr><th>Order ID</th><th>Symbol</th><th>Quantity</th><th>Buy Price</th></tr><tr>";
+    //     if (mBuyOrders->size() > 0)
+    //     {
+    //         table = "<h2>Buy Orders</h2><table><tr><th>Order ID</th><th>Symbol</th><th>Quantity</th><th>Buy Price</th></tr><tr>";
         
-            for (MapIterator i = (*mBuyOrders).begin(); i != (*mBuyOrders).end(); ++i)
-            {
-                table = table + "<td>" + std::to_string(i->first) + "</td>";
-                table = table + "<td>" + i->second["Symbol"] + "</td>";
-                table = table + "<td>" + i->second["Quantity"] + "</td>";
-                table = table + "<td>" + i->second["Price"] + "</td>";
+    //         for (MapIterator i = (*mBuyOrders).begin(); i != (*mBuyOrders).end(); ++i)
+    //         {
+    //             table = table + "<td>" + std::to_string(i->first) + "</td>";
+    //             table = table + "<td>" + i->second["Symbol"] + "</td>";
+    //             table = table + "<td>" + i->second["Quantity"] + "</td>";
+    //             table = table + "<td>" + i->second["Price"] + "</td>";
 
-                table = table + "</tr>";
-            }
-            table = table + "</table>\n";
-        }
+    //             table = table + "</tr>";
+    //         }
+    //         table = table + "</table>\n";
+    //     }
 
-        return table;
-    }
+    //     return table;
+    // }
     
-    inline std::string soldOrderTable()
-    {
-        Opel *iOpel = Opel::instance();
+    // inline std::string soldOrderTable()
+    // {
+    //     Opel *iOpel = Opel::instance();
 
-        SoldOrdersMap *mSoldOrders = iOpel->getSoldOrdersMap();
+    //     SoldOrdersMap *mSoldOrders = iOpel->getSoldOrdersMap();
 
-        std::string table = "";
+    //     std::string table = "";
 
-        if (mSoldOrders->size() > 0)
-        {
-            table = "<h2>Sold Orders</h2><table><tr><th>Order ID</th><th>Symbol</th><th>Quantity</th><th>Bought Price</th><th>Sold Price</th><th> Sold Time </th></tr><tr>";
+    //     if (mSoldOrders->size() > 0)
+    //     {
+    //         table = "<h2>Sold Orders</h2><table><tr><th>Order ID</th><th>Symbol</th><th>Quantity</th><th>Bought Price</th><th>Sold Price</th><th> Sold Time </th></tr><tr>";
         
-            for (SoldOrdersMap::iterator i = (*mSoldOrders).begin(); i != (*mSoldOrders).end(); ++i)
-            {
-                table = table + "<td>" + std::to_string(i->first) + "</td>";
-                table = table + "<td>" + i->second["Symbol"] + "</td>";
-                table = table + "<td>" + i->second["Quantity"] + "</td>";
-                table = table + "<td>" + i->second["BoughtPrice"] + "</td>";
-                table = table + "<td>" + i->second["SoldPrice"] + "</td>";
-                table = table + "<td>" + i->second["Timestamp"] + "</td>";
+    //         for (SoldOrdersMap::iterator i = (*mSoldOrders).begin(); i != (*mSoldOrders).end(); ++i)
+    //         {
+    //             table = table + "<td>" + std::to_string(i->first) + "</td>";
+    //             table = table + "<td>" + i->second["Symbol"] + "</td>";
+    //             table = table + "<td>" + i->second["Quantity"] + "</td>";
+    //             table = table + "<td>" + i->second["BoughtPrice"] + "</td>";
+    //             table = table + "<td>" + i->second["SoldPrice"] + "</td>";
+    //             table = table + "<td>" + i->second["Timestamp"] + "</td>";
 
-                table = table + "</tr>";
-            }
-            table = table + "</table>\n";
-        }
+    //             table = table + "</tr>";
+    //         }
+    //         table = table + "</table>\n";
+    //     }
 
-        return table;
-    }
+    //     return table;
+    // }
 }
 
 class Server : public std::enable_shared_from_this<Server>

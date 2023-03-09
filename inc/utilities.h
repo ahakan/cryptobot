@@ -14,6 +14,7 @@
 
 // Includes
 #include "opel.h"
+#include "structs.h"
 
 // Libraries
 #include "elog.h"
@@ -23,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <algorithm>
 #include <openssl/hmac.h>
 #include <vector>
 #include <thread>
@@ -34,15 +36,22 @@
  */
 class Utilities
 {
-    private:
-    
     protected:
         std::ifstream           mConfigFile;
+
         Json::Value             mConfigJson;
         Json::Value             mTradeJson;
         Json::Value             mExchangeJson;
-        std::string             mExchangeName;
         Json::Value             mWebserverJson;
+
+        std::string             mExchangeName;
+
+        std::string             RSI(std::vector<std::string>& vector);
+        std::string             Average(std::vector<std::string>& vector);
+        std::string             Change(std::vector<std::string>& vector);
+
+        std::string             getLowestPrice(std::vector<std::string>& vector);
+        std::string             getHighestPrice(std::vector<std::string>& vector);
 
     public:
                                 Utilities();
@@ -52,12 +61,16 @@ class Utilities
 
         std::string             getTimestamp();
         std::string             getRSITimestamp(int rsiPeriod, std::string interval);
+
+        long long int           getCandlestickDuration(int rsiPeriod, std::string interval);
+
+        std::string             getType();
+        std::string             getQuantity();
         std::string             getCoinSymbol();
         std::string             getTradeSymbol();
         std::string             getFollowSymbol();
         std::string             getInterval();
-        std::string             getQuantity();
-        std::string             getType();
+        std::string             getFollowInterval();
         std::string             getBalanceSymbol();
         std::string             getBalanceAmount();
         std::string             getAverageAmount();
@@ -71,18 +84,65 @@ class Utilities
         std::string             getWebserverBase();
         unsigned short          getWebserverPort();
 
-        std::string             calculateAverage(std::vector<std::string> vector);
-        std::string             calculateRSI(std::vector<std::string> vector);
-
         std::string             upperToLower(std::string data);
         std::string             roundString(std::string price, int tickSize);
-        std::string             addTwoStrings(std::string number1, std::string number2);
-        std::string             subTwoStrings(std::string number1, std::string number2);
-        std::string             multiplyTwoStrings(std::string number1, std::string number2);
-        
-        bool                    compareTwoStrings(std::string firstPrice, std::string secondPrice);
+
+        std::string             atfts(std::string number1, std::string number2);
+        std::string             stfts(std::string number1, std::string number2);
+        std::string             mtfts(std::string number1, std::string number2);
+        std::string             dtfts(std::string number1, std::string number2);
+
+        std::string             atlts(std::string number1, std::string number2);
+        std::string             stlts(std::string number1, std::string number2);
+        std::string             mtlts(std::string number1, std::string number2);
+
+        bool                    ctscf(std::string number1, std::string number2);
+        bool                    ctscl(std::string number1, std::string number2);
 
         int                     getTickSize(std::string data);
+
+        void                    getWSCandlesticks(struct Candlesticks& candles,
+                                                    struct Symbol& coin);
+
+        bool                    calculateRSI(struct Candlesticks& candles);
+        bool                    calculateChange(struct Candlesticks& candles);
+        bool                    calculateAverage(struct Candlesticks& candles);
+        bool                    getHighestLowestPrice(struct Candlesticks& candles);
+
+        bool                    checkBuyOrder(std::shared_ptr<Order> order, 
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles,
+                                                struct Candlesticks& algorithmCandles);
+
+        bool                    checkSellOrder(std::shared_ptr<Order> order, 
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles,
+                                                struct Candlesticks& algorithmCandles);
+
+        bool                    checkStopOrder(std::shared_ptr<Order> order, 
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles,
+                                                struct Candlesticks& algorithmCandles);
+
+        bool                    calcNewBuyPrice(std::shared_ptr<Order> order, 
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles,
+                                                struct Candlesticks& algorithmCandles);
+                                                    
+        bool                    calcNewSellPrice(std::shared_ptr<Order> order, 
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles);
+
+        bool                    calcNewStopPrice(std::shared_ptr<Order> order, 
+                                                struct Symbol& coin,
+                                                struct Candlesticks& candles);
+
+        bool                    calcNewOrderAverage(std::shared_ptr<Order> order, 
+                                                    struct Candlesticks& candles);
+
+        bool                    calcNewBalanceAmount(std::shared_ptr<Order> order, 
+                                                    struct Symbol& balance,
+                                                    struct Symbol& coin);
 };
 
 

@@ -90,85 +90,47 @@ void Sql::init()
 
     while (iOpel->getExitSignal())
     {
-        // struct candle_data *pTradeCandleData = Opel::getTradeCandleStruct();
-
-        // pTradeCandleData->lock();
-        // if (pTradeCandleData->isUpdated)
-        // {
-        //     std::cout << "Timestamp:" << pTradeCandleData->timestamp << std::endl;
-        //     std::cout << "Symbol:" << pTradeCandleData->symbol << std::endl;
-        //     std::cout << "Open:" << pTradeCandleData->openPrice << std::endl;
-        //     std::cout << "Close:" <<  pTradeCandleData->closePrice << std::endl;
-        //     std::cout << "High:" <<  pTradeCandleData->highPrice << std::endl;
-        //     std::cout << "Low:" <<  pTradeCandleData->lowPrice << std::endl;
-        //     std::cout << "isClosed:" <<  pTradeCandleData->isClosed << std::endl;
-
-        //     // addClosedKlinePrice(pTradeCandleData->timestamp, pTradeCandleData->openPrice, pTradeCandleData->closePrice, pTradeCandleData->highPrice, pTradeCandleData->lowPrice);
-
-        //     pTradeCandleData->isUpdated = false;
-        // }
-        // pTradeCandleData->unlock();
-
-        // struct candle_data *pFollowCandleData = Opel::getFollowCandleStruct();
-
-        // pFollowCandleData->lock();
-        // if (pFollowCandleData->isUpdated)
-        // {
-        //     std::cout << "Timestamp:" << pFollowCandleData->timestamp << std::endl;
-        //     std::cout << "Symbol:" << pFollowCandleData->symbol << std::endl;
-        //     std::cout << "Open:" << pFollowCandleData->openPrice << std::endl;
-        //     std::cout << "Close:" <<  pFollowCandleData->closePrice << std::endl;
-        //     std::cout << "High:" <<  pFollowCandleData->highPrice << std::endl;
-        //     std::cout << "Low:" <<  pFollowCandleData->lowPrice << std::endl;
-        //     std::cout << "isClosed:" <<  pFollowCandleData->isClosed << std::endl;
-
-        //     // addClosedKlinePrice(pFollowCandleData->timestamp, pFollowCandleData->openPrice, pFollowCandleData->closePrice, pFollowCandleData->highPrice, pFollowCandleData->lowPrice);
-
-        //     pFollowCandleData->isUpdated = false;
-        // }
-        // pFollowCandleData->unlock();
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 
     // Record all bought coins
     if (!iOpel->getExitSignal())
     {
-        AllOrdersMap *mBoughtOrders = iOpel->getBoughtOrdersMap();
-        AllOrdersMap *mSellOrders   = iOpel->getSellOrdersMap();
+        // AllOrdersMap *mBoughtOrders = iOpel->getBoughtOrdersMap();
+        // AllOrdersMap *mSellOrders   = iOpel->getSellOrdersMap();
 
-        if (mBoughtOrders->size() > 0)
-        {
-            for (MapIterator order = mBoughtOrders->begin(); order != mBoughtOrders->end(); ++order)
-            {
-                int orderId             = order->first;
-                std::string symbol      = order->second["Symbol"];
-                std::string price       = order->second["BoughtPrice"];
-                std::string quantity    = order->second["Quantity"];
-                std::string time        = order->second["BoughtTime"];
+        // if (mBoughtOrders->size() > 0)
+        // {
+        //     for (MapIterator order = mBoughtOrders->begin(); order != mBoughtOrders->end(); ++order)
+        //     {
+        //         int orderId             = order->first;
+        //         std::string symbol      = order->second["Symbol"];
+        //         std::string price       = order->second["BoughtPrice"];
+        //         std::string quantity    = order->second["Quantity"];
+        //         std::string time        = order->second["BoughtTime"];
 
-                addBoughtCoin(orderId, symbol, price, quantity, time);
-            }
-        }
+        //         addBoughtCoin(orderId, symbol, price, quantity, time);
+        //     }
+        // }
 
-        if (mSellOrders->size() > 0)
-        {
-            for (MapIterator order = mSellOrders->begin(); order != mSellOrders->end(); ++order)
-            {
-                int orderId             = order->first;
-                std::string symbol      = order->second["Symbol"];
-                std::string price       = order->second["BoughtPrice"];
-                std::string quantity    = order->second["Quantity"];
-                std::string time        = order->second["BoughtTime"];
+        // if (mSellOrders->size() > 0)
+        // {
+        //     for (MapIterator order = mSellOrders->begin(); order != mSellOrders->end(); ++order)
+        //     {
+        //         int orderId             = order->first;
+        //         std::string symbol      = order->second["Symbol"];
+        //         std::string price       = order->second["BoughtPrice"];
+        //         std::string quantity    = order->second["Quantity"];
+        //         std::string time        = order->second["BoughtTime"];
 
-                addBoughtCoin(orderId, symbol, price, quantity, time);
+        //         addBoughtCoin(orderId, symbol, price, quantity, time);
 
-                ELOG(INFO, "Added sell coin. Order id: %d, Symbol: %s, Price: %s.", orderId, symbol.c_str(), price.c_str());
-            }
-        }
+        //         ELOG(INFO, "Added sell coin. Order id: %d, Symbol: %s, Price: %s.", orderId, symbol.c_str(), price.c_str());
+        //     }
+        // }
     }
 
-    ELOG(INFO, "Thread SQL detached.");
+    ELOG(INFO, "SQL -> detached.");
 }
 
 
@@ -398,36 +360,36 @@ void Sql::getBoughtCoin()
 
     Record records          = selectQuery(sql);
 
-    int recordSize  = 6;
-    int orderSize   = static_cast<int>(records.size())/6;
+    // int recordSize  = 6;
+    // int orderSize   = static_cast<int>(records.size())/6;
 
-    for(int i = 0; i < orderSize; i++)
-    {
-        int orderId             = std::stoi(records[i*recordSize].second);
-        std::string symbol      = records[i*recordSize + 1].second;
-        std::string price       = records[i*recordSize + 2].second;
-        std::string quantity    = records[i*recordSize + 3].second;
-        std::string timestamp   = records[i*recordSize + 4].second;
+    // for(int i = 0; i < orderSize; i++)
+    // {
+    //     int orderId             = std::stoi(records[i*recordSize].second);
+    //     std::string symbol      = records[i*recordSize + 1].second;
+    //     std::string price       = records[i*recordSize + 2].second;
+    //     std::string quantity    = records[i*recordSize + 3].second;
+    //     std::string timestamp   = records[i*recordSize + 4].second;
 
 
-        OrderMap order;
+    //     OrderMap order;
 
-        order.emplace("Symbol", symbol);
-        order.emplace("BoughtPrice", price);
-        order.emplace("Quantity", quantity);
-        order.emplace("BoughtTime", timestamp);
+    //     order.emplace("Symbol", symbol);
+    //     order.emplace("BoughtPrice", price);
+    //     order.emplace("Quantity", quantity);
+    //     order.emplace("BoughtTime", timestamp);
 
-        Opel *iOpel = Opel::instance();
+    //     Opel *iOpel = Opel::instance();
 
-        AllOrdersMap *mBoughtOrders = iOpel->getBoughtOrdersMap();
+    //     AllOrdersMap *mBoughtOrders = iOpel->getBoughtOrdersMap();
 
-        mBoughtOrders->emplace(orderId, order);
+    //     mBoughtOrders->emplace(orderId, order);
 
-        // Remove bought coin
-        removeBoughtCoin(orderId);
+    //     // Remove bought coin
+    //     removeBoughtCoin(orderId);
 
-        ELOG(INFO, "Bought Coin Added to Bought Orders Map. Order id: %d, Symbol: %s, Price: %s, Quantity: %s.", orderId, symbol.c_str(), price.c_str(), quantity.c_str());
-    }
+    //     ELOG(INFO, "Bought Coin Added to Bought Orders Map. Order id: %d, Symbol: %s, Price: %s, Quantity: %s.", orderId, symbol.c_str(), price.c_str(), quantity.c_str());
+    // }
 }
 
 
